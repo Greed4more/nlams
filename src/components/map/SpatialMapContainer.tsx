@@ -87,33 +87,67 @@ function polygonCentroid(ring: number[][]): [number, number] {
   return [lat, lng];
 }
 
+type ParcelFeature = Feature<Polygon, ParcelFeatureProperties>;
+
+function boundsOf(features: ParcelFeature[]): [[number, number], [number, number]] {
+  const lats = features.flatMap((f) => f.geometry.coordinates[0]!.map((c) => c[1]!));
+  const lngs = features.flatMap((f) => f.geometry.coordinates[0]!.map((c) => c[0]!));
+  return [
+    [Math.min(...lats), Math.min(...lngs)],
+    [Math.max(...lats), Math.max(...lngs)],
+  ];
+}
+
+/** The densest proposal cluster — real parcels are only ~100-300m wide, so
+ * opening on all 5 states at once zooms out so far they're sub-pixel and
+ * unclickable. Open on one real cluster instead, like a real cadastral
+ * viewer does after a search — "fit all" is available as an explicit action. */
+function defaultCluster(features: ParcelFeature[]): ParcelFeature[] {
+  const byProposal = new Map<string, ParcelFeature[]>();
+  for (const f of features) {
+    const list = byProposal.get(f.properties.proposalId) ?? [];
+    list.push(f);
+    byProposal.set(f.properties.proposalId, list);
+  }
+  return [...byProposal.values()].sort((a, b) => b.length - a.length)[0] ?? features;
+}
+
 /** Recenters the map once, when geojson first loads or the highlighted parcel changes. */
 function FitToData({
   data,
   highlightedUlpin,
+  fitAllSignal,
 }: {
   data: FeatureCollection<Polygon, ParcelFeatureProperties> | undefined;
   highlightedUlpin?: string | undefined;
+  fitAllSignal: number;
 }) {
   const map = useMap();
+
   useEffect(() => {
     if (!data || data.features.length === 0) return;
+    if (fitAllSignal > 0) {
+      map.fitBounds(boundsOf(data.features), { padding: [24, 24] });
+      return;
+    }
     const target = highlightedUlpin
       ? data.features.find((f) => f.properties.ulpin === highlightedUlpin)
       : undefined;
     if (target) {
       const [lng, lat] = target.geometry.coordinates[0]![0]!;
-      map.setView([lat!, lng!], 15);
+      map.setView([lat!, lng!], 16);
       return;
     }
-    const lats = data.features.flatMap((f) => f.geometry.coordinates[0]!.map((c) => c[1]!));
-    const lngs = data.features.flatMap((f) => f.geometry.coordinates[0]!.map((c) => c[0]!));
-    map.fitBounds([
-      [Math.min(...lats), Math.min(...lngs)],
-      [Math.max(...lats), Math.max(...lngs)],
-    ]);
+    // Individual parcels vary in real-world size, and a proposal's parcels
+    // can be spread a few km apart — fitBounds on the whole cluster can
+    // still zoom out too far to see any single one. Center on one parcel
+    // in the densest cluster at a fixed close zoom instead; "Fit all
+    // parcels" is available for the zoomed-out view.
+    const cluster = defaultCluster(data.features);
+    const [lng, lat] = cluster[0]!.geometry.coordinates[0]![0]!;
+    map.setView([lat!, lng!], 16);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, highlightedUlpin]);
+  }, [data, highlightedUlpin, fitAllSignal]);
   return null;
 }
 
@@ -128,6 +162,7 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
   const [showLulc, setShowLulc] = useState(false);
   const [basemap, setBasemap] = useState<(typeof BASEMAPS)[number]["value"]>("satellite");
   const [selected, setSelected] = useState<Selection | null>(null);
+  const [fitAllSignal, setFitAllSignal] = useState(0);
 
   const theme = MAP_THEMES[themeId];
   const geojson = data as FeatureCollection<Polygon, ParcelFeatureProperties> | undefined;
@@ -263,7 +298,7 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
           <GeoJSON key={geojsonKey} data={geojson} style={styleFor} onEachFeature={onEachFeature} />
         )}
 
-        <FitToData data={geojson} highlightedUlpin={highlightedUlpin} />
+        <FitToData data={geojson} highlightedUlpin={highlightedUlpin} fitAllSignal={fitAllSignal} />
       </MapContainer>
 
       {isLoading && (
@@ -342,6 +377,16 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
           </div>
         </div>
       )}
+
+      {/* Zoom-out escape hatch — individual parcels are ~100-300m wide, so
+          the default view opens on one real cluster, not all of India. */}
+      <button
+        type="button"
+        onClick={() => setFitAllSignal((n) => n + 1)}
+        className="panel absolute bottom-3 left-3 z-[1000] px-3 py-1.5 text-[11.5px] font-medium text-foreground transition-colors hover:bg-muted"
+      >
+        Fit all parcels
+      </button>
 
       {/* Legend */}
       <div className="panel absolute bottom-3 right-3 z-[1000] px-3 py-2">
