@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { REFERENCE_DATE, type Proposal, type RfctlarrStage } from "@/data/mockData";
+import type { Proposal, RfctlarrStage } from "@/data/mockData";
 import { getSlaStatus, SLA_RULES, type SlaStatus } from "@/lib/slaRules";
 import { STAGE_ORDER, STAGE_LABELS } from "@/data/mockData";
 import { useRole } from "@/context/RoleContext";
@@ -51,7 +51,6 @@ export interface ActivityEvent {
   at: Date;
   ago: string;
   sha: string;
-  blockHeight: number;
   docType: string;
 }
 
@@ -63,8 +62,8 @@ const ACTION_LABEL: Record<string, string> = {
   RR_SCHEME: "R&R scheme approved",
 };
 
-function agoLabel(at: Date): string {
-  const mins = Math.max(1, Math.round((REFERENCE_DATE.getTime() - at.getTime()) / 60000));
+function agoLabel(at: Date, now: Date): string {
+  const mins = Math.max(1, Math.round((now.getTime() - at.getTime()) / 60000));
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.round(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
@@ -74,6 +73,7 @@ function agoLabel(at: Date): string {
 }
 
 export function buildDerived(list: Proposal[]) {
+  const now = new Date();
   const enriched: Enriched[] = list.map((proposal) => ({
     proposal,
     sla: getSlaStatus(proposal),
@@ -89,13 +89,11 @@ export function buildDerived(list: Proposal[]) {
     breached: enriched.filter((e) => e.sla.status === "BREACHED").length,
     atRisk: enriched.filter((e) => e.sla.status === "AT_RISK").length,
     newThisQuarter: list.filter(
-      (p) => REFERENCE_DATE.getTime() - new Date(p.initiatedAt).getTime() <= 180 * 86400000,
+      (p) => now.getTime() - new Date(p.initiatedAt).getTime() <= 180 * 86400000,
     ).length,
   };
 
-  const disbursalPct = totals.assessed
-    ? Math.round((totals.disbursed / totals.assessed) * 100)
-    : 0;
+  const disbursalPct = totals.assessed ? Math.round((totals.disbursed / totals.assessed) * 100) : 0;
 
   const stageBreakdown: StageRow[] = STAGE_ORDER.map((stage) => {
     const rows = enriched.filter((e) => e.proposal.currentStage === stage);
@@ -129,9 +127,7 @@ export function buildDerived(list: Proposal[]) {
     const months: FlowPoint[] = [];
     const keys: string[] = [];
     for (let i = 11; i >= 0; i--) {
-      const d = new Date(
-        Date.UTC(REFERENCE_DATE.getUTCFullYear(), REFERENCE_DATE.getUTCMonth() - i, 1),
-      );
+      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
       keys.push(`${d.getUTCFullYear()}-${d.getUTCMonth()}`);
       months.push({
         month: d.toLocaleString("en-IN", { month: "short", timeZone: "UTC" }),
@@ -190,9 +186,8 @@ export function buildDerived(list: Proposal[]) {
         action: ACTION_LABEL[d.type] ?? d.type,
         proposalId: p.id,
         at: new Date(d.uploadedAt),
-        ago: agoLabel(new Date(d.uploadedAt)),
+        ago: agoLabel(new Date(d.uploadedAt), now),
         sha: d.sha256.slice(0, 10),
-        blockHeight: d.blockHeight,
         docType: d.type,
       })),
     )

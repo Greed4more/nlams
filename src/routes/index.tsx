@@ -10,6 +10,8 @@ import { StateDistribution } from "@/components/dashboard/StateDistribution";
 import { CompensationFlow } from "@/components/dashboard/CompensationFlow";
 import { RRProgress } from "@/components/dashboard/RRProgress";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
+import { MisExport } from "@/components/dashboard/MisExport";
+import { useI18n } from "@/context/I18nContext";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -44,7 +46,8 @@ function useLiveClock() {
 }
 
 function Dashboard() {
-  const { role } = useRole();
+  const { person, roleLabel } = useRole();
+  const { t } = useI18n();
   const now = useLiveClock();
   const stamp = now
     ? now.toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "medium" })
@@ -53,8 +56,9 @@ function Dashboard() {
   return (
     <AppShell breadcrumb={["Home", "Dashboard"]}>
       <PageHeader
-        title="Executive Overview"
-        subtitle={`Signed in as ${role} · Live as of ${stamp} IST`}
+        title={t("page.dashboard.title")}
+        subtitle={`Signed in as ${person} (${roleLabel}) · Live as of ${stamp} IST`}
+        actions={<MisExport />}
       />
 
       <div className="space-y-3">

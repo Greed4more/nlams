@@ -20,6 +20,14 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Secrets — never commit real Supabase/DB credentials
+.env
+.env.*
+!.env.example
+server/.env
+server/.env.*
+!server/.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

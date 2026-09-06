@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ProposalPipeline } from "@/components/proposals/ProposalPipeline";
+import { useI18n } from "@/context/I18nContext";
 
 export const Route = createFileRoute("/proposals/")({
   validateSearch: (search: Record<string, unknown>): { filter?: string; focus?: string } => ({
@@ -19,7 +20,8 @@ export const Route = createFileRoute("/proposals/")({
       { property: "og:title", content: "Proposal Pipeline — NLAMS" },
       {
         property: "og:description",
-        content: "Search and filter acquisition proposals by state, requiring body, stage and SLA status.",
+        content:
+          "Search and filter acquisition proposals by state, requiring body, stage and SLA status.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -29,10 +31,11 @@ export const Route = createFileRoute("/proposals/")({
 });
 
 function ProposalsPage() {
+  const { t } = useI18n();
   return (
     <AppShell breadcrumb={["Home", "Proposals"]}>
       <PageHeader
-        title="Proposal Pipeline"
+        title={t("page.proposals.title")}
         subtitle="All acquisition proposals recorded against notified requiring bodies"
       />
       <ProposalPipeline />

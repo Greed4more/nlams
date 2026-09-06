@@ -1,8 +1,14 @@
+import { lazy, Suspense, useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { SpatialMapContainer } from "@/components/map/SpatialMapContainer";
-import { proposals } from "@/data/mockData";
+import { useI18n } from "@/context/I18nContext";
+
+// Leaflet touches `window` at module load time, which crashes SSR — load it
+// only after mount, client-side only.
+const SpatialMapContainer = lazy(() =>
+  import("@/components/map/SpatialMapContainer").then((m) => ({ default: m.SpatialMapContainer })),
+);
 
 export const Route = createFileRoute("/map-view")({
   validateSearch: (search: Record<string, unknown>): { ulpin?: string } => ({
@@ -14,12 +20,13 @@ export const Route = createFileRoute("/map-view")({
       {
         name: "description",
         content:
-          "Spatial view of ULPIN cadastral parcels, proposed alignment corridors and village boundaries for acquisition proposals.",
+          "Spatial view of ULPIN cadastral parcels over OpenStreetMap, with ISRO Bhuvan administrative boundary overlays.",
       },
       { property: "og:title", content: "Cadastral GIS Viewer — NLAMS" },
       {
         property: "og:description",
-        content: "ULPIN parcel polygons, layer toggles and parcel status legend for land acquisition.",
+        content:
+          "ULPIN parcel polygons, layer toggles and parcel status legend for land acquisition.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -28,29 +35,29 @@ export const Route = createFileRoute("/map-view")({
   component: MapViewPage,
 });
 
+function MapSkeleton() {
+  return <div className="shimmer h-[calc(100vh-190px)] min-h-[520px] w-full rounded-[6px]" />;
+}
+
 function MapViewPage() {
   const { ulpin } = Route.useSearch();
-
-  const parcels = (() => {
-    const all = proposals.flatMap((p) => p.parcels);
-    if (ulpin) {
-      const idx = all.findIndex((p) => p.ulpin === ulpin);
-      if (idx !== -1) {
-        const target = all[idx]!;
-        const rest = all.filter((_, i) => i !== idx);
-        return [target, ...rest].slice(0, 12);
-      }
-    }
-    return all.slice(0, 12);
-  })();
+  const { t } = useI18n();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   return (
     <AppShell breadcrumb={["NLAMS", "GIS Map View"]}>
       <PageHeader
-        title="Cadastral GIS Viewer"
-        subtitle="ULPIN-linked cadastral parcels · ISRO Bhuvan base imagery pending live layer integration."
+        title={t("page.map.title")}
+        subtitle="ULPIN-linked cadastral parcels on OpenStreetMap · ISRO Bhuvan boundary overlay available"
       />
-      <SpatialMapContainer parcels={parcels} highlightedUlpin={ulpin} />
+      {mounted ? (
+        <Suspense fallback={<MapSkeleton />}>
+          <SpatialMapContainer highlightedUlpin={ulpin} />
+        </Suspense>
+      ) : (
+        <MapSkeleton />
+      )}
     </AppShell>
   );
 }

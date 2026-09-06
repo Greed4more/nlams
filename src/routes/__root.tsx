@@ -10,8 +10,10 @@ import {
 import type { ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import { AuthProvider } from "../context/AuthContext";
 import { RoleProvider } from "../context/RoleContext";
 import { DemoProvider } from "../context/DemoContext";
+import { I18nProvider } from "../context/I18nContext";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -87,7 +89,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "NLAMS — National Land Acquisition & Management System" },
       {
         property: "og:description",
-        content: "Statutory timeline, compensation and parcel tracking under the RFCTLARR Act, 2013.",
+        content:
+          "Statutory timeline, compensation and parcel tracking under the RFCTLARR Act, 2013.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -131,15 +134,19 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <RoleProvider>
-        <DemoProvider>
-          <TooltipProvider delayDuration={200}>
-            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-            <Outlet />
-            <Toaster />
-          </TooltipProvider>
-        </DemoProvider>
-      </RoleProvider>
+      <I18nProvider>
+        <AuthProvider>
+          <RoleProvider>
+            <DemoProvider>
+              <TooltipProvider delayDuration={200}>
+                {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+                <Outlet />
+                <Toaster />
+              </TooltipProvider>
+            </DemoProvider>
+          </RoleProvider>
+        </AuthProvider>
+      </I18nProvider>
     </QueryClientProvider>
   );
 }

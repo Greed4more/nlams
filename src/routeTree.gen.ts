@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CalculatorRouteImport } from './routes/calculator'
 import { Route as MapViewRouteImport } from './routes/map-view'
+import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as ProposalsIndexRouteImport } from './routes/proposals.index'
 import { Route as ProposalsIdRouteImport } from './routes/proposals.$id'
 
@@ -30,6 +31,11 @@ const MapViewRoute = MapViewRouteImport.update({
   path: '/map-view',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignInRoute = SignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProposalsIndexRoute = ProposalsIndexRouteImport.update({
   id: '/proposals/',
   path: '/proposals/',
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/calculator': typeof CalculatorRoute
   '/map-view': typeof MapViewRoute
+  '/sign-in': typeof SignInRoute
   '/proposals/$id': typeof ProposalsIdRoute
   '/proposals/': typeof ProposalsIndexRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/calculator': typeof CalculatorRoute
   '/map-view': typeof MapViewRoute
+  '/sign-in': typeof SignInRoute
   '/proposals/$id': typeof ProposalsIdRoute
   '/proposals': typeof ProposalsIndexRoute
 }
@@ -60,20 +68,33 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/calculator': typeof CalculatorRoute
   '/map-view': typeof MapViewRoute
+  '/sign-in': typeof SignInRoute
   '/proposals/$id': typeof ProposalsIdRoute
   '/proposals/': typeof ProposalsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/calculator' | '/map-view' | '/proposals/$id' | '/proposals/'
+    | '/'
+    | '/calculator'
+    | '/map-view'
+    | '/sign-in'
+    | '/proposals/$id'
+    | '/proposals/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/calculator' | '/map-view' | '/proposals/$id' | '/proposals'
+  to:
+    | '/'
+    | '/calculator'
+    | '/map-view'
+    | '/sign-in'
+    | '/proposals/$id'
+    | '/proposals'
   id:
     | '__root__'
     | '/'
     | '/calculator'
     | '/map-view'
+    | '/sign-in'
     | '/proposals/$id'
     | '/proposals/'
   fileRoutesById: FileRoutesById
@@ -82,6 +103,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CalculatorRoute: typeof CalculatorRoute
   MapViewRoute: typeof MapViewRoute
+  SignInRoute: typeof SignInRoute
   ProposalsIdRoute: typeof ProposalsIdRoute
   ProposalsIndexRoute: typeof ProposalsIndexRoute
 }
@@ -109,6 +131,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MapViewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/proposals/': {
       id: '/proposals/'
       path: '/proposals'
@@ -130,6 +159,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CalculatorRoute: CalculatorRoute,
   MapViewRoute: MapViewRoute,
+  SignInRoute: SignInRoute,
   ProposalsIdRoute: ProposalsIdRoute,
   ProposalsIndexRoute: ProposalsIndexRoute,
 }

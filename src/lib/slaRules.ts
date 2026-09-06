@@ -1,4 +1,4 @@
-import { REFERENCE_DATE, type Proposal, type RfctlarrStage } from "@/data/mockData";
+import type { Proposal, RfctlarrStage } from "@/data/mockData";
 
 export type SlaStatus = "OK" | "AT_RISK" | "BREACHED";
 
@@ -49,7 +49,7 @@ export interface SlaResult {
   description: string;
 }
 
-export function getSlaStatus(proposal: Proposal, now: Date = REFERENCE_DATE): SlaResult {
+export function getSlaStatus(proposal: Proposal, now: Date = new Date()): SlaResult {
   const entered = new Date(proposal.stageEnteredAt).getTime();
   const daysElapsed = Math.max(0, Math.floor((now.getTime() - entered) / 86400000));
   const rule = SLA_RULES[proposal.currentStage];

@@ -1,108 +1,62 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
-import { toast } from "sonner";
-import { proposals as ALL_PROPOSALS, type Proposal } from "@/data/mockData";
-
-export type Role =
-  | "District Collector – South Goa"
-  | "Land Acquisition Officer"
-  | "DoLR Secretary"
-  | "State Revenue Dept";
-
-export const ROLES: Role[] = [
-  "District Collector – South Goa",
-  "Land Acquisition Officer",
-  "DoLR Secretary",
-  "State Revenue Dept",
-];
-
-export interface RoleConfig {
-  /** null = national scope (all states) */
-  states: string[] | null;
-  dashboardTitle: string;
-  scopeLabel: string;
-  /** May execute statutory actions (advance stage, officer override) */
-  canAct: boolean;
-  initials: string;
-  person: string;
-  designation: string;
-}
-
-export const ROLE_CONFIG: Record<Role, RoleConfig> = {
-  "DoLR Secretary": {
-    states: null,
-    dashboardTitle: "National Overview",
-    scopeLabel: "All states",
-    canAct: false,
-    initials: "RK",
-    person: "R. Kulkarni",
-    designation: "IAS · DoLR",
-  },
-  "District Collector – South Goa": {
-    states: ["Goa"],
-    dashboardTitle: "District Overview – South Goa",
-    scopeLabel: "Goa",
-    canAct: false,
-    initials: "AN",
-    person: "A. Naik",
-    designation: "IAS · South Goa",
-  },
-  "Land Acquisition Officer": {
-    states: ["Goa"],
-    dashboardTitle: "Acquisition Officer Workspace – South Goa",
-    scopeLabel: "Goa",
-    canAct: true,
-    initials: "SD",
-    person: "S. Desai",
-    designation: "LAO · South Goa",
-  },
-  "State Revenue Dept": {
-    states: ["Maharashtra"],
-    dashboardTitle: "State Overview – Maharashtra",
-    scopeLabel: "Maharashtra",
-    canAct: false,
-    initials: "MV",
-    person: "M. Vaidya",
-    designation: "Revenue Dept · MH",
-  },
-};
+import { createContext, useContext, useMemo, type ReactNode } from "react";
+import type { Proposal } from "@/data/mockData";
+import { useAuth, ROLE_LABEL, ROLE_CAN_ACT, type Role } from "@/context/AuthContext";
+import { useProposalsQuery } from "@/hooks/useProposals";
 
 export const NO_CREDENTIALS_HINT = "Requires LAO credentials";
 
 interface RoleContextValue {
-  role: Role;
-  setRole: (role: Role) => void;
-  config: RoleConfig;
+  role: Role | null;
+  roleLabel: string;
+  /** null = national scope (all states) */
+  states: string[] | null;
+  dashboardTitle: string;
+  scopeLabel: string;
   canAct: boolean;
+  initials: string;
+  person: string;
+  proposals: Proposal[];
+  proposalsLoading: boolean;
   scopedProposals: Proposal[];
   inScope: (p: Proposal) => boolean;
 }
 
 const RoleContext = createContext<RoleContextValue | null>(null);
 
-export function RoleProvider({ children }: { children: ReactNode }) {
-  const [role, setRoleState] = useState<Role>("DoLR Secretary");
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
+  return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase();
+}
 
-  const setRole = useCallback((next: Role) => {
-    setRoleState(next);
-    toast(`Viewing as ${next}`, {
-      description: ROLE_CONFIG[next].states
-        ? `Data scoped to ${ROLE_CONFIG[next].scopeLabel}.`
-        : "National scope — all states visible.",
-    });
-  }, []);
+export function RoleProvider({ children }: { children: ReactNode }) {
+  const { role, states: rawStates, displayName } = useAuth();
+  const { data, isLoading } = useProposalsQuery();
+  const proposals = useMemo(() => data ?? [], [data]);
 
   const value = useMemo<RoleContextValue>(() => {
-    const config = ROLE_CONFIG[role];
-    const inScope = (p: Proposal) => !config.states || config.states.includes(p.state);
+    const states = rawStates.length > 0 ? rawStates : null;
+    const inScope = (p: Proposal) => !states || states.includes(p.state);
+    const roleLabel = role ? ROLE_LABEL[role] : "No role assigned";
+    const scopeLabel = states ? states.join(", ") : "All states";
+    const dashboardTitle = states ? `${roleLabel} Workspace — ${scopeLabel}` : "National Overview";
+
     return {
       role,
-      setRole,
-      config,
-      canAct: config.canAct,
-      scopedProposals: ALL_PROPOSALS.filter(inScope),
+      roleLabel,
+      states,
+      dashboardTitle,
+      scopeLabel,
+      canAct: role ? ROLE_CAN_ACT[role] : false,
+      initials: initialsOf(displayName),
+      person: displayName,
+      proposals,
+      proposalsLoading: isLoading,
+      scopedProposals: proposals.filter(inScope),
       inScope,
     };
-  }, [role, setRole]);
+  }, [role, rawStates, displayName, proposals, isLoading]);
 
   return <RoleContext.Provider value={value}>{children}</RoleContext.Provider>;
 }

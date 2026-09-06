@@ -1,16 +1,13 @@
-import { Bell, Menu, PlayCircle } from "lucide-react";
+import { Bell, LogOut, Menu, PlayCircle } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ROLES, useRole, type Role } from "@/context/RoleContext";
+import { useRole } from "@/context/RoleContext";
+import { useAuth } from "@/context/AuthContext";
 import { useDemo } from "@/context/DemoContext";
+import { useI18n } from "@/context/I18nContext";
+import { LANGUAGES } from "@/lib/translations";
 import { useDerived } from "@/components/dashboard/derive";
+import { cn } from "@/lib/utils";
 import { DemoPanel } from "./DemoPanel";
 
 export function TopBar({
@@ -20,7 +17,9 @@ export function TopBar({
   breadcrumb: string[];
   onOpenNav?: () => void;
 }) {
-  const { role, setRole, config } = useRole();
+  const { initials, person, roleLabel } = useRole();
+  const { signOut } = useAuth();
+  const { lang, setLang, t } = useI18n();
   const { breachedQueue } = useDerived();
   const demo = useDemo();
   const urgent = breachedQueue.slice(0, 4);
@@ -58,6 +57,25 @@ export function TopBar({
       </div>
 
       <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        <div className="inline-flex items-center overflow-hidden rounded-[4px] border border-border text-[11px] font-semibold">
+          {LANGUAGES.map((l) => (
+            <button
+              key={l.value}
+              type="button"
+              onClick={() => setLang(l.value)}
+              aria-pressed={lang === l.value}
+              className={cn(
+                "px-2 py-1.5 transition-colors",
+                lang === l.value
+                  ? "bg-navy text-navy-foreground"
+                  : "bg-card text-muted-foreground hover:bg-muted",
+              )}
+            >
+              {l.label}
+            </button>
+          ))}
+        </div>
+
         <Popover open={demo.open} onOpenChange={demo.setOpen}>
           <PopoverTrigger asChild>
             <button
@@ -72,19 +90,6 @@ export function TopBar({
             <DemoPanel />
           </PopoverContent>
         </Popover>
-
-        <Select value={role} onValueChange={(v) => setRole(v as Role)}>
-          <SelectTrigger className="h-8 w-[150px] rounded-[4px] border-border text-[12px] lg:w-[248px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {ROLES.map((r) => (
-              <SelectItem key={r} value={r} className="text-[12px]">
-                {r}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
 
         <Popover>
           <PopoverTrigger asChild>
@@ -137,15 +142,32 @@ export function TopBar({
           </PopoverContent>
         </Popover>
 
-        <div className="hidden items-center gap-2 border-l border-border pl-3 sm:flex">
-          <div className="grid size-8 place-items-center rounded-full bg-navy text-[11px] font-semibold text-navy-foreground">
-            {config.initials}
-          </div>
-          <div className="hidden leading-tight lg:block">
-            <div className="text-[12px] font-semibold text-foreground">{config.person}</div>
-            <div className="text-[10px] text-muted-foreground">{config.designation}</div>
-          </div>
-        </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="hidden items-center gap-2 border-l border-border pl-3 sm:flex"
+            >
+              <div className="grid size-8 place-items-center rounded-full bg-navy text-[11px] font-semibold text-navy-foreground">
+                {initials}
+              </div>
+              <div className="hidden text-left leading-tight lg:block">
+                <div className="text-[12px] font-semibold text-foreground">{person}</div>
+                <div className="text-[10px] text-muted-foreground">{roleLabel}</div>
+              </div>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-[200px] rounded-[6px] p-1">
+            <button
+              type="button"
+              onClick={() => void signOut()}
+              className="flex w-full items-center gap-2 rounded-[4px] px-2.5 py-2 text-left text-[12.5px] font-medium text-foreground transition-colors hover:bg-accent"
+            >
+              <LogOut className="size-3.5" />
+              {t("action.signOut")}
+            </button>
+          </PopoverContent>
+        </Popover>
       </div>
     </header>
   );

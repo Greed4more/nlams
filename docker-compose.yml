@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nlams
+      POSTGRES_PASSWORD: nlams_dev_password
+      POSTGRES_DB: nlams
+    ports:
+      - "5432:5432"
+    volumes:
+      - nlams_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nlams -d nlams"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  nlams_pgdata:

@@ -1,14 +1,10 @@
 import { useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { CheckCircle2, Circle, RotateCcw } from "lucide-react";
-import { proposals } from "@/data/mockData";
 import { getSlaStatus } from "@/lib/slaRules";
 import { useDemo, type HighlightKey } from "@/context/DemoContext";
+import { useProposalsQuery } from "@/hooks/useProposals";
 import { cn } from "@/lib/utils";
-
-const DEMO_PROPOSAL =
-  proposals.find((p) => getSlaStatus(p).status === "BREACHED" && p.documents.length > 0) ??
-  proposals[0]!;
 
 interface DemoStep {
   title: string;
@@ -21,9 +17,18 @@ interface DemoStep {
 export function DemoPanel() {
   const navigate = useNavigate();
   const demo = useDemo();
+  const { data: proposals } = useProposalsQuery();
 
-  const steps = useMemo<DemoStep[]>(
-    () => [
+  const demoProposal = useMemo(() => {
+    const list = proposals ?? [];
+    return (
+      list.find((p) => getSlaStatus(p).status === "BREACHED" && p.documents.length > 0) ?? list[0]
+    );
+  }, [proposals]);
+
+  const steps = useMemo<DemoStep[]>(() => {
+    const id = demoProposal?.id ?? "";
+    return [
       {
         title: "Statutory delay alerts",
         description: "The dashboard flags every proposal past its RFCTLARR clock.",
@@ -38,16 +43,18 @@ export function DemoPanel() {
       },
       {
         title: "Open a proposal",
-        description: `${DEMO_PROPOSAL.id} — statutory status and stage timeline at a glance.`,
+        description: id
+          ? `${id} — statutory status and stage timeline at a glance.`
+          : "Statutory status and stage timeline at a glance.",
         highlight: "proposal-header",
-        run: () => navigate({ to: "/proposals/$id", params: { id: DEMO_PROPOSAL.id } }),
+        run: () => id && navigate({ to: "/proposals/$id", params: { id } }),
       },
       {
-        title: "Verify on-chain documents",
-        description: "Every filing is hash-anchored — re-verify integrity on demand.",
+        title: "Verify filed documents",
+        description: "Every filing is content-hashed — re-verify integrity on demand.",
         highlight: "document-repository",
         verify: true,
-        run: () => navigate({ to: "/proposals/$id", params: { id: DEMO_PROPOSAL.id } }),
+        run: () => id && navigate({ to: "/proposals/$id", params: { id } }),
       },
       {
         title: "Compute compensation",
@@ -55,9 +62,8 @@ export function DemoPanel() {
         highlight: "calculator-breakdown",
         run: () => navigate({ to: "/calculator" }),
       },
-    ],
-    [navigate],
-  );
+    ];
+  }, [navigate, demoProposal]);
 
   const go = (index: number) => {
     const step = steps[index];

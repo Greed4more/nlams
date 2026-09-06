@@ -1,12 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { LayoutDashboard, FileStack, Calculator, Map } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/context/I18nContext";
 
 export const NAV = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/proposals", label: "Proposals", icon: FileStack },
-  { to: "/calculator", label: "Compensation Calculator", icon: Calculator },
-  { to: "/map-view", label: "GIS Map View", icon: Map },
+  { to: "/", labelKey: "nav.dashboard", icon: LayoutDashboard },
+  { to: "/proposals", labelKey: "nav.proposals", icon: FileStack },
+  { to: "/calculator", labelKey: "nav.calculator", icon: Calculator },
+  { to: "/map-view", labelKey: "nav.map", icon: Map },
 ] as const;
 
 /** `compact` renders the icon rail (used between 768px and 1280px). */
@@ -17,6 +18,7 @@ export function SidebarContent({
   compact?: boolean;
   onNavigate?: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="flex h-full flex-col bg-navy text-navy-foreground">
       <div className={cn("border-b border-white/10 py-4", compact ? "px-2 text-center" : "px-4")}>
@@ -35,29 +37,32 @@ export function SidebarContent({
       <nav className={cn("flex-1 py-3", compact ? "px-1.5" : "px-2")}>
         {!compact && <div className="label-xs px-2 pb-2 text-navy-muted">Navigation</div>}
         <ul className="space-y-0.5">
-          {NAV.map(({ to, label, icon: Icon }) => (
-            <li key={to}>
-              <Link
-                to={to}
-                title={label}
-                onClick={onNavigate}
-                activeOptions={{ exact: to === "/" }}
-                className={cn(
-                  "flex items-center gap-2.5 rounded-[4px] py-2 text-[13px] font-medium text-navy-foreground/80 transition-colors hover:bg-navy-hover hover:text-navy-foreground",
-                  compact ? "justify-center px-2" : "px-2.5",
-                )}
-                activeProps={{
-                  className: cn(
-                    "bg-navy-hover text-navy-foreground",
-                    !compact && "border-l-2 border-status-info pl-2",
-                  ),
-                }}
-              >
-                <Icon className="size-4 shrink-0" strokeWidth={1.75} />
-                {!compact && label}
-              </Link>
-            </li>
-          ))}
+          {NAV.map(({ to, labelKey, icon: Icon }) => {
+            const label = t(labelKey);
+            return (
+              <li key={to}>
+                <Link
+                  to={to}
+                  title={label}
+                  onClick={onNavigate}
+                  activeOptions={{ exact: to === "/" }}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-[4px] py-2 text-[13px] font-medium text-navy-foreground/80 transition-colors hover:bg-navy-hover hover:text-navy-foreground",
+                    compact ? "justify-center px-2" : "px-2.5",
+                  )}
+                  activeProps={{
+                    className: cn(
+                      "bg-navy-hover text-navy-foreground",
+                      !compact && "border-l-2 border-status-info pl-2",
+                    ),
+                  }}
+                >
+                  <Icon className="size-4 shrink-0" strokeWidth={1.75} />
+                  {!compact && label}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </nav>
 

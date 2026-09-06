@@ -1,0 +1,169 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [postgis]
+}
+
+enum RfctlarrStage {
+  INTAKE
+  SIA
+  SIA_APPRAISAL
+  SEC_11
+  SEC_19
+  AWARD
+  RR_COMPLETE
+}
+
+enum ParcelClassification {
+  RURAL
+  URBAN
+}
+
+enum DocumentType {
+  SIA_REPORT
+  SEC_11_NOTIFICATION
+  SEC_19_DECLARATION
+  AWARD_ORDER
+  RR_SCHEME
+}
+
+/// Mirrors the four demo personas; role itself is authoritative in Supabase
+/// (auth.users.app_metadata.role) and synced here so it can be joined against
+/// audit log rows and queried without calling out to Supabase on every read.
+enum Role {
+  DOLR_SECRETARY
+  DISTRICT_COLLECTOR
+  LAO
+  STATE_REVENUE
+}
+
+enum AuditAction {
+  STAGE_ADVANCE
+  DOCUMENT_UPLOAD
+  DOCUMENT_VERIFY
+}
+
+enum SlaAlertStatus {
+  AT_RISK
+  BREACHED
+}
+
+model User {
+  /// Supabase auth.users.id (uuid) — Supabase is the source of truth for identity.
+  id        String   @id
+  email     String   @unique
+  name      String
+  role      Role
+  /// National scope when empty.
+  states    String[] @default([])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  auditLogs AuditLog[]
+
+  @@map("users")
+}
+
+model Proposal {
+  id             String        @id
+  projectName    String
+  requiringBody  String
+  state          String
+  district       String
+  currentStage   RfctlarrStage
+  stageEnteredAt DateTime
+  initiatedAt    DateTime
+  affectedFamilies Int
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  parcels   Parcel[]
+  documents DocumentRef[]
+  auditLogs AuditLog[]
+  slaAlerts SlaAlert[]
+
+  @@map("proposals")
+}
+
+model Parcel {
+  id          String               @id @default(cuid())
+  proposalId  String
+  proposal    Proposal             @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  ulpin       String               @unique
+  khasraNo    String
+  /// { local, script, standard } — vernacular revenue-term glossary entry.
+  vernacularTerm Json
+  areaHa      Float
+  classification ParcelClassification
+  ownerName   String
+  coOwners    Int
+  compensationAssessed  Float
+  compensationDisbursed Float
+
+  /// Cadastral polygon geometry (WGS84). Schema-ready for Phase 3 (real GIS);
+  /// left unpopulated until real ULPIN survey coordinates are sourced —
+  /// Prisma Client cannot read/write this column, only raw SQL / PostGIS
+  /// functions (ST_AsGeoJSON, etc.) can.
+  geom Unsupported("geometry(Polygon, 4326)")?
+
+  @@map("parcels")
+}
+
+model DocumentRef {
+  id         String       @id @default(cuid())
+  proposalId String
+  proposal   Proposal     @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  name       String
+  type       DocumentType
+  uploadedAt DateTime     @default(now())
+  sizeKb     Int
+  sha256     String
+  /// Raw file bytes. Fine at hackathon scale; swap for object storage
+  /// (S3/GCS + storagePath) if documents grow large or numerous.
+  fileData   Bytes
+  contentType String      @default("application/pdf")
+  lastVerifiedAt DateTime?
+
+  @@map("document_refs")
+}
+
+model AuditLog {
+  id         String       @id @default(cuid())
+  proposalId String
+  proposal   Proposal     @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  userId     String?
+  user       User?        @relation(fields: [userId], references: [id])
+  action     AuditAction
+  fromStage  RfctlarrStage?
+  toStage    RfctlarrStage?
+  metadata   Json?
+  createdAt  DateTime     @default(now())
+
+  @@map("audit_logs")
+}
+
+/**
+ * One row per (proposal, stage) breach/at-risk event the scheduled scanner
+ * detects — see server/src/jobs/slaAlertScanner.ts. `deliveredAt` is set once
+ * a delivery channel (console by default; email/SMS if wired up) has fired.
+ */
+model SlaAlert {
+  id           String         @id @default(cuid())
+  proposalId   String
+  proposal     Proposal       @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  stage        RfctlarrStage
+  status       SlaAlertStatus
+  daysElapsed  Int
+  daysRemaining Int
+  createdAt    DateTime       @default(now())
+  deliveredAt  DateTime?
+
+  /// One alert per proposal+stage+status — re-scans don't spam duplicates.
+  @@unique([proposalId, stage, status])
+  @@map("sla_alerts")
+}

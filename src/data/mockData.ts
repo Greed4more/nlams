@@ -1,11 +1,5 @@
 export type RfctlarrStage =
-  | "INTAKE"
-  | "SIA"
-  | "SIA_APPRAISAL"
-  | "SEC_11"
-  | "SEC_19"
-  | "AWARD"
-  | "RR_COMPLETE";
+  "INTAKE" | "SIA" | "SIA_APPRAISAL" | "SEC_11" | "SEC_19" | "AWARD" | "RR_COMPLETE";
 
 export interface Parcel {
   ulpin: string;
@@ -22,17 +16,12 @@ export interface Parcel {
 export interface DocumentRef {
   id: string;
   name: string;
-  type:
-    | "SIA_REPORT"
-    | "SEC_11_NOTIFICATION"
-    | "SEC_19_DECLARATION"
-    | "AWARD_ORDER"
-    | "RR_SCHEME";
+  type: "SIA_REPORT" | "SEC_11_NOTIFICATION" | "SEC_19_DECLARATION" | "AWARD_ORDER" | "RR_SCHEME";
   uploadedAt: string;
   sizeKb: number;
   sha256: string;
-  blockHeight: number;
   verified: boolean;
+  lastVerifiedAt: string | null;
 }
 
 export interface Proposal {
@@ -121,15 +110,11 @@ function mulberry32(seed: number) {
 
 const rand = mulberry32(20130926); // RFCTLARR assent date as seed
 
-const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(rand() * arr.length)]!;
+const pick = <T>(arr: readonly T[]): T => arr[Math.floor(rand() * arr.length)]!;
 const between = (min: number, max: number) => min + rand() * (max - min);
 const intBetween = (min: number, max: number) => Math.floor(between(min, max + 1));
 
-const HEX = "0123456789abcdef";
 const ALNUM = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789";
-
-const hex = (n: number) =>
-  Array.from({ length: n }, () => HEX[Math.floor(rand() * 16)]).join("");
 
 const STATE_CODE: Record<string, string> = {
   Maharashtra: "MH",
@@ -253,18 +238,20 @@ const DOCS_BY_STAGE: Record<RfctlarrStage, DocumentRef["type"][]> = {
   RR_COMPLETE: DOC_TYPES,
 };
 
-/** Reference "today" — fixed so SLA buckets stay deterministic. */
-export const REFERENCE_DATE = new Date("2026-08-31T00:00:00.000Z");
+/**
+ * Anchor for the generator's relative day arithmetic — evaluated once when
+ * buildProposals() runs (i.e. at seed time), so seeded stageEnteredAt/
+ * initiatedAt dates sit realistically relative to the actual current date.
+ */
+const GEN_NOW = new Date();
 
-const daysAgoIso = (days: number) =>
-  new Date(REFERENCE_DATE.getTime() - days * 86400000).toISOString();
+const daysAgoIso = (days: number) => new Date(GEN_NOW.getTime() - days * 86400000).toISOString();
 
 const ulpin = (state: string) => {
   const code = STATE_CODE[state] ?? "IN";
-  const body = Array.from(
-    { length: 12 - 2 },
-    () => ALNUM[Math.floor(rand() * ALNUM.length)],
-  ).join("");
+  const body = Array.from({ length: 12 - 2 }, () => ALNUM[Math.floor(rand() * ALNUM.length)]).join(
+    "",
+  );
   return (code + String(intBetween(1, 24)).padStart(2, "0") + body).slice(0, 14);
 };
 
@@ -306,20 +293,31 @@ function buildParcels(state: string, count: number, totalCompensation: number): 
   });
 }
 
+/**
+ * Structural placeholders only — sha256/sizeKb/verified get overwritten by
+ * server/prisma/seed.ts with values computed from real synthesized file
+ * bytes, so every seeded document's hash is genuinely verifiable.
+ */
 function buildDocuments(stage: RfctlarrStage, proposalId: string): DocumentRef[] {
   return DOCS_BY_STAGE[stage].map((type, i) => ({
     id: `${proposalId}-DOC-${String(i + 1).padStart(2, "0")}`,
     name: `${DOC_TYPE_LABEL[type]} — ${proposalId}.pdf`,
     type,
     uploadedAt: daysAgoIso(intBetween(30, 900)),
-    sizeKb: intBetween(180, 9800),
-    sha256: hex(64),
-    blockHeight: intBetween(1_840_000, 1_920_000),
+    sizeKb: 0,
+    sha256: "",
     verified: rand() > 0.08,
+    lastVerifiedAt: null,
   }));
 }
 
-function buildProposals(): Proposal[] {
+/**
+ * Deterministic demo-data generator. No longer called from the browser
+ * bundle — the app now reads real data from the API. Kept here (rather than
+ * duplicated in server/prisma/seed.ts) so the one-time DB seed produces the
+ * same realistic dataset shape; see server/prisma/seed.ts for the caller.
+ */
+export function buildProposals(): Proposal[] {
   const states = Object.keys(STATE_CODE);
 
   return Array.from({ length: 45 }, (_, i) => {
@@ -330,9 +328,7 @@ function buildProposals(): Proposal[] {
 
     // Every proposal that carries an SLA sits on one of the four timed stages.
     const stage: RfctlarrStage =
-      i < BREACHED_COUNT + AT_RISK_COUNT
-        ? SLA_STAGES[i % SLA_STAGES.length]!
-        : pick(STAGE_ORDER);
+      i < BREACHED_COUNT + AT_RISK_COUNT ? SLA_STAGES[i % SLA_STAGES.length]! : pick(STAGE_ORDER);
 
     const limit = STAGE_LIMIT_DAYS[stage];
     let elapsed: number;
@@ -376,8 +372,6 @@ function buildProposals(): Proposal[] {
     } satisfies Proposal;
   });
 }
-
-export const proposals: Proposal[] = buildProposals();
 
 export const STATES = Object.keys(STATE_CODE);
 export const REQUIRING_BODY_LIST = [...REQUIRING_BODIES];

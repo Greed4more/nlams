@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { useLocation } from "@tanstack/react-router";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import { Sidebar, SidebarContent } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { useAuth } from "@/context/AuthContext";
 
 function RouteSkeleton() {
   return (
@@ -18,17 +19,13 @@ function RouteSkeleton() {
   );
 }
 
-export function AppShell({
-  breadcrumb,
-  children,
-}: {
-  breadcrumb: string[];
-  children: ReactNode;
-}) {
+export function AppShell({ breadcrumb, children }: { breadcrumb: string[]; children: ReactNode }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [navOpen, setNavOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const mounted = useRef(false);
+  const { loading: authLoading, session, role } = useAuth();
 
   useEffect(() => {
     if (!mounted.current) {
@@ -40,9 +37,39 @@ export function AppShell({
     return () => window.clearTimeout(t);
   }, [location.pathname]);
 
+  useEffect(() => {
+    if (!authLoading && !session) {
+      void navigate({ to: "/sign-in" });
+    }
+  }, [authLoading, session, navigate]);
+
+  if (authLoading || !session) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-surface">
+        <div className="shimmer h-9 w-64" />
+      </div>
+    );
+  }
+
+  if (!role) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-surface px-4">
+        <div className="panel max-w-sm p-6 text-center">
+          <div className="label-xs">No role assigned</div>
+          <p className="mt-2 text-[13px] text-muted-foreground">
+            This account isn't mapped to an NLAMS role yet. An admin needs to set app_metadata.role
+            in Supabase for this user.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-surface">
-      <Sidebar />
+      <div className="print:hidden">
+        <Sidebar />
+      </div>
 
       {/* Mobile nav drawer: below 768px */}
       <Sheet open={navOpen} onOpenChange={setNavOpen}>
@@ -55,10 +82,14 @@ export function AppShell({
         </SheetContent>
       </Sheet>
 
-      <div className="flex min-h-screen flex-col md:pl-16 xl:pl-60">
-        <TopBar breadcrumb={breadcrumb} onOpenNav={() => setNavOpen(true)} />
-        <main className="flex-1 px-5 py-5">{loading ? <RouteSkeleton /> : children}</main>
-        <footer className="border-t border-border px-5 py-2 text-center text-[10px] text-muted-foreground">
+      <div className="flex min-h-screen flex-col md:pl-16 xl:pl-60 print:pl-0">
+        <div className="print:hidden">
+          <TopBar breadcrumb={breadcrumb} onOpenNav={() => setNavOpen(true)} />
+        </div>
+        <main className="flex-1 px-5 py-5 print:px-0 print:py-0">
+          {loading ? <RouteSkeleton /> : children}
+        </main>
+        <footer className="border-t border-border px-5 py-2 text-center text-[10px] text-muted-foreground print:hidden">
           NLAMS v0.9 · National Land Acquisition &amp; Management System · Department of Land
           Resources
         </footer>

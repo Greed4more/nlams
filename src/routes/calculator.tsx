@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { CompensationCalculator } from "@/components/calculator/CompensationCalculator";
+import { useI18n } from "@/context/I18nContext";
 
 export const Route = createFileRoute("/calculator")({
   validateSearch: (search: Record<string, unknown>): { ulpin?: string } => ({
@@ -28,10 +29,11 @@ export const Route = createFileRoute("/calculator")({
 });
 
 function CalculatorPage() {
+  const { t } = useI18n();
   return (
     <AppShell breadcrumb={["NLAMS", "Compensation Calculator"]}>
       <PageHeader
-        title="Section 26 Compensation Calculator"
+        title={t("page.calculator.title")}
         subtitle="Award computation under the RFCTLARR Act, 2013 — First Schedule multiplication factor, Sec 29 assets, Sec 30 solatium and interest."
       />
       <CompensationCalculator />

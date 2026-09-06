@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
-import { X } from "lucide-react";
-import type { Parcel } from "@/data/mockData";
+import { useEffect, useMemo, useState } from "react";
+import { MapContainer, TileLayer, WMSTileLayer, GeoJSON, useMap } from "react-leaflet";
+import type { Layer, LeafletMouseEvent } from "leaflet";
+import type { Feature, FeatureCollection, Geometry, Polygon } from "geojson";
+import { X, Loader2 } from "lucide-react";
+import "leaflet/dist/leaflet.css";
 import { formatINRFull } from "@/data/mockData";
+import { useParcelsGeoJson, type ParcelFeatureProperties } from "@/hooks/useParcels";
 import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -11,10 +14,10 @@ import { cn } from "@/lib/utils";
 export type ParcelStatus = "ACQUIRED" | "UNDER_AWARD" | "DISPUTED" | "NOTIFIED";
 
 export const PARCEL_STATUS_COLOR: Record<ParcelStatus, string> = {
-  ACQUIRED: "var(--status-ok)",
-  UNDER_AWARD: "var(--status-info)",
-  DISPUTED: "var(--status-critical)",
-  NOTIFIED: "var(--status-warn)",
+  ACQUIRED: "#1a9c5c",
+  UNDER_AWARD: "#2563eb",
+  DISPUTED: "#dc2626",
+  NOTIFIED: "#d97706",
 };
 
 const STATUS_LABEL: Record<ParcelStatus, string> = {
@@ -24,36 +27,20 @@ const STATUS_LABEL: Record<ParcelStatus, string> = {
   NOTIFIED: "Notified",
 };
 
-/** Hand-drawn cadastral geometry (viewBox 0 0 1000 620). */
-const POLYGONS: { points: string; label?: boolean }[] = [
-  { points: "90,120 260,96 300,220 130,250", label: true },
-  { points: "300,220 470,190 520,320 340,350", label: true },
-  { points: "260,96 430,74 470,190 300,220" },
-  { points: "520,320 700,286 750,410 560,440", label: true },
-  { points: "430,74 620,58 660,170 470,190" },
-  { points: "130,250 340,350 300,470 120,420", label: true },
-  { points: "660,170 840,150 880,270 700,286" },
-  { points: "340,350 560,440 520,540 300,470" },
-  { points: "750,410 900,390 930,500 780,520", label: true },
-];
+/**
+ * ISRO Bhuvan public WMS (bhuvan-vec1.nrsc.gov.in) — no API key required.
+ * Verified layers: basemap:INDIA_STATE, basemap:INDIA_DIST.
+ */
+const BHUVAN_WMS_URL = "https://bhuvan-vec1.nrsc.gov.in/bhuvan/wms";
+const BHUVAN_LAYERS = "basemap:INDIA_STATE,basemap:INDIA_DIST";
 
 const BASEMAPS = [
-  { value: "bhuvan", label: "ISRO Bhuvan" },
-  { value: "cadastral", label: "Cadastral Grey" },
-  { value: "terrain", label: "Terrain" },
-];
-
-const LAYERS = [
-  { key: "cadastral", label: "Cadastral Polygons" },
-  { key: "ulpin", label: "ULPIN Parcel Highlights" },
-  { key: "satellite", label: "ISRO Bhuvan Satellite Base" },
-  { key: "corridor", label: "Proposed Alignment Corridor" },
-  { key: "village", label: "Village Boundaries" },
+  { value: "osm", label: "OpenStreetMap" },
+  { value: "satellite", label: "Satellite (Esri)" },
 ] as const;
 
 export interface SpatialMapContainerProps {
-  parcels: Parcel[];
-  onParcelClick?: (parcel: Parcel) => void;
+  onParcelClick?: (parcel: ParcelFeatureProperties) => void;
   highlightedUlpin?: string | undefined;
 }
 
@@ -63,141 +50,159 @@ const statusFor = (ulpin: string): ParcelStatus => {
   return codes[sum % codes.length]!;
 };
 
-export function SpatialMapContainer({
-  parcels,
-  onParcelClick,
+/** Recenters the map once, when geojson first loads or the highlighted parcel changes. */
+function FitToData({
+  data,
   highlightedUlpin,
-}: SpatialMapContainerProps) {
-  const [layers, setLayers] = useState<Record<string, boolean>>({
-    cadastral: true,
-    ulpin: true,
-    satellite: false,
-    corridor: true,
-    village: true,
-  });
-  const [basemap, setBasemap] = useState("cadastral");
-  const [opacity, setOpacity] = useState(70);
-  const [selected, setSelected] = useState<Parcel | null>(null);
-  const [cursor, setCursor] = useState({ lat: 15.4021, lng: 73.9812 });
+}: {
+  data: FeatureCollection<Polygon, ParcelFeatureProperties> | undefined;
+  highlightedUlpin?: string | undefined;
+}) {
+  const map = useMap();
+  useEffect(() => {
+    if (!data || data.features.length === 0) return;
+    const target = highlightedUlpin
+      ? data.features.find((f) => f.properties.ulpin === highlightedUlpin)
+      : undefined;
+    if (target) {
+      const [lng, lat] = target.geometry.coordinates[0]![0]!;
+      map.setView([lat!, lng!], 15);
+      return;
+    }
+    const lats = data.features.flatMap((f) => f.geometry.coordinates[0]!.map((c) => c[1]!));
+    const lngs = data.features.flatMap((f) => f.geometry.coordinates[0]!.map((c) => c[0]!));
+    map.fitBounds([
+      [Math.min(...lats), Math.min(...lngs)],
+      [Math.max(...lats), Math.max(...lngs)],
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, highlightedUlpin]);
+  return null;
+}
 
-  const shown = parcels.slice(0, POLYGONS.length);
+export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: SpatialMapContainerProps) {
+  const { data, isLoading } = useParcelsGeoJson();
+  const [showCadastral, setShowCadastral] = useState(true);
+  const [showUlpinLabels, setShowUlpinLabels] = useState(true);
+  const [showBhuvanAdmin, setShowBhuvanAdmin] = useState(false);
+  const [basemap, setBasemap] = useState<(typeof BASEMAPS)[number]["value"]>("osm");
+  const [selected, setSelected] = useState<ParcelFeatureProperties | null>(null);
+
+  const geojson = data as FeatureCollection<Polygon, ParcelFeatureProperties> | undefined;
 
   useEffect(() => {
-    if (!highlightedUlpin) return;
-    const match = shown.find((p) => p.ulpin === highlightedUlpin);
-    if (match) setSelected(match);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [highlightedUlpin]);
+    if (!highlightedUlpin || !geojson) return;
+    const match = geojson.features.find((f) => f.properties.ulpin === highlightedUlpin);
+    if (match) setSelected(match.properties);
+  }, [highlightedUlpin, geojson]);
 
-  const select = (p: Parcel) => {
+  const select = (p: ParcelFeatureProperties) => {
     setSelected(p);
     onParcelClick?.(p);
   };
 
+  const styleFor = (feature: Feature<Geometry, ParcelFeatureProperties> | undefined) => {
+    const p = feature?.properties;
+    const status = p ? statusFor(p.ulpin) : "ACQUIRED";
+    const active = p && (selected?.ulpin === p.ulpin || highlightedUlpin === p.ulpin);
+    return {
+      color: "#0f2942",
+      weight: active ? 3 : 1.25,
+      fillColor: PARCEL_STATUS_COLOR[status],
+      fillOpacity: active ? 0.55 : 0.28,
+    };
+  };
+
+  const onEachFeature = (feature: Feature<Geometry, ParcelFeatureProperties>, layer: Layer) => {
+    layer.on("click", (() => select(feature.properties)) as (e: LeafletMouseEvent) => void);
+    if (showUlpinLabels) {
+      layer.bindTooltip(feature.properties.ulpin, {
+        sticky: true,
+        className: "num font-mono text-[10.5px]",
+      });
+    }
+  };
+
+  // Force GeoJSON re-render when toggles that affect style/tooltips change.
+  const geojsonKey = useMemo(
+    () => `${showUlpinLabels}-${selected?.ulpin}-${highlightedUlpin}`,
+    [showUlpinLabels, selected, highlightedUlpin],
+  );
+
   return (
     <div className="panel relative h-[calc(100vh-190px)] min-h-[520px] overflow-hidden">
-      {/* Base */}
-      <div
-        className={cn(
-          "absolute inset-0",
-          basemap === "terrain"
-            ? "bg-[#e9e4d8]"
-            : basemap === "bhuvan"
-              ? "bg-[#2b3327]"
-              : "bg-[#eef1f4]",
-        )}
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(0deg, rgba(15,41,66,0.05) 0 1px, transparent 1px 42px), repeating-linear-gradient(90deg, rgba(15,41,66,0.05) 0 1px, transparent 1px 42px), radial-gradient(circle at 30% 40%, rgba(15,41,66,0.07), transparent 55%), radial-gradient(circle at 70% 70%, rgba(15,123,79,0.08), transparent 50%)",
-        }}
-        onMouseMove={(e) => {
-          const r = e.currentTarget.getBoundingClientRect();
-          setCursor({
-            lat: 15.2 + ((r.bottom - e.clientY) / r.height) * 0.4,
-            lng: 73.8 + ((e.clientX - r.left) / r.width) * 0.45,
-          });
-        }}
+      <MapContainer
+        center={[22.5, 79]}
+        zoom={5}
+        scrollWheelZoom
+        className="size-full"
+        style={{ background: "#eef1f4" }}
       >
-        <svg viewBox="0 0 1000 620" className="size-full" preserveAspectRatio="none">
-          {layers["village"] && (
-            <path
-              d="M40,60 C260,20 620,10 960,70 L950,560 C620,600 300,600 60,540 Z"
-              fill="none"
-              stroke="var(--navy)"
-              strokeWidth={2}
-              strokeDasharray="10 6"
-              opacity={0.35}
-            />
-          )}
+        {basemap === "osm" ? (
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+        ) : (
+          <TileLayer
+            attribution="Tiles &copy; Esri — Esri, DigitalGlobe, GeoEye, Earthstar Geographics"
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+          />
+        )}
 
-          {layers["corridor"] && (
-            <path
-              d="M60,470 C280,410 430,300 640,250 C790,214 880,190 970,140"
-              fill="none"
-              stroke="var(--status-warn)"
-              strokeWidth={16}
-              opacity={0.28}
-              strokeLinecap="round"
-            />
-          )}
+        {showBhuvanAdmin && (
+          <WMSTileLayer
+            url={BHUVAN_WMS_URL}
+            params={{
+              layers: BHUVAN_LAYERS,
+              format: "image/png",
+              transparent: true,
+              version: "1.1.1",
+            }}
+            attribution="Boundaries &copy; ISRO Bhuvan (NRSC)"
+          />
+        )}
 
-          {layers["cadastral"] &&
-            shown.map((parcel, i) => {
-              const poly = POLYGONS[i]!;
-              const status = statusFor(parcel.ulpin);
-              const active = selected?.ulpin === parcel.ulpin || highlightedUlpin === parcel.ulpin;
-              const pts = poly.points.split(" ").map((s) => s.split(",").map(Number));
-              const cx = pts.reduce((s, p) => s + (p[0] ?? 0), 0) / pts.length;
-              const cy = pts.reduce((s, p) => s + (p[1] ?? 0), 0) / pts.length;
-              return (
-                <g key={parcel.ulpin} className="cursor-pointer" onClick={() => select(parcel)}>
-                  <polygon
-                    points={poly.points}
-                    fill={active ? PARCEL_STATUS_COLOR[status] : "var(--status-info)"}
-                    fillOpacity={(active ? 0.5 : 0.22) * (opacity / 100)}
-                    stroke="var(--navy)"
-                    strokeWidth={active ? 3 : 1.5}
-                  />
-                  {layers["ulpin"] && poly.label && (
-                    <text
-                      x={cx}
-                      y={cy}
-                      textAnchor="middle"
-                      className="font-mono"
-                      fontSize={13}
-                      fill="var(--navy)"
-                      opacity={0.85}
-                    >
-                      {parcel.ulpin}
-                    </text>
-                  )}
-                </g>
-              );
-            })}
-        </svg>
-      </div>
+        {showCadastral && geojson && (
+          <GeoJSON key={geojsonKey} data={geojson} style={styleFor} onEachFeature={onEachFeature} />
+        )}
+
+        <FitToData data={geojson} highlightedUlpin={highlightedUlpin} />
+      </MapContainer>
+
+      {isLoading && (
+        <div className="pointer-events-none absolute inset-0 grid place-items-center bg-background/40">
+          <div className="flex items-center gap-2 rounded-[6px] bg-card px-3 py-2 text-[12.5px] shadow">
+            <Loader2 className="size-4 animate-spin" />
+            Loading cadastral parcels…
+          </div>
+        </div>
+      )}
 
       {/* Control panel */}
-      <div className="panel absolute right-3 top-3 w-[248px] p-3">
+      <div className="panel absolute right-3 top-3 z-[1000] w-[248px] p-3">
         <div className="label-xs">Layers</div>
         <div className="mt-2 space-y-2">
-          {LAYERS.map((l) => (
-            <div key={l.key} className="flex items-center justify-between gap-2">
-              <Label htmlFor={`layer-${l.key}`} className="text-[11.5px] font-normal">
-                {l.label}
-              </Label>
-              <Switch
-                id={`layer-${l.key}`}
-                checked={!!layers[l.key]}
-                onCheckedChange={(v) => setLayers((s) => ({ ...s, [l.key]: v }))}
-              />
-            </div>
-          ))}
+          <LayerRow
+            label="Cadastral Polygons"
+            checked={showCadastral}
+            onChange={setShowCadastral}
+          />
+          <LayerRow label="ULPIN Labels" checked={showUlpinLabels} onChange={setShowUlpinLabels} />
+          <LayerRow
+            label="ISRO Bhuvan Admin Boundaries"
+            checked={showBhuvanAdmin}
+            onChange={setShowBhuvanAdmin}
+          />
         </div>
 
         <div className="mt-3 border-t border-border pt-3">
           <div className="label-xs">Basemap</div>
-          <RadioGroup value={basemap} onValueChange={setBasemap} className="mt-2 gap-1.5">
+          <RadioGroup
+            value={basemap}
+            onValueChange={(v) => setBasemap(v as typeof basemap)}
+            className="mt-2 gap-1.5"
+          >
             {BASEMAPS.map((b) => (
               <div key={b.value} className="flex items-center gap-2">
                 <RadioGroupItem id={`bm-${b.value}`} value={b.value} className="size-3.5" />
@@ -208,35 +213,10 @@ export function SpatialMapContainer({
             ))}
           </RadioGroup>
         </div>
-
-        <div className="mt-3 border-t border-border pt-3">
-          <div className="label-xs">Overlay Opacity — {opacity}%</div>
-          <Slider
-            className="mt-2.5"
-            value={[opacity]}
-            min={10}
-            max={100}
-            step={5}
-            onValueChange={(v) => setOpacity(v[0] ?? 70)}
-          />
-        </div>
-      </div>
-
-      {/* Scale + coordinates */}
-      <div className="absolute bottom-3 left-3 space-y-1.5">
-        <div className="panel px-2 py-1.5">
-          <div className="flex items-center gap-2">
-            <div className="h-[7px] w-[72px] border-x-2 border-b-2 border-navy" />
-            <span className="num text-[10.5px] text-muted-foreground">500 m</span>
-          </div>
-        </div>
-        <div className="panel num px-2 py-1 font-mono text-[10.5px] text-muted-foreground">
-          {cursor.lat.toFixed(4)}° N, {cursor.lng.toFixed(4)}° E · EPSG:4326
-        </div>
       </div>
 
       {/* Legend */}
-      <div className="panel absolute bottom-3 right-3 px-3 py-2">
+      <div className="panel absolute bottom-3 right-3 z-[1000] px-3 py-2">
         <div className="label-xs">Parcel Status</div>
         <div className="mt-1.5 space-y-1">
           {(Object.keys(STATUS_LABEL) as ParcelStatus[]).map((s) => (
@@ -253,7 +233,7 @@ export function SpatialMapContainer({
 
       {/* Side panel */}
       {selected && (
-        <aside className="absolute inset-y-0 right-0 w-[320px] border-l border-border bg-card p-4 shadow-lg">
+        <aside className="absolute inset-y-0 right-0 z-[1000] w-[320px] border-l border-border bg-card p-4 shadow-lg">
           <div className="flex items-start justify-between gap-2">
             <div>
               <div className="label-xs">Parcel Record</div>
@@ -271,10 +251,7 @@ export function SpatialMapContainer({
 
           <dl className="mt-4 space-y-2.5 text-[12.5px]">
             <Row label="Khasra / Survey No." value={selected.khasraNo} mono />
-            <Row
-              label="Classification"
-              value={`${selected.vernacularTerm.script} — ${selected.vernacularTerm.standard}`}
-            />
+            <Row label="Proposal" value={`${selected.proposalId} — ${selected.projectName}`} />
             <Row label="Area" value={`${selected.areaHa.toFixed(2)} Ha`} mono />
             <Row label="Zone" value={selected.classification === "URBAN" ? "Urban" : "Rural"} />
             <Row
@@ -291,6 +268,26 @@ export function SpatialMapContainer({
           </dl>
         </aside>
       )}
+    </div>
+  );
+}
+
+function LayerRow({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  const id = `layer-${label.replace(/\s+/g, "-").toLowerCase()}`;
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <Label htmlFor={id} className="text-[11.5px] font-normal">
+        {label}
+      </Label>
+      <Switch id={id} checked={checked} onCheckedChange={onChange} />
     </div>
   );
 }

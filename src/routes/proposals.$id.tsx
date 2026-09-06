@@ -1,43 +1,31 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowRight, ChevronLeft } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowRight, ChevronLeft, Loader2 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
-import { proposals, formatINRFull } from "@/data/mockData";
+import { formatINRFull } from "@/data/mockData";
 import { getSlaStatus, SLA_STATUS_LABEL } from "@/lib/slaRules";
 import { SlaBadge } from "@/components/proposals/bits";
 import { WorkflowStepper } from "@/components/proposals/WorkflowStepper";
 import { ParcelsTable } from "@/components/proposals/ParcelsTable";
 import { DocumentRepository } from "@/components/proposals/DocumentRepository";
+import { AuditTrail } from "@/components/proposals/AuditTrail";
 import { useRole, NO_CREDENTIALS_HINT } from "@/context/RoleContext";
 import { useSpotlight } from "@/context/DemoContext";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { ApiError } from "@/lib/api";
+import { useAdvanceStageMutation, useProposalQuery } from "@/hooks/useProposals";
 
 export const Route = createFileRoute("/proposals/$id")({
-  loader: ({ params }) => {
-    const proposal = proposals.find((p) => p.id === params.id);
-    if (!proposal) throw notFound();
-    return { proposal };
-  },
-  head: ({ loaderData }) => {
-    if (!loaderData) {
-      return { meta: [{ title: "Proposal unavailable — NLAMS" }, { name: "robots", content: "noindex" }] };
-    }
-    const { proposal } = loaderData;
-    const title = `${proposal.id} · ${proposal.projectName} — NLAMS`;
-    const description = `${proposal.requiringBody} acquisition in ${proposal.district}, ${proposal.state}: ${proposal.totalAreaHa} Ha across ${proposal.parcels.length} parcels affecting ${proposal.affectedFamilies} families.`;
-    return {
-      meta: [
-        { title },
-        { name: "description", content: description },
-        { property: "og:title", content: title },
-        { property: "og:description", content: description },
-        { property: "og:type", content: "article" },
-        { name: "twitter:card", content: "summary" },
-      ],
-    };
-  },
-  notFoundComponent: ProposalNotFound,
+  head: ({ params }) => ({
+    meta: [
+      { title: `${params.id} — NLAMS` },
+      {
+        name: "description",
+        content: `Statutory status, parcels and compensation for acquisition proposal ${params.id}.`,
+      },
+    ],
+  }),
   component: ProposalDetail,
 });
 
@@ -63,10 +51,27 @@ function ProposalNotFound() {
 }
 
 function ProposalDetail() {
-  const { proposal } = Route.useLoaderData();
-  const sla = getSlaStatus(proposal);
+  const { id } = Route.useParams();
+  const { data: proposal, isLoading, error } = useProposalQuery(id);
   const { canAct } = useRole();
+  const advanceStage = useAdvanceStageMutation(id);
   const headerSpotlight = useSpotlight("proposal-header");
+
+  if (isLoading) {
+    return (
+      <AppShell breadcrumb={["Home", "Proposals", id]}>
+        <div className="space-y-3">
+          <div className="shimmer h-24 w-full" />
+          <div className="shimmer h-64 w-full" />
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (error instanceof ApiError && error.status === 404) return <ProposalNotFound />;
+  if (!proposal) return <ProposalNotFound />;
+
+  const sla = getSlaStatus(proposal);
 
   const pills: [string, string][] = [
     ["Requiring Body", proposal.requiringBody],
@@ -83,6 +88,22 @@ function ProposalDetail() {
     ],
   ];
 
+  const handleAdvance = () => {
+    if (!canAct) return;
+    advanceStage.mutate(undefined, {
+      onSuccess: (updated) => {
+        toast.success("Stage advanced", {
+          description: `${updated.id} moved to the next statutory stage — logged to the audit trail.`,
+        });
+      },
+      onError: (err) => {
+        toast.error("Could not advance stage", {
+          description: err instanceof Error ? err.message : "Unknown error",
+        });
+      },
+    });
+  };
+
   return (
     <AppShell breadcrumb={["Home", "Proposals", proposal.id]}>
       <Link
@@ -93,7 +114,9 @@ function ProposalDetail() {
       </Link>
 
       {/* Header banner */}
-      <header className={cn("rounded-[6px] bg-navy px-5 py-4 text-navy-foreground", headerSpotlight)}>
+      <header
+        className={cn("rounded-[6px] bg-navy px-5 py-4 text-navy-foreground", headerSpotlight)}
+      >
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="num font-mono text-[12px] tracking-wide text-navy-muted">
@@ -122,23 +145,21 @@ function ProposalDetail() {
               </div>
             </div>
             {(() => {
+              const disabled =
+                !canAct || advanceStage.isPending || proposal.currentStage === "RR_COMPLETE";
               const advanceButton = (
                 <button
                   type="button"
-                  disabled={!canAct}
-                  onClick={() =>
-                    canAct &&
-                    toast.success("Stage advancement queued", {
-                      description: `${proposal.id} forwarded for approval — action anchored to audit trail.`,
-                    })
-                  }
+                  disabled={disabled}
+                  onClick={handleAdvance}
                   className={cn(
                     "inline-flex items-center gap-1.5 rounded-[4px] bg-status-info px-3 py-2 text-[12.5px] font-semibold text-white transition-opacity hover:opacity-90",
-                    !canAct && "cursor-not-allowed opacity-45 hover:opacity-45",
+                    disabled && "cursor-not-allowed opacity-45 hover:opacity-45",
                   )}
                 >
+                  {advanceStage.isPending && <Loader2 className="size-3.5 animate-spin" />}
                   Advance to Next Stage
-                  <ArrowRight className="size-3.5" />
+                  {!advanceStage.isPending && <ArrowRight className="size-3.5" />}
                 </button>
               );
               if (canAct) return advanceButton;
@@ -179,6 +200,7 @@ function ProposalDetail() {
               ))}
             </div>
           </div>
+          <AuditTrail proposalId={proposal.id} />
         </div>
         <DocumentRepository proposal={proposal} />
       </div>

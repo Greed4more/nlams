@@ -15,7 +15,7 @@ export function ActivityFeed() {
     <section className="panel flex flex-col">
       <header className="border-b border-border px-4 py-2.5">
         <h2 className="text-[13px] font-semibold text-foreground">Recent activity</h2>
-        <p className="label-xs mt-0.5">Blockchain-anchored audit trail</p>
+        <p className="label-xs mt-0.5">Hash-verified document filings</p>
       </header>
       <ol className="px-4 py-3">
         {recentActivity.map((e, i) => {
@@ -35,7 +35,7 @@ export function ActivityFeed() {
                   <span className="num">{e.ago}</span>
                 </div>
                 <div className="num mt-0.5 truncate text-[10px] text-muted-foreground/70">
-                  blk #{e.blockHeight.toLocaleString("en-IN")} · sha256:{e.sha}…
+                  sha256:{e.sha}…
                 </div>
               </div>
             </li>
