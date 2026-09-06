@@ -13,6 +13,8 @@ export interface ParcelFeatureProperties {
   compensationDisbursed: number;
   proposalId: string;
   projectName: string;
+  state: string;
+  district: string;
 }
 
 export interface ParcelFeatureCollection {

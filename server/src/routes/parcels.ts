@@ -18,6 +18,8 @@ interface ParcelGeoRow {
   compensationDisbursed: number;
   proposalId: string;
   projectName: string;
+  state: string;
+  district: string;
   geometry: string; // GeoJSON geometry, as text
 }
 
@@ -38,6 +40,8 @@ parcelsRouter.get("/geojson", async (req, res) => {
       p."compensationDisbursed",
       pr.id AS "proposalId",
       pr."projectName",
+      pr.state,
+      pr.district,
       ST_AsGeoJSON(p.geom) AS geometry
     FROM parcels p
     JOIN proposals pr ON pr.id = p."proposalId"
@@ -61,6 +65,8 @@ parcelsRouter.get("/geojson", async (req, res) => {
         compensationDisbursed: r.compensationDisbursed,
         proposalId: r.proposalId,
         projectName: r.projectName,
+        state: r.state,
+        district: r.district,
       },
     })),
   });
