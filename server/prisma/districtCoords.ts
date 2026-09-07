@@ -32,4 +32,14 @@ export const DISTRICT_COORDS: Record<string, [number, number]> = {
   Bathinda: [30.211, 74.9455],
   Jalandhar: [31.326, 75.5762],
   Amritsar: [31.634, 74.8723],
+
+  // West Bengal — polygon centroids computed from public/geo/west-bengal-districts.geojson
+  // (geoBoundaries.org / lgdirectory.gov.in), not hand-picked HQ towns like the rest of this
+  // file, so district names must match that file's `distName` values exactly.
+  Kolkata: [22.5601, 88.3542],
+  Haora: [22.5652, 88.0709],
+  Hugli: [22.8957, 88.0058],
+  "North Twenty Four Parganas": [22.7559, 88.7661],
+  "South Twenty Four Parganas": [22.1163, 88.6175],
+  "Paschim Medinipur": [22.3524, 87.4276],
 };

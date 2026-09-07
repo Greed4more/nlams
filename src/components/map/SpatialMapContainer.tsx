@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { MapContainer, TileLayer, WMSTileLayer, GeoJSON, useMap } from "react-leaflet";
-import type { Layer, LeafletMouseEvent } from "leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  WMSTileLayer,
+  GeoJSON,
+  useMap,
+  useMapEvents,
+} from "react-leaflet";
+import type { Layer, LeafletMouseEvent, Polygon as LeafletPolygon } from "leaflet";
 import type { Feature, FeatureCollection, Geometry, Polygon } from "geojson";
 import { Link } from "@tanstack/react-router";
 import {
@@ -11,22 +18,44 @@ import {
   FileText,
   PanelRightClose,
   PanelRightOpen,
+  Locate,
 } from "lucide-react";
+import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
+import { point as turfPoint } from "@turf/helpers";
 import "leaflet/dist/leaflet.css";
 import { formatINRFull } from "@/data/mockData";
 import { useParcelsGeoJson, type ParcelFeatureProperties } from "@/hooks/useParcels";
+import {
+  useWestBengalDistricts,
+  useWestBengalBlocks,
+  type DistrictFeature,
+  type DistrictFeatureProperties,
+  type BlockFeature,
+  type BlockFeatureProperties,
+} from "@/hooks/useAdminBoundaries";
 import { useRole } from "@/context/RoleContext";
 import {
   MAP_THEMES,
   MAP_THEME_LIST,
   SELECTED_PARCEL_COLOR,
+  ADMIN_BOUNDARY_COLORS,
   lulcLayerFor,
   type MapThemeId,
 } from "@/lib/mapThemes";
+import { wbDistrictDisplayName } from "@/lib/westBengalDistrictNames";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+
+/** Blocks are only rendered once zoomed in this far — 349 of them at once
+ * over all West Bengal is unreadable, and this roughly matches the zoom
+ * level at which the real TN Nilam viewer starts showing block/village
+ * detail. */
+const BLOCK_VISIBLE_ZOOM = 9;
+/** Below this zoom, district/block name labels are skipped — otherwise 23
+ * district labels (or 349 block labels) overlap into noise. */
+const ADMIN_LABEL_ZOOM = 7;
 
 export type ParcelStatus = "ACQUIRED" | "UNDER_AWARD" | "DISPUTED" | "NOTIFIED";
 
@@ -62,10 +91,20 @@ export interface SpatialMapContainerProps {
   highlightedUlpin?: string | undefined;
 }
 
-interface Selection {
-  properties: ParcelFeatureProperties;
-  /** [lat, lng] — averaged from the polygon ring, not a surveyed centroid. */
-  centroid: [number, number];
+type Selection =
+  | {
+      kind: "parcel";
+      properties: ParcelFeatureProperties;
+      /** [lat, lng] — averaged from the polygon ring, not a surveyed centroid. */
+      centroid: [number, number];
+    }
+  | { kind: "district"; properties: DistrictFeatureProperties; centroid: [number, number] }
+  | { kind: "block"; properties: BlockFeatureProperties; centroid: [number, number] };
+
+/** Bumped on every "zoom to" request so repeated clicks on the same feature still refocus. */
+interface FocusRequest {
+  bounds: [[number, number], [number, number]];
+  nonce: number;
 }
 
 const statusFor = (ulpin: string): ParcelStatus => {
@@ -87,6 +126,19 @@ function polygonCentroid(ring: number[][]): [number, number] {
   return [lat, lng];
 }
 
+/** Same as polygonCentroid but [lng, lat] order, for turf point-in-polygon checks. */
+function polygonCentroidLngLat(ring: number[][]): [number, number] {
+  const [lat, lng] = polygonCentroid(ring);
+  return [lng, lat];
+}
+
+/** District/block layers can be Polygon or MultiPolygon — Leaflet's own
+ * layer bounds handle both without branching on geometry type. */
+function polygonBoundsCentroid(layer: Layer): [number, number] {
+  const center = (layer as LeafletPolygon).getBounds().getCenter();
+  return [center.lat, center.lng];
+}
+
 type ParcelFeature = Feature<Polygon, ParcelFeatureProperties>;
 
 function boundsOf(features: ParcelFeature[]): [[number, number], [number, number]] {
@@ -98,8 +150,24 @@ function boundsOf(features: ParcelFeature[]): [[number, number], [number, number
   ];
 }
 
+/** Bounds across a mix of Polygon/MultiPolygon geometries — used for the
+ * district layer, which boundsOf() (Polygon-only, single-ring) can't handle. */
+function boundsOfGeometries(geometries: Geometry[]): [[number, number], [number, number]] {
+  const coords: number[][] = [];
+  for (const g of geometries) {
+    if (g.type === "Polygon") coords.push(...g.coordinates.flat());
+    else if (g.type === "MultiPolygon") coords.push(...g.coordinates.flat(2));
+  }
+  const lats = coords.map((c) => c[1]!);
+  const lngs = coords.map((c) => c[0]!);
+  return [
+    [Math.min(...lats), Math.min(...lngs)],
+    [Math.max(...lats), Math.max(...lngs)],
+  ];
+}
+
 /** The densest proposal cluster — real parcels are only ~100-300m wide, so
- * opening on all 5 states at once zooms out so far they're sub-pixel and
+ * opening on all 6 states at once zooms out so far they're sub-pixel and
  * unclickable. Open on one real cluster instead, like a real cadastral
  * viewer does after a search — "fit all" is available as an explicit action. */
 function defaultCluster(features: ParcelFeature[]): ParcelFeature[] {
@@ -151,44 +219,117 @@ function FitToData({
   return null;
 }
 
+/** Reports the current zoom level up so district/block layers can hide
+ * detail that isn't legible at the current scale. */
+function ZoomWatcher({ onZoom }: { onZoom: (zoom: number) => void }) {
+  const map = useMapEvents({ zoomend: () => onZoom(map.getZoom()) });
+  useEffect(() => onZoom(map.getZoom()), [map, onZoom]);
+  return null;
+}
+
+/** Flies to `request.bounds` whenever its `nonce` changes — driven by
+ * clicking a district/block feature or a "zoom to" button, both of which
+ * only have Leaflet layer bounds (not a live map instance) to work with. */
+function FocusOnRequest({ request }: { request: FocusRequest | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!request) return;
+    map.fitBounds(request.bounds, { padding: [24, 24] });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [request?.nonce]);
+  return null;
+}
+
 export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: SpatialMapContainerProps) {
   const { data, isLoading } = useParcelsGeoJson();
+  const { data: districtsData } = useWestBengalDistricts();
+  const { data: blocksData } = useWestBengalBlocks();
   const { person } = useRole();
   const [themeId, setThemeId] = useState<MapThemeId>("nlams");
   const [panelOpen, setPanelOpen] = useState(true);
   const [showCadastral, setShowCadastral] = useState(true);
   const [showLabels, setShowLabels] = useState(true);
+  const [showDistricts, setShowDistricts] = useState(true);
+  const [showBlocks, setShowBlocks] = useState(true);
   const [showBhuvanAdmin, setShowBhuvanAdmin] = useState(false);
   const [showLulc, setShowLulc] = useState(false);
   const [basemap, setBasemap] = useState<(typeof BASEMAPS)[number]["value"]>("satellite");
   const [selected, setSelected] = useState<Selection | null>(null);
   const [fitAllSignal, setFitAllSignal] = useState(0);
+  const [focusRequest, setFocusRequest] = useState<FocusRequest | null>(null);
+  const [zoom, setZoom] = useState(5);
 
   const theme = MAP_THEMES[themeId];
   const geojson = data as FeatureCollection<Polygon, ParcelFeatureProperties> | undefined;
-  const lulcLayer = selected ? lulcLayerFor(selected.properties.state) : null;
+  const lulcLayer = selected?.kind === "parcel" ? lulcLayerFor(selected.properties.state) : null;
+  const blocksVisible = showBlocks && zoom >= BLOCK_VISIBLE_ZOOM;
+  const adminLabelsVisible = zoom >= ADMIN_LABEL_ZOOM;
 
   useEffect(() => {
     if (!highlightedUlpin || !geojson) return;
     const match = geojson.features.find((f) => f.properties.ulpin === highlightedUlpin);
     if (match) {
       setSelected({
+        kind: "parcel",
         properties: match.properties,
         centroid: polygonCentroid(match.geometry.coordinates[0]!),
       });
     }
   }, [highlightedUlpin, geojson]);
 
-  const select = (feature: Feature<Geometry, ParcelFeatureProperties>) => {
+  const selectParcel = (feature: Feature<Geometry, ParcelFeatureProperties>) => {
     if (feature.geometry.type !== "Polygon") return;
     const centroid = polygonCentroid(feature.geometry.coordinates[0]!);
-    setSelected({ properties: feature.properties, centroid });
+    setSelected({ kind: "parcel", properties: feature.properties, centroid });
     onParcelClick?.(feature.properties);
+  };
+
+  /** Both admin layers can hold Polygon or MultiPolygon geometry, so bounds
+   * (from the Leaflet layer itself, not the raw ring coordinates) are the
+   * only reliable way to get a centroid/focus target for either shape. */
+  const focusOn = (layer: Layer) => {
+    const bounds = (layer as LeafletPolygon).getBounds();
+    const center = bounds.getCenter();
+    setFocusRequest({
+      bounds: [
+        [bounds.getSouth(), bounds.getWest()],
+        [bounds.getNorth(), bounds.getEast()],
+      ],
+      nonce: Date.now(),
+    });
+    return [center.lat, center.lng] as [number, number];
+  };
+
+  const selectDistrict = (feature: DistrictFeature, layer: Layer, fly: boolean) => {
+    const centroid = fly ? focusOn(layer) : polygonBoundsCentroid(layer);
+    setSelected({ kind: "district", properties: feature.properties, centroid });
+  };
+
+  const selectBlock = (feature: BlockFeature, layer: Layer, fly: boolean) => {
+    const centroid = fly ? focusOn(layer) : polygonBoundsCentroid(layer);
+    setSelected({ kind: "block", properties: feature.properties, centroid });
+  };
+
+  /** Used by the block info panel's "back to district" link, which only has
+   * the district's name (not its feature/layer) to work from. */
+  const jumpToDistrict = (distName: string) => {
+    const feature = districtsData?.features.find((f) => f.properties.distName === distName);
+    if (!feature) return;
+    const bounds = boundsOfGeometries([feature.geometry]);
+    setFocusRequest({ bounds, nonce: Date.now() });
+    setSelected({
+      kind: "district",
+      properties: feature.properties,
+      centroid: [(bounds[0][0] + bounds[1][0]) / 2, (bounds[0][1] + bounds[1][1]) / 2],
+    });
   };
 
   const styleFor = (feature: Feature<Geometry, ParcelFeatureProperties> | undefined) => {
     const p = feature?.properties;
-    const active = p && (selected?.properties.ulpin === p.ulpin || highlightedUlpin === p.ulpin);
+    const active =
+      p &&
+      ((selected?.kind === "parcel" && selected.properties.ulpin === p.ulpin) ||
+        highlightedUlpin === p.ulpin);
     return {
       color: active ? SELECTED_PARCEL_COLOR : theme.parcelStroke,
       weight: active ? 3.5 : 1.5,
@@ -197,8 +338,31 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
     };
   };
 
+  const districtStyleFor = (feature: Feature<Geometry, DistrictFeatureProperties> | undefined) => {
+    const active =
+      selected?.kind === "district" &&
+      selected.properties.distName === feature?.properties.distName;
+    return {
+      color: ADMIN_BOUNDARY_COLORS.district,
+      weight: active ? 4 : 2,
+      fillColor: ADMIN_BOUNDARY_COLORS.district,
+      fillOpacity: active ? 0.12 : 0.02,
+    };
+  };
+
+  const blockStyleFor = (feature: Feature<Geometry, BlockFeatureProperties> | undefined) => {
+    const active =
+      selected?.kind === "block" && selected.properties.blockName === feature?.properties.blockName;
+    return {
+      color: ADMIN_BOUNDARY_COLORS.block,
+      weight: active ? 3.5 : 1.25,
+      fillColor: ADMIN_BOUNDARY_COLORS.block,
+      fillOpacity: active ? 0.15 : 0.02,
+    };
+  };
+
   const onEachFeature = (feature: Feature<Geometry, ParcelFeatureProperties>, layer: Layer) => {
-    layer.on("click", (() => select(feature)) as (e: LeafletMouseEvent) => void);
+    layer.on("click", (() => selectParcel(feature)) as (e: LeafletMouseEvent) => void);
     if (showLabels) {
       const { survey } = splitKhasra(feature.properties.khasraNo);
       layer.bindTooltip(
@@ -212,11 +376,66 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
     }
   };
 
+  const onEachDistrict = (feature: Feature<Geometry, DistrictFeatureProperties>, layer: Layer) => {
+    layer.on("click", (() => selectDistrict(feature as DistrictFeature, layer, true)) as (
+      e: LeafletMouseEvent,
+    ) => void);
+    if (adminLabelsVisible) {
+      layer.bindTooltip(
+        `<span style="color:#ffffff;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,0.85)">${wbDistrictDisplayName(feature.properties.distName)}</span>`,
+        {
+          permanent: true,
+          direction: "center",
+          className: "border-none bg-transparent shadow-none !p-0",
+        },
+      );
+    }
+  };
+
+  const onEachBlock = (feature: Feature<Geometry, BlockFeatureProperties>, layer: Layer) => {
+    layer.on("click", (() => selectBlock(feature as BlockFeature, layer, true)) as (
+      e: LeafletMouseEvent,
+    ) => void);
+    if (adminLabelsVisible) {
+      layer.bindTooltip(
+        `<span style="color:${ADMIN_BOUNDARY_COLORS.block};font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,0.6)">${feature.properties.blockName}</span>`,
+        {
+          permanent: true,
+          direction: "center",
+          className: "border-none bg-transparent shadow-none !p-0",
+        },
+      );
+    }
+  };
+
   // Force GeoJSON re-render when toggles that affect style/tooltips change.
   const geojsonKey = useMemo(
-    () => `${showLabels}-${themeId}-${selected?.properties.ulpin}-${highlightedUlpin}`,
+    () =>
+      `${showLabels}-${themeId}-${selected?.kind}-${selected?.kind === "parcel" ? selected.properties.ulpin : ""}-${highlightedUlpin}`,
     [showLabels, themeId, selected, highlightedUlpin],
   );
+  const districtsKey = useMemo(
+    () =>
+      `${adminLabelsVisible}-${selected?.kind === "district" ? selected.properties.distName : ""}`,
+    [adminLabelsVisible, selected],
+  );
+  const blocksKey = useMemo(
+    () =>
+      `${adminLabelsVisible}-${blocksVisible}-${selected?.kind === "block" ? selected.properties.blockName : ""}`,
+    [adminLabelsVisible, blocksVisible, selected],
+  );
+
+  /** WB parcels whose centroid falls inside the given block — computed lazily
+   * (only for the currently-open block panel), not precomputed for all 349
+   * blocks up front. */
+  const parcelsInBlock = (block: BlockFeature): ParcelFeature[] => {
+    if (!geojson) return [];
+    return geojson.features.filter((f) => {
+      if (f.properties.district !== block.properties.districtName) return false;
+      const [lng, lat] = polygonCentroidLngLat(f.geometry.coordinates[0]!);
+      return booleanPointInPolygon(turfPoint([lng, lat]), block.geometry);
+    });
+  };
 
   return (
     <div className="panel relative h-[calc(100vh-190px)] min-h-[560px] overflow-hidden">
@@ -294,11 +513,31 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
           />
         )}
 
+        {showDistricts && districtsData && (
+          <GeoJSON
+            key={`districts-${districtsKey}`}
+            data={districtsData}
+            style={districtStyleFor as (feature?: Feature<Geometry>) => object}
+            onEachFeature={onEachDistrict as (feature: Feature<Geometry>, layer: Layer) => void}
+          />
+        )}
+
+        {blocksVisible && blocksData && (
+          <GeoJSON
+            key={`blocks-${blocksKey}`}
+            data={blocksData}
+            style={blockStyleFor as (feature?: Feature<Geometry>) => object}
+            onEachFeature={onEachBlock as (feature: Feature<Geometry>, layer: Layer) => void}
+          />
+        )}
+
         {showCadastral && geojson && (
           <GeoJSON key={geojsonKey} data={geojson} style={styleFor} onEachFeature={onEachFeature} />
         )}
 
         <FitToData data={geojson} highlightedUlpin={highlightedUlpin} fitAllSignal={fitAllSignal} />
+        <FocusOnRequest request={focusRequest} />
+        <ZoomWatcher onZoom={setZoom} />
       </MapContainer>
 
       {isLoading && (
@@ -312,7 +551,7 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
 
       {/* Layers and Tools panel */}
       {panelOpen && (
-        <div className="panel absolute right-3 top-14 z-[1000] w-[252px] p-3">
+        <div className="panel absolute left-3 top-14 z-[1000] w-[252px] p-3">
           <div className="label-xs">Portal Style</div>
           <RadioGroup
             value={themeId}
@@ -356,6 +595,37 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
                 disabled={!lulcLayer}
               />
             </div>
+          </div>
+
+          <div className="mt-3 border-t border-border pt-3">
+            <div className="label-xs">West Bengal — District &amp; Block</div>
+            <div className="mt-2 space-y-2">
+              <LayerRow
+                label="District Boundaries"
+                checked={showDistricts}
+                onChange={setShowDistricts}
+              />
+              <LayerRow
+                label={
+                  blocksVisible || !showBlocks ? "Block Boundaries" : "Block Boundaries — zoom in"
+                }
+                checked={showBlocks}
+                onChange={setShowBlocks}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (!districtsData || districtsData.features.length === 0) return;
+                const bounds = boundsOfGeometries(districtsData.features.map((f) => f.geometry));
+                setFocusRequest({ bounds, nonce: Date.now() });
+              }}
+              disabled={!districtsData}
+              className="mt-2.5 inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-card px-2.5 py-1.5 text-[11.5px] font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+            >
+              <Locate className="size-3.5" />
+              Zoom to West Bengal
+            </button>
           </div>
 
           <div className="mt-3 border-t border-border pt-3">
@@ -405,21 +675,41 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
           />
           <span className="text-[11px] text-muted-foreground">Cadastral outline</span>
         </div>
+        <div className="mt-1 flex items-center gap-2">
+          <span
+            className="size-2.5 rounded-[2px]"
+            style={{ backgroundColor: ADMIN_BOUNDARY_COLORS.district }}
+          />
+          <span className="text-[11px] text-muted-foreground">District boundary</span>
+        </div>
+        <div className="mt-1 flex items-center gap-2">
+          <span
+            className="size-2.5 rounded-[2px]"
+            style={{ backgroundColor: ADMIN_BOUNDARY_COLORS.block }}
+          />
+          <span className="text-[11px] text-muted-foreground">Block boundary</span>
+        </div>
       </div>
 
-      {/* Land Parcel Information panel */}
+      {/* Selection info panel — parcel, district, or block */}
       {selected && (
         <aside className="absolute inset-y-0 right-0 z-[1000] w-[340px] overflow-y-auto border-l border-border bg-card p-4 shadow-lg">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <div className="label-xs">Land Parcel Information</div>
+              <div className="label-xs">
+                {selected.kind === "parcel"
+                  ? "Land Parcel Information"
+                  : selected.kind === "district"
+                    ? "District"
+                    : "Block"}
+              </div>
               <div className="num mt-1 text-[11px] text-muted-foreground">
                 {selected.centroid[0].toFixed(6)}, {selected.centroid[1].toFixed(6)}
               </div>
             </div>
             <button
               type="button"
-              aria-label="Close parcel panel"
+              aria-label="Close panel"
               onClick={() => setSelected(null)}
               className="text-muted-foreground hover:text-foreground"
             >
@@ -427,75 +717,144 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
             </button>
           </div>
 
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <InfoBox label="State" value={selected.properties.state} />
-            <InfoBox label="District" value={selected.properties.district} />
-          </div>
-          <div className="mt-2">
-            <InfoBox
-              label="Proposal"
-              value={`${selected.properties.proposalId} — ${selected.properties.projectName}`}
-            />
-          </div>
+          {selected.kind === "parcel" && (
+            <>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <InfoBox label="State" value={selected.properties.state} />
+                <InfoBox label="District" value={selected.properties.district} />
+              </div>
+              <div className="mt-2">
+                <InfoBox
+                  label="Proposal"
+                  value={`${selected.properties.proposalId} — ${selected.properties.projectName}`}
+                />
+              </div>
 
-          <dl className="mt-4 space-y-2.5 text-[12.5px]">
-            <Row label="ULPIN" value={selected.properties.ulpin} mono />
-            {(() => {
-              const { survey, subDivision } = splitKhasra(selected.properties.khasraNo);
+              <dl className="mt-4 space-y-2.5 text-[12.5px]">
+                <Row label="ULPIN" value={selected.properties.ulpin} mono />
+                {(() => {
+                  const { survey, subDivision } = splitKhasra(selected.properties.khasraNo);
+                  return (
+                    <>
+                      <Row label="Survey Number" value={survey} mono />
+                      <Row label="Sub Division" value={subDivision ?? "—"} mono />
+                    </>
+                  );
+                })()}
+                <Row label="Area" value={`${selected.properties.areaHa.toFixed(2)} Ha`} mono />
+                <Row
+                  label="Zone"
+                  value={selected.properties.classification === "URBAN" ? "Urban" : "Rural"}
+                />
+                <Row
+                  label="Owner"
+                  value={
+                    selected.properties.coOwners > 0
+                      ? `${selected.properties.ownerName} (+${selected.properties.coOwners} co-owners)`
+                      : selected.properties.ownerName
+                  }
+                />
+                <Row label="Status" value={STATUS_LABEL[statusFor(selected.properties.ulpin)]} />
+                <Row
+                  label="Assessed"
+                  value={formatINRFull(selected.properties.compensationAssessed)}
+                  mono
+                />
+                <Row
+                  label="Disbursed"
+                  value={formatINRFull(selected.properties.compensationDisbursed)}
+                  mono
+                />
+              </dl>
+
+              <div className="mt-4 border-t border-border pt-3">
+                <div className="label-xs mb-2">Records</div>
+                <div className="flex flex-wrap gap-2">
+                  <Link
+                    to="/calculator"
+                    search={{ ulpin: selected.properties.ulpin }}
+                    className="inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-card px-2.5 py-1.5 text-[11.5px] font-medium text-foreground transition-colors hover:bg-muted"
+                  >
+                    <Calculator className="size-3.5" />
+                    Compensation
+                  </Link>
+                  <Link
+                    to="/proposals/$id"
+                    params={{ id: selected.properties.proposalId }}
+                    className="inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-card px-2.5 py-1.5 text-[11.5px] font-medium text-foreground transition-colors hover:bg-muted"
+                  >
+                    <FileText className="size-3.5" />
+                    Documents &amp; Audit Trail
+                  </Link>
+                </div>
+              </div>
+            </>
+          )}
+
+          {selected.kind === "district" &&
+            (() => {
+              const distName = selected.properties.distName;
+              const blocksInDistrict =
+                blocksData?.features.filter((f) => f.properties.districtName === distName) ?? [];
+              const parcelsInDistrict =
+                geojson?.features.filter((f) => f.properties.district === distName) ?? [];
+              const proposalCount = new Set(parcelsInDistrict.map((f) => f.properties.proposalId))
+                .size;
               return (
                 <>
-                  <Row label="Survey Number" value={survey} mono />
-                  <Row label="Sub Division" value={subDivision ?? "—"} mono />
+                  <div className="mt-3">
+                    <InfoBox label="District" value={wbDistrictDisplayName(distName)} />
+                  </div>
+                  <dl className="mt-4 space-y-2.5 text-[12.5px]">
+                    <Row label="State" value="West Bengal" />
+                    <Row label="CD Blocks" value={String(blocksInDistrict.length)} mono />
+                    <Row label="Seeded Proposals" value={String(proposalCount)} mono />
+                    <Row label="Seeded Parcels" value={String(parcelsInDistrict.length)} mono />
+                  </dl>
+                  {blocksInDistrict.length > 0 && (
+                    <p className="mt-3 text-[11px] text-muted-foreground">
+                      Zoom in (or enable Block Boundaries) to see this district's{" "}
+                      {blocksInDistrict.length} CD blocks.
+                    </p>
+                  )}
                 </>
               );
             })()}
-            <Row label="Area" value={`${selected.properties.areaHa.toFixed(2)} Ha`} mono />
-            <Row
-              label="Zone"
-              value={selected.properties.classification === "URBAN" ? "Urban" : "Rural"}
-            />
-            <Row
-              label="Owner"
-              value={
-                selected.properties.coOwners > 0
-                  ? `${selected.properties.ownerName} (+${selected.properties.coOwners} co-owners)`
-                  : selected.properties.ownerName
-              }
-            />
-            <Row label="Status" value={STATUS_LABEL[statusFor(selected.properties.ulpin)]} />
-            <Row
-              label="Assessed"
-              value={formatINRFull(selected.properties.compensationAssessed)}
-              mono
-            />
-            <Row
-              label="Disbursed"
-              value={formatINRFull(selected.properties.compensationDisbursed)}
-              mono
-            />
-          </dl>
 
-          <div className="mt-4 border-t border-border pt-3">
-            <div className="label-xs mb-2">Records</div>
-            <div className="flex flex-wrap gap-2">
-              <Link
-                to="/calculator"
-                search={{ ulpin: selected.properties.ulpin }}
-                className="inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-card px-2.5 py-1.5 text-[11.5px] font-medium text-foreground transition-colors hover:bg-muted"
-              >
-                <Calculator className="size-3.5" />
-                Compensation
-              </Link>
-              <Link
-                to="/proposals/$id"
-                params={{ id: selected.properties.proposalId }}
-                className="inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-card px-2.5 py-1.5 text-[11.5px] font-medium text-foreground transition-colors hover:bg-muted"
-              >
-                <FileText className="size-3.5" />
-                Documents &amp; Audit Trail
-              </Link>
-            </div>
-          </div>
+          {selected.kind === "block" &&
+            (() => {
+              const parcelsHere = (() => {
+                const feature = blocksData?.features.find(
+                  (f) =>
+                    f.properties.blockName === selected.properties.blockName &&
+                    f.properties.districtName === selected.properties.districtName,
+                );
+                return feature ? parcelsInBlock(feature) : [];
+              })();
+              return (
+                <>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <InfoBox label="Block" value={selected.properties.blockName} />
+                    <InfoBox
+                      label="District"
+                      value={wbDistrictDisplayName(selected.properties.districtName)}
+                    />
+                  </div>
+                  <dl className="mt-4 space-y-2.5 text-[12.5px]">
+                    <Row label="State" value="West Bengal" />
+                    <Row label="Seeded Parcels" value={String(parcelsHere.length)} mono />
+                  </dl>
+                  <button
+                    type="button"
+                    onClick={() => jumpToDistrict(selected.properties.districtName)}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-card px-2.5 py-1.5 text-[11.5px] font-medium text-foreground transition-colors hover:bg-muted"
+                  >
+                    <Locate className="size-3.5" />
+                    Back to {wbDistrictDisplayName(selected.properties.districtName)}
+                  </button>
+                </>
+              );
+            })()}
         </aside>
       )}
     </div>

@@ -9,7 +9,7 @@ import { scanForSlaAlerts, startSlaAlertScheduler } from "./jobs/slaAlertScanner
 
 const app = express();
 
-app.use(cors({ origin: process.env["CORS_ORIGIN"] ?? "http://localhost:3000", credentials: true }));
+app.use(cors({ origin: process.env["CORS_ORIGIN"] ?? "http://localhost:8080", credentials: true }));
 app.use(express.json());
 
 app.get("/health", (_req, res) => res.json({ ok: true }));

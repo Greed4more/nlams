@@ -61,6 +61,16 @@ export const MAP_THEME_LIST = Object.values(MAP_THEMES);
 /** Highlight color for the currently selected parcel, independent of theme. */
 export const SELECTED_PARCEL_COLOR = "#00c2d1";
 
+/**
+ * Admin-boundary hierarchy colors — fixed across all portal themes (like the
+ * real TNGIS Nilam viewer's red district / magenta block lines), independent
+ * of the cadastral parcel theme above.
+ */
+export const ADMIN_BOUNDARY_COLORS = {
+  district: "#c0392b",
+  block: "#ec0c8c",
+} as const;
+
 const STATE_LULC_LAYER: Record<string, string> = {
   Maharashtra: "basemap:MH_LULC",
   "Tamil Nadu": "basemap:TN_LULC",

@@ -92,6 +92,10 @@ export const GLOSSARY: Record<string, VernacularTerm[]> = {
     { local: "Survey No.", script: "Survey No.", standard: "Survey Number" },
     { local: "Chalta", script: "Chalta", standard: "City Survey Sub-division" },
   ],
+  "West Bengal": [
+    { local: "Dag", script: "দাগ", standard: "Plot Number" },
+    { local: "Khatian", script: "খতিয়ান", standard: "Record of Rights" },
+  ],
 };
 
 /* ---------------------------------------------------------------- *
@@ -122,14 +126,29 @@ const STATE_CODE: Record<string, string> = {
   Assam: "AS",
   Goa: "GA",
   Punjab: "PB",
+  "West Bengal": "WB",
 };
 
+/**
+ * West Bengal district names use LGD/geoBoundaries transliterations (e.g.
+ * "Haora", "Hugli") rather than common English spellings (Howrah, Hooghly)
+ * so they match `distName` in public/geo/west-bengal-districts.geojson
+ * exactly — see src/lib/westBengalDistrictNames.ts for display labels.
+ */
 const DISTRICTS: Record<string, string[]> = {
   Maharashtra: ["Palghar", "Thane", "Raigad", "Nashik", "Pune", "Nagpur"],
   "Tamil Nadu": ["Kancheepuram", "Coimbatore", "Tiruvallur", "Madurai", "Salem"],
   Assam: ["Kamrup", "Dibrugarh", "Nagaon", "Sonitpur", "Barpeta"],
   Goa: ["South Goa", "North Goa"],
   Punjab: ["Ludhiana", "Patiala", "Bathinda", "Jalandhar", "Amritsar"],
+  "West Bengal": [
+    "Kolkata",
+    "Haora",
+    "Hugli",
+    "North Twenty Four Parganas",
+    "South Twenty Four Parganas",
+    "Paschim Medinipur",
+  ],
 };
 
 const OWNER_NAMES: Record<string, string[]> = {
@@ -173,6 +192,14 @@ const OWNER_NAMES: Record<string, string[]> = {
     "Simranjeet Kaur",
     "Jaswant Singh Sidhu",
   ],
+  "West Bengal": [
+    "Ashok Kumar Mondal",
+    "Rina Chatterjee",
+    "Subrata Halder",
+    "Mousumi Bhattacharya",
+    "Tapan Kumar Das",
+    "Ananya Roy",
+  ],
 };
 
 const REQUIRING_BODIES = [
@@ -210,6 +237,11 @@ const PROJECT_NAMES = [
   "Nashik–Pune Semi High Speed Rail – Package 6",
   "Tiruvallur Industrial Water Pipeline Corridor",
   "Kamrup Multimodal Logistics Park",
+  "Kolkata Metro Line 6 Extension",
+  "Hugli River Bridge Approach Corridor",
+  "Paschim Medinipur Industrial Corridor Link Road",
+  "North Twenty Four Parganas Flood Control Embankment",
+  "South Twenty Four Parganas Coastal Protection Works",
 ] as const;
 
 const DOC_TYPES: DocumentRef["type"][] = [
