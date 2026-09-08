@@ -153,3 +153,21 @@ npm run dev
 ```
 
 Other scripts: `build` (production build), `preview` (serve the production build), `lint`, `format`.
+
+## Backend (`server/`)
+
+Express + Prisma + Postgres/PostGIS API on `:4000`, auth via Supabase JWT (see `server/src/middleware/auth.ts`). `docker compose up -d db` for the local dev database, then `cd server && npm install && npx prisma migrate dev && npm run dev`.
+
+Beyond the core proposal/parcel/document/SLA-alert endpoints, the following statutory modules were ported in from a collaborator's separate Bhumitra backend prototype (`BHUMITRA/backend`) and adapted onto this app's schema, Supabase auth, and existing Cryptographic Audit Vault:
+
+- **Compensation** — `POST/GET /api/parcels/:parcelId/compensation`: Sec. 26-30 statutory award calculation, persisted and audit-hashed, with a mock PFMS/DBT disbursal receipt.
+- **Grievances** — `POST /api/grievances`, `GET /api/grievances[/:id]`, `PATCH /api/grievances/:id/resolve`: 15-day SLA title-correction tickets; auto-created by parcel verification for unverified parcels.
+- **Parcel verification** — `POST /api/parcels/verify`: overlays an ISRO Bhuvan LULC check onto a proposal's parcels and auto-opens grievances for any parcel not yet ULPIN-verified.
+- **Litigation & delay risk** — `GET /api/proposals/:id/risk`, `PATCH /api/proposals/:id/consent`: calls the `ml_service` FastAPI microservice (falls back to a local rule-based estimate if it's not running).
+- **Audit Vault** — `GET /api/audit/verify`: walks the full `audit_logs` hash chain and reports whether it's intact.
+- **Public transparency portal** — `GET /api/public/proposals/search`, `GET /api/public/proposals/:id`: unauthenticated, non-PII aggregate metrics only.
+- **State adapters (admin)** — `GET /api/admin/adapters`, `POST /api/admin/adapters/trigger-sync`: pluggable per-state land-records adapter registry (West Bengal/Banglarbhumi is the reference implementation), DoLR-Secretary-only.
+
+`ml_service/` (Python FastAPI, `:8000`) is the risk-scoring microservice these call into — run it with `docker compose up -d ml_service` or manually (`cd ml_service && pip install -r requirements.txt && uvicorn main:app --port 8000`).
+
+The original `BHUMITRA/` folder (a separate Express backend with its own JWT/bcrypt auth and Postgres schema) was the source for this port but is not wired into the running app — it can be removed once the above is verified end-to-end.

@@ -4,7 +4,10 @@ type ProposalWithRelations = Proposal & { parcels: Parcel[]; documents: Document
 
 export function serializeParcel(p: Parcel) {
   return {
+    id: p.id,
     ulpin: p.ulpin,
+    provenance: p.provenance,
+    restrictionFlags: p.restrictionFlags,
     khasraNo: p.khasraNo,
     vernacularTerm: p.vernacularTerm,
     areaHa: p.areaHa,

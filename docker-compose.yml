@@ -16,5 +16,15 @@ services:
       timeout: 5s
       retries: 10
 
+  # Litigation & delay risk model (Module 5), ported from BHUMITRA/ml_service.
+  # server/src/services/riskBridge.ts calls this; if it's not running, that
+  # service falls back to a local rule-based estimate automatically.
+  ml_service:
+    build:
+      context: ./ml_service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+
 volumes:
   nlams_pgdata:

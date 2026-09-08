@@ -1,11 +1,17 @@
-import { History } from "lucide-react";
+import { History, ShieldCheck, ShieldAlert, Loader2 } from "lucide-react";
 import { STAGE_LABELS, type RfctlarrStage } from "@/data/mockData";
 import { useAuditLogQuery } from "@/hooks/useProposals";
+import { useVerifyAuditChainMutation } from "@/hooks/useAudit";
+import { cn } from "@/lib/utils";
 
 const ACTION_LABEL: Record<string, string> = {
   STAGE_ADVANCE: "Stage advanced",
   DOCUMENT_UPLOAD: "Document uploaded",
   DOCUMENT_VERIFY: "Document integrity checked",
+  COMPENSATION_CALCULATED: "Compensation award finalized",
+  GRIEVANCE_SUBMITTED: "Grievance ticket submitted",
+  GRIEVANCE_RESOLVED: "Grievance ticket resolved",
+  RISK_SCORED: "Litigation risk re-scored",
 };
 
 const fmt = (iso: string) =>
@@ -19,12 +25,50 @@ const fmt = (iso: string) =>
 
 export function AuditTrail({ proposalId }: { proposalId: string }) {
   const { data, isLoading } = useAuditLogQuery(proposalId);
+  const verifyChain = useVerifyAuditChainMutation();
 
   return (
     <section className="panel">
-      <div className="flex items-center gap-1.5 border-b border-border px-4 py-2.5">
-        <History className="size-3.5 text-muted-foreground" />
-        <div className="label-xs">Audit Trail</div>
+      <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+        <div className="flex items-center gap-1.5">
+          <History className="size-3.5 text-muted-foreground" />
+          <div className="label-xs">Audit Trail</div>
+        </div>
+        <div className="flex items-center gap-2">
+          {verifyChain.data && (
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 rounded-[4px] border px-1.5 py-0.5 text-[10.5px] font-medium",
+                verifyChain.data.chainIntact
+                  ? "border-status-ok/30 bg-status-ok/10 text-status-ok"
+                  : "border-status-critical/30 bg-status-critical/10 text-status-critical",
+              )}
+            >
+              {verifyChain.data.chainIntact ? (
+                <ShieldCheck className="size-3" />
+              ) : (
+                <ShieldAlert className="size-3" />
+              )}
+              {verifyChain.data.chainIntact
+                ? `Chain intact (${verifyChain.data.totalRecords})`
+                : "Tamper detected"}
+            </span>
+          )}
+          <button
+            type="button"
+            disabled={verifyChain.isPending}
+            onClick={() => verifyChain.mutate()}
+            className="inline-flex items-center gap-1.5 rounded-[4px] border border-border px-2 py-1 text-[11px] font-medium text-foreground/80 transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+            title="Recompute the cryptographic hash chain over the entire audit log"
+          >
+            {verifyChain.isPending ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <ShieldCheck className="size-3.5" />
+            )}
+            Verify Chain Integrity
+          </button>
+        </div>
       </div>
 
       <div className="divide-y divide-border">

@@ -8,6 +8,7 @@ import { WorkflowStepper } from "@/components/proposals/WorkflowStepper";
 import { ParcelsTable } from "@/components/proposals/ParcelsTable";
 import { DocumentRepository } from "@/components/proposals/DocumentRepository";
 import { AuditTrail } from "@/components/proposals/AuditTrail";
+import { RiskConsentPanel } from "@/components/proposals/RiskConsentPanel";
 import { useRole, NO_CREDENTIALS_HINT } from "@/context/RoleContext";
 import { useSpotlight } from "@/context/DemoContext";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -200,6 +201,7 @@ function ProposalDetail() {
               ))}
             </div>
           </div>
+          <RiskConsentPanel proposalId={proposal.id} />
           <AuditTrail proposalId={proposal.id} />
         </div>
         <DocumentRepository proposal={proposal} />

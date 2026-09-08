@@ -1,14 +1,18 @@
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard, FileStack, Calculator, Map } from "lucide-react";
+import { LayoutDashboard, FileStack, Calculator, Map, ShieldAlert, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/context/I18nContext";
+import { useRole } from "@/context/RoleContext";
 
 export const NAV = [
   { to: "/", labelKey: "nav.dashboard", icon: LayoutDashboard },
   { to: "/proposals", labelKey: "nav.proposals", icon: FileStack },
   { to: "/calculator", labelKey: "nav.calculator", icon: Calculator },
   { to: "/map-view", labelKey: "nav.map", icon: Map },
+  { to: "/grievances", labelKey: "nav.grievances", icon: ShieldAlert },
 ] as const;
+
+const ADMIN_NAV = { to: "/admin/adapters", labelKey: "nav.admin", icon: Settings2 } as const;
 
 /** `compact` renders the icon rail (used between 768px and 1280px). */
 export function SidebarContent({
@@ -19,6 +23,8 @@ export function SidebarContent({
   onNavigate?: () => void;
 }) {
   const { t } = useI18n();
+  const { role } = useRole();
+  const items = role === "DOLR_SECRETARY" ? [...NAV, ADMIN_NAV] : NAV;
   return (
     <div className="flex h-full flex-col bg-navy text-navy-foreground">
       <div className={cn("border-b border-white/10 py-4", compact ? "px-2 text-center" : "px-4")}>
@@ -37,7 +43,7 @@ export function SidebarContent({
       <nav className={cn("flex-1 py-3", compact ? "px-1.5" : "px-2")}>
         {!compact && <div className="label-xs px-2 pb-2 text-navy-muted">Navigation</div>}
         <ul className="space-y-0.5">
-          {NAV.map(({ to, labelKey, icon: Icon }) => {
+          {items.map(({ to, labelKey, icon: Icon }) => {
             const label = t(labelKey);
             return (
               <li key={to}>

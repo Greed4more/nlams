@@ -11,10 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CalculatorRouteImport } from './routes/calculator'
+import { Route as GrievancesRouteImport } from './routes/grievances'
 import { Route as MapViewRouteImport } from './routes/map-view'
 import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as AdminAdaptersRouteImport } from './routes/admin.adapters'
 import { Route as ProposalsIndexRouteImport } from './routes/proposals.index'
 import { Route as ProposalsIdRouteImport } from './routes/proposals.$id'
+import { Route as PublicIndexRouteImport } from './routes/public.index'
+import { Route as PublicIdRouteImport } from './routes/public.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -24,6 +28,11 @@ const IndexRoute = IndexRouteImport.update({
 const CalculatorRoute = CalculatorRouteImport.update({
   id: '/calculator',
   path: '/calculator',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GrievancesRoute = GrievancesRouteImport.update({
+  id: '/grievances',
+  path: '/grievances',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MapViewRoute = MapViewRouteImport.update({
@@ -36,6 +45,11 @@ const SignInRoute = SignInRouteImport.update({
   path: '/sign-in',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminAdaptersRoute = AdminAdaptersRouteImport.update({
+  id: '/admin/adapters',
+  path: '/admin/adapters',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProposalsIndexRoute = ProposalsIndexRouteImport.update({
   id: '/proposals/',
   path: '/proposals/',
@@ -46,66 +60,104 @@ const ProposalsIdRoute = ProposalsIdRouteImport.update({
   path: '/proposals/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PublicIndexRoute = PublicIndexRouteImport.update({
+  id: '/public/',
+  path: '/public/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublicIdRoute = PublicIdRouteImport.update({
+  id: '/public/$id',
+  path: '/public/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/calculator': typeof CalculatorRoute
+  '/grievances': typeof GrievancesRoute
   '/map-view': typeof MapViewRoute
   '/sign-in': typeof SignInRoute
+  '/admin/adapters': typeof AdminAdaptersRoute
   '/proposals/$id': typeof ProposalsIdRoute
+  '/public/$id': typeof PublicIdRoute
   '/proposals/': typeof ProposalsIndexRoute
+  '/public/': typeof PublicIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/calculator': typeof CalculatorRoute
+  '/grievances': typeof GrievancesRoute
   '/map-view': typeof MapViewRoute
   '/sign-in': typeof SignInRoute
+  '/admin/adapters': typeof AdminAdaptersRoute
   '/proposals/$id': typeof ProposalsIdRoute
+  '/public/$id': typeof PublicIdRoute
   '/proposals': typeof ProposalsIndexRoute
+  '/public': typeof PublicIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/calculator': typeof CalculatorRoute
+  '/grievances': typeof GrievancesRoute
   '/map-view': typeof MapViewRoute
   '/sign-in': typeof SignInRoute
+  '/admin/adapters': typeof AdminAdaptersRoute
   '/proposals/$id': typeof ProposalsIdRoute
+  '/public/$id': typeof PublicIdRoute
   '/proposals/': typeof ProposalsIndexRoute
+  '/public/': typeof PublicIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/calculator'
+    | '/grievances'
     | '/map-view'
     | '/sign-in'
+    | '/admin/adapters'
     | '/proposals/$id'
+    | '/public/$id'
     | '/proposals/'
+    | '/public/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/calculator'
+    | '/grievances'
     | '/map-view'
     | '/sign-in'
+    | '/admin/adapters'
     | '/proposals/$id'
+    | '/public/$id'
     | '/proposals'
+    | '/public'
   id:
     | '__root__'
     | '/'
     | '/calculator'
+    | '/grievances'
     | '/map-view'
     | '/sign-in'
+    | '/admin/adapters'
     | '/proposals/$id'
+    | '/public/$id'
     | '/proposals/'
+    | '/public/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CalculatorRoute: typeof CalculatorRoute
+  GrievancesRoute: typeof GrievancesRoute
   MapViewRoute: typeof MapViewRoute
   SignInRoute: typeof SignInRoute
+  AdminAdaptersRoute: typeof AdminAdaptersRoute
   ProposalsIdRoute: typeof ProposalsIdRoute
+  PublicIdRoute: typeof PublicIdRoute
   ProposalsIndexRoute: typeof ProposalsIndexRoute
+  PublicIndexRoute: typeof PublicIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -124,6 +176,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CalculatorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/grievances': {
+      id: '/grievances'
+      path: '/grievances'
+      fullPath: '/grievances'
+      preLoaderRoute: typeof GrievancesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/map-view': {
       id: '/map-view'
       path: '/map-view'
@@ -136,6 +195,13 @@ declare module '@tanstack/react-router' {
       path: '/sign-in'
       fullPath: '/sign-in'
       preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/adapters': {
+      id: '/admin/adapters'
+      path: '/admin/adapters'
+      fullPath: '/admin/adapters'
+      preLoaderRoute: typeof AdminAdaptersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/proposals/': {
@@ -152,16 +218,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProposalsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/public/': {
+      id: '/public/'
+      path: '/public'
+      fullPath: '/public/'
+      preLoaderRoute: typeof PublicIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/public/$id': {
+      id: '/public/$id'
+      path: '/public/$id'
+      fullPath: '/public/$id'
+      preLoaderRoute: typeof PublicIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CalculatorRoute: CalculatorRoute,
+  GrievancesRoute: GrievancesRoute,
   MapViewRoute: MapViewRoute,
   SignInRoute: SignInRoute,
+  AdminAdaptersRoute: AdminAdaptersRoute,
   ProposalsIdRoute: ProposalsIdRoute,
+  PublicIdRoute: PublicIdRoute,
   ProposalsIndexRoute: ProposalsIndexRoute,
+  PublicIndexRoute: PublicIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

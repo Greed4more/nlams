@@ -1,7 +1,11 @@
 export type RfctlarrStage =
   "INTAKE" | "SIA" | "SIA_APPRAISAL" | "SEC_11" | "SEC_19" | "AWARD" | "RR_COMPLETE";
 
+export type ParcelProvenance =
+  "ULPIN_VERIFIED" | "SVAMITVA_DIGITISED" | "LEGACY_MIGRATED" | "SELF_DECLARED_PENDING";
+
 export interface Parcel {
+  id: string;
   ulpin: string;
   khasraNo: string;
   vernacularTerm: { local: string; script: string; standard: string };
@@ -11,6 +15,8 @@ export interface Parcel {
   coOwners: number;
   compensationAssessed: number;
   compensationDisbursed: number;
+  provenance: ParcelProvenance;
+  restrictionFlags: string[];
 }
 
 export interface DocumentRef {
@@ -311,8 +317,13 @@ function buildParcels(state: string, count: number, totalCompensation: number): 
   return Array.from({ length: count }, (_, i) => {
     const assessed = Math.round((totalCompensation * weights[i]!) / weightSum);
     const disbursedRatio = pick([0, 0, 0.25, 0.5, 0.75, 1, 1]);
+    const parcelUlpin = ulpin(state);
     return {
-      ulpin: ulpin(state),
+      // Seeding (server/prisma/seed.ts) doesn't use this id/provenance/
+      // restrictionFlags — Prisma assigns the real id and schema defaults.
+      // Present only so this generator satisfies the shared Parcel type.
+      id: parcelUlpin,
+      ulpin: parcelUlpin,
       khasraNo: `${intBetween(11, 899)}/${intBetween(1, 24)}`,
       vernacularTerm: pick(glossary),
       areaHa: Number(between(0.2, 14).toFixed(2)),
@@ -321,6 +332,8 @@ function buildParcels(state: string, count: number, totalCompensation: number): 
       coOwners: intBetween(0, 7),
       compensationAssessed: assessed,
       compensationDisbursed: Math.round(assessed * disbursedRatio),
+      provenance: "LEGACY_MIGRATED",
+      restrictionFlags: [],
     } satisfies Parcel;
   });
 }

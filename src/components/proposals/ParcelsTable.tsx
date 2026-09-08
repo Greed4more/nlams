@@ -1,9 +1,29 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Copy, Check, MapPin, Calculator } from "lucide-react";
+import { toast } from "sonner";
+import { Copy, Check, MapPin, Calculator, ShieldCheck, Loader2, AlertTriangle } from "lucide-react";
 import type { Proposal } from "@/data/mockData";
 import { formatINRFull } from "@/data/mockData";
 import { cn } from "@/lib/utils";
+import { useRole, NO_CREDENTIALS_HINT } from "@/context/RoleContext";
+import { useVerifyParcelsMutation } from "@/hooks/useParcelVerification";
+import { CompensationDialog } from "./CompensationDialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ApiError } from "@/lib/api";
+
+const PROVENANCE_LABEL: Record<string, string> = {
+  ULPIN_VERIFIED: "ULPIN verified",
+  SVAMITVA_DIGITISED: "SVAMITVA digitised",
+  LEGACY_MIGRATED: "Legacy — unverified",
+  SELF_DECLARED_PENDING: "Self-declared, pending",
+};
+
+const PROVENANCE_TONE: Record<string, string> = {
+  ULPIN_VERIFIED: "border-status-ok/30 bg-status-ok/10 text-status-ok",
+  SVAMITVA_DIGITISED: "border-status-ok/30 bg-status-ok/10 text-status-ok",
+  LEGACY_MIGRATED: "border-status-warn/30 bg-status-warn/10 text-status-warn",
+  SELF_DECLARED_PENDING: "border-status-warn/30 bg-status-warn/10 text-status-warn",
+};
 
 function CopyButton({ value, label }: { value: string; label: string }) {
   const [copied, setCopied] = useState(false);
@@ -27,13 +47,46 @@ export function ParcelsTable({ proposal }: { proposal: Proposal }) {
   const totalArea = proposal.parcels.reduce((s, p) => s + p.areaHa, 0);
   const totalAssessed = proposal.parcels.reduce((s, p) => s + p.compensationAssessed, 0);
   const totalDisbursed = proposal.parcels.reduce((s, p) => s + p.compensationDisbursed, 0);
+  const { canAct } = useRole();
+  const verifyParcels = useVerifyParcelsMutation(proposal.id);
+
+  const handleVerify = () => {
+    verifyParcels.mutate(undefined, {
+      onSuccess: (result) => {
+        toast.success("Parcel verification complete", {
+          description: `${result.totalParcels} parcels checked · ${result.autoCreatedGrievancesCount} correction ticket(s) auto-opened.`,
+        });
+      },
+      onError: (err) => {
+        toast.error("Verification failed", {
+          description: err instanceof ApiError ? err.message : "Unknown error",
+        });
+      },
+    });
+  };
 
   return (
     <section className="panel overflow-hidden">
       <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
         <div className="label-xs">Land Parcels</div>
-        <div className="num text-[11px] text-muted-foreground">
-          {proposal.parcels.length} parcels
+        <div className="flex items-center gap-3">
+          <div className="num text-[11px] text-muted-foreground">
+            {proposal.parcels.length} parcels
+          </div>
+          <button
+            type="button"
+            disabled={verifyParcels.isPending}
+            onClick={handleVerify}
+            className="inline-flex items-center gap-1.5 rounded-[4px] border border-border px-2 py-1 text-[11px] font-medium text-foreground/80 transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+            title="Run Bhuvan LULC overlay + ULPIN provenance check; auto-opens correction tickets for unverified parcels"
+          >
+            {verifyParcels.isPending ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <ShieldCheck className="size-3.5" />
+            )}
+            Verify Parcels
+          </button>
         </div>
       </div>
 
@@ -41,19 +94,26 @@ export function ParcelsTable({ proposal }: { proposal: Proposal }) {
         <table className="w-full border-collapse text-[13px]">
           <thead className="bg-muted/50">
             <tr>
-              {["ULPIN", "Khasra / Survey No.", "Classification", "Area (Ha)", "Zone", "Owner", "Compensation"].map(
-                (h, i) => (
-                  <th
-                    key={h}
-                    className={cn(
-                      "label-xs whitespace-nowrap border-b border-border px-3 py-2 text-left",
-                      i === 3 && "text-right",
-                    )}
-                  >
-                    {h}
-                  </th>
-                ),
-              )}
+              {[
+                "ULPIN",
+                "Khasra / Survey No.",
+                "Classification",
+                "Area (Ha)",
+                "Zone",
+                "Owner",
+                "Provenance",
+                "Compensation",
+              ].map((h, i) => (
+                <th
+                  key={h}
+                  className={cn(
+                    "label-xs whitespace-nowrap border-b border-border px-3 py-2 text-left",
+                    i === 3 && "text-right",
+                  )}
+                >
+                  {h}
+                </th>
+              ))}
               <th className="label-xs w-16 whitespace-nowrap border-b border-border px-3 py-2 text-right">
                 Actions
               </th>
@@ -65,7 +125,10 @@ export function ParcelsTable({ proposal }: { proposal: Proposal }) {
                 ? Math.round((p.compensationDisbursed / p.compensationAssessed) * 100)
                 : 0;
               return (
-                <tr key={p.ulpin} className="border-b border-border last:border-0 hover:bg-muted/50">
+                <tr
+                  key={p.ulpin}
+                  className="border-b border-border last:border-0 hover:bg-muted/50"
+                >
                   <td className="whitespace-nowrap px-3 py-2">
                     <span className="inline-flex items-center gap-1.5">
                       <span className="num font-mono text-[12px]">{p.ulpin}</span>
@@ -106,9 +169,25 @@ export function ParcelsTable({ proposal }: { proposal: Proposal }) {
                       </span>
                     )}
                   </td>
+                  <td className="px-3 py-2">
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1 whitespace-nowrap rounded-[4px] border px-1.5 py-0.5 text-[10.5px] font-medium",
+                        PROVENANCE_TONE[p.provenance],
+                      )}
+                    >
+                      {(p.provenance === "LEGACY_MIGRATED" ||
+                        p.provenance === "SELF_DECLARED_PENDING") && (
+                        <AlertTriangle className="size-3" />
+                      )}
+                      {PROVENANCE_LABEL[p.provenance] ?? p.provenance}
+                    </span>
+                  </td>
                   <td className="min-w-[150px] px-3 py-2">
                     <div className="num flex items-baseline justify-between gap-2 text-[11px]">
-                      <span className="text-foreground">{formatINRFull(p.compensationDisbursed)}</span>
+                      <span className="text-foreground">
+                        {formatINRFull(p.compensationDisbursed)}
+                      </span>
                       <span className="text-muted-foreground">
                         / {formatINRFull(p.compensationAssessed)}
                       </span>
@@ -117,7 +196,11 @@ export function ParcelsTable({ proposal }: { proposal: Proposal }) {
                       <div
                         className={cn(
                           "h-full rounded-[2px]",
-                          pct >= 100 ? "bg-status-ok" : pct > 0 ? "bg-status-warn" : "bg-status-critical",
+                          pct >= 100
+                            ? "bg-status-ok"
+                            : pct > 0
+                              ? "bg-status-warn"
+                              : "bg-status-critical",
                         )}
                         style={{ width: `${Math.min(100, pct)}%` }}
                       />
@@ -143,6 +226,18 @@ export function ParcelsTable({ proposal }: { proposal: Proposal }) {
                       >
                         <Calculator className="size-3.5" />
                       </Link>
+                      {canAct ? (
+                        <CompensationDialog proposalId={proposal.id} parcel={p} />
+                      ) : (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-block">
+                              <CompensationDialog proposalId={proposal.id} parcel={p} disabled />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="left">{NO_CREDENTIALS_HINT}</TooltipContent>
+                        </Tooltip>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -159,6 +254,7 @@ export function ParcelsTable({ proposal }: { proposal: Proposal }) {
               <td className="num px-3 py-2 text-[12px] text-muted-foreground">
                 {proposal.affectedFamilies} families
               </td>
+              <td />
               <td className="num px-3 py-2 text-[11px]">
                 {formatINRFull(totalDisbursed)}{" "}
                 <span className="font-normal text-muted-foreground">

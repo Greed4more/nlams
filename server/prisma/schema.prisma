@@ -24,6 +24,17 @@ enum ParcelClassification {
   URBAN
 }
 
+/// Provenance of a parcel's title/boundary record — ported from the Bhumitra
+/// backend's national parcel model. Drives the auto-grievance logic in
+/// POST /api/parcels/verify: LEGACY_MIGRATED / SELF_DECLARED_PENDING parcels
+/// get an auto-created correction ticket before they can clear Sec. 11.
+enum ParcelProvenance {
+  ULPIN_VERIFIED
+  SVAMITVA_DIGITISED
+  LEGACY_MIGRATED
+  SELF_DECLARED_PENDING
+}
+
 enum DocumentType {
   SIA_REPORT
   SEC_11_NOTIFICATION
@@ -46,11 +57,29 @@ enum AuditAction {
   STAGE_ADVANCE
   DOCUMENT_UPLOAD
   DOCUMENT_VERIFY
+  COMPENSATION_CALCULATED
+  GRIEVANCE_SUBMITTED
+  GRIEVANCE_RESOLVED
+  RISK_SCORED
 }
 
 enum SlaAlertStatus {
   AT_RISK
   BREACHED
+}
+
+enum GrievanceStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  FIELD_VERIFICATION
+  RESOLVED
+  REJECTED
+}
+
+enum RiskTier {
+  LOW
+  MEDIUM
+  HIGH
 }
 
 model User {
@@ -65,6 +94,8 @@ model User {
   updatedAt DateTime @updatedAt
 
   auditLogs AuditLog[]
+  compensationRecords CompensationRecord[]
+  grievanceTickets    GrievanceTicket[]
 
   @@map("users")
 }
@@ -82,10 +113,17 @@ model Proposal {
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
+  /// Latest SIA public-consultation consent %, 0-100 — feeds the litigation
+  /// & delay risk model (Module 5, ported from Bhumitra). Null until first set.
+  consentPercentage Float?
+
   parcels   Parcel[]
   documents DocumentRef[]
   auditLogs AuditLog[]
   slaAlerts SlaAlert[]
+  compensationRecords CompensationRecord[]
+  grievances          GrievanceTicket[]
+  riskScores          RiskScore[]
 
   @@map("proposals")
 }
@@ -110,6 +148,15 @@ model Parcel {
   /// Prisma Client cannot read/write this column, only raw SQL / PostGIS
   /// functions (ST_AsGeoJSON, etc.) can.
   geom Unsupported("geometry(Polygon, 4326)")?
+
+  /// Title/boundary provenance — ported from Bhumitra's national parcel
+  /// model; drives auto-grievance creation in POST /api/parcels/verify.
+  provenance       ParcelProvenance @default(LEGACY_MIGRATED)
+  /// e.g. ["multi_crop_irrigated"] — set by the Bhuvan LULC overlay check.
+  restrictionFlags Json             @default("[]")
+
+  compensationRecords CompensationRecord[]
+  grievances          GrievanceTicket[]
 
   @@map("parcels")
 }
@@ -144,7 +191,93 @@ model AuditLog {
   metadata   Json?
   createdAt  DateTime     @default(now())
 
+  /// Cryptographic Audit Vault (ported from Bhumitra's audit_vault.service).
+  /// Populated only for entries written through server/src/lib/auditVault.ts
+  /// — nullable so the pre-existing STAGE_ADVANCE/DOCUMENT_* call sites keep
+  /// compiling untouched until they're migrated onto addAuditEntry() too.
+  fileHash          String?
+  eventPayloadHash  String?
+  previousHash      String?
+  chainHash         String?
+
   @@map("audit_logs")
+}
+
+/// Statutory compensation award for one parcel within a proposal — Sec. 26-30
+/// RFCTLARR Act 2013. Ported from Bhumitra's compensation module; ties into
+/// the same cryptographic Audit Vault as the rest of the audit log.
+model CompensationRecord {
+  id                 String   @id @default(cuid())
+  proposalId         String
+  proposal           Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  parcelId           String
+  parcel             Parcel   @relation(fields: [parcelId], references: [id], onDelete: Cascade)
+  marketValue        Float
+  ruralMultiplier    Float
+  assetValue         Float
+  solatium           Float
+  interestAmount     Float
+  totalCompensation  Float
+  breakdown          Json
+  /// Mock PFMS/DBT disbursal receipt — see server/src/services/pfmsPayment.ts.
+  pfmsReceipt        Json
+  calculatedByUserId String?
+  calculatedBy       User?    @relation(fields: [calculatedByUserId], references: [id])
+  calculatedAt       DateTime @default(now())
+
+  @@map("compensation_records")
+}
+
+/// Land-title / provenance correction ticket, 15-day statutory SLA. Ported
+/// from Bhumitra's grievances module; auto-created by POST /api/parcels/verify
+/// for unverified parcels, or submitted directly against a proposal/parcel.
+model GrievanceTicket {
+  id                String          @id @default(cuid())
+  proposalId        String
+  proposal          Proposal        @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  parcelId          String?
+  parcel            Parcel?         @relation(fields: [parcelId], references: [id])
+  submittedByUserId String
+  submittedBy       User            @relation(fields: [submittedByUserId], references: [id])
+  issueCategory     String
+  description       String
+  evidenceUrl       String?
+  status            GrievanceStatus @default(SUBMITTED)
+  slaDeadline       DateTime
+  escalated         Boolean         @default(false)
+  createdAt         DateTime        @default(now())
+  resolvedAt        DateTime?
+
+  @@map("grievance_tickets")
+}
+
+/// Explainable litigation & delay-risk score for a proposal (Module 5).
+/// Computed by server/src/services/riskBridge.ts, which calls out to the
+/// Python FastAPI ml_service and falls back to a local rule-based estimate.
+model RiskScore {
+  id                     String   @id @default(cuid())
+  proposalId             String
+  proposal               Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  riskScore              Float
+  riskTier               RiskTier
+  topContributingFactors Json
+  computedAt             DateTime @default(now())
+
+  @@map("risk_scores")
+}
+
+/// Registry row for the pluggable per-state land-records adapter framework
+/// (Module 9) — West Bengal/Banglarbhumi is the reference implementation in
+/// server/src/adapters/westBengalAdapter.ts. One row per onboarded state.
+model StateAdapter {
+  id             String   @id @default(cuid())
+  stateCode      String   @unique
+  adapterName    String
+  isActive       Boolean  @default(true)
+  lastSyncStatus String   @default("idle")
+  updatedAt      DateTime @updatedAt
+
+  @@map("state_adapters")
 }
 
 /**

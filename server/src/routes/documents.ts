@@ -6,6 +6,7 @@ import { requireNlamsUser } from "../middleware/auth.js";
 import { serializeDocument } from "../lib/serialize.js";
 import { sha256Hex } from "../lib/hash.js";
 import { proposalScopeWhere } from "../lib/scope.js";
+import { addAuditEntry } from "../lib/auditVault.js";
 
 export const documentsRouter = Router();
 
@@ -62,13 +63,12 @@ documentsRouter.post(
           lastVerifiedAt: new Date(),
         },
       });
-      await tx.auditLog.create({
-        data: {
-          proposalId: proposal.id,
-          userId: req.nlamsUser!.id,
-          action: "DOCUMENT_UPLOAD",
-          metadata: { documentId: doc.id, name: doc.name, sha256 },
-        },
+      await addAuditEntry(tx, {
+        proposalId: proposal.id,
+        userId: req.nlamsUser!.id,
+        action: "DOCUMENT_UPLOAD",
+        fileBuffer: req.file!.buffer,
+        eventPayload: { documentId: doc.id, name: doc.name, sha256 },
       });
       return doc;
     });
@@ -94,13 +94,11 @@ documentsRouter.post("/documents/:id/verify", async (req, res) => {
     const d = matches
       ? await tx.documentRef.update({ where: { id: doc.id }, data: { lastVerifiedAt: new Date() } })
       : doc;
-    await tx.auditLog.create({
-      data: {
-        proposalId: doc.proposalId,
-        userId: req.nlamsUser!.id,
-        action: "DOCUMENT_VERIFY",
-        metadata: { documentId: doc.id, matches, recomputedSha256: recomputed },
-      },
+    await addAuditEntry(tx, {
+      proposalId: doc.proposalId,
+      userId: req.nlamsUser!.id,
+      action: "DOCUMENT_VERIFY",
+      eventPayload: { documentId: doc.id, matches, recomputedSha256: recomputed },
     });
     return d;
   });
