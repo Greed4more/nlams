@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { getBypassSession } from "./bypassAuth";
 
 const API_URL = (import.meta.env["VITE_API_URL"] as string | undefined) ?? "http://localhost:4000";
 
@@ -11,6 +12,9 @@ export class ApiError extends Error {
 }
 
 async function authHeaders(): Promise<HeadersInit> {
+  const bypass = getBypassSession();
+  if (bypass) return { Authorization: `Bearer ${bypass.token}` };
+
   const {
     data: { session },
   } = await supabase.auth.getSession();

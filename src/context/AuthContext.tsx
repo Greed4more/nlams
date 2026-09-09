@@ -1,6 +1,36 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import {
+  getBypassSession,
+  setBypassSession,
+  clearBypassSession,
+  type BypassSession,
+} from "@/lib/bypassAuth";
+
+/** Wraps a demo bypass session in the same shape useAuth()'s consumers
+ * already expect from a real Supabase Session — see lib/bypassAuth.ts. */
+function bypassToSession(b: BypassSession): Session {
+  const user = {
+    id: b.token,
+    aud: "authenticated",
+    role: "authenticated",
+    email: b.email,
+    app_metadata: { role: b.role, states: b.states },
+    user_metadata: { name: b.name },
+    identities: [],
+    created_at: new Date().toISOString(),
+  } as unknown as User;
+
+  return {
+    access_token: b.token,
+    token_type: "bearer",
+    expires_in: 60 * 60 * 24,
+    expires_at: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
+    refresh_token: "bypass",
+    user,
+  } as unknown as Session;
+}
 
 export type Role = "DOLR_SECRETARY" | "DISTRICT_COLLECTOR" | "LAO" | "STATE_REVENUE";
 
@@ -29,6 +59,8 @@ interface AuthContextValue {
   states: string[];
   displayName: string;
   signOut: () => Promise<void>;
+  /** Demo bypass login (no Supabase account needed) — see lib/bypassAuth.ts. */
+  signInWithBypass: (session: BypassSession) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -38,6 +70,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const bypass = getBypassSession();
+    if (bypass) {
+      setSession(bypassToSession(bypass));
+      setLoading(false);
+      return;
+    }
     supabase.auth
       .getSession()
       .then(({ data }) => setSession(data.session))
@@ -66,7 +104,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       states,
       displayName,
       signOut: async () => {
+        if (getBypassSession()) {
+          clearBypassSession();
+          setSession(null);
+          return;
+        }
         await supabase.auth.signOut();
+      },
+      signInWithBypass: (bypass: BypassSession) => {
+        setBypassSession(bypass);
+        setSession(bypassToSession(bypass));
       },
     };
   }, [session, loading]);

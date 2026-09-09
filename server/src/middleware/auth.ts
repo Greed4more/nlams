@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import type { Role } from "@prisma/client";
 import { prisma } from "../db.js";
 import { supabaseAdmin } from "../lib/supabaseAdmin.js";
+import { BYPASS_TOKEN_PREFIX, resolveBypassToken } from "../lib/bypassAuth.js";
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -26,6 +27,34 @@ export async function requireNlamsUser(req: Request, res: Response, next: NextFu
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
   if (!token) {
     res.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+
+  // Demo bypass path — never calls Supabase, only needs the local Postgres.
+  // See server/src/lib/bypassAuth.ts.
+  if (token.startsWith(BYPASS_TOKEN_PREFIX)) {
+    const principal = resolveBypassToken(token);
+    if (!principal) {
+      res.status(401).json({ error: "Invalid or expired bypass session" });
+      return;
+    }
+    try {
+      const user = await prisma.user.upsert({
+        where: { id: principal.id },
+        create: principal,
+        update: {
+          email: principal.email,
+          name: principal.name,
+          role: principal.role,
+          states: principal.states,
+        },
+      });
+      req.nlamsUser = user;
+      next();
+    } catch (error) {
+      console.error("Failed to upsert bypass user", error);
+      res.status(502).json({ error: "Could not reach the local database" });
+    }
     return;
   }
 

@@ -1,5 +1,8 @@
 import { Router } from "express";
+import { z } from "zod";
+import type { Role } from "@prisma/client";
 import { prisma } from "../db.js";
+import { BYPASS_PASSWORD, BYPASS_PERSONAS, issueBypassToken } from "../lib/bypassAuth.js";
 
 /**
  * Public case-transparency portal — no auth, no PII. Ported from Bhumitra's
@@ -7,6 +10,36 @@ import { prisma } from "../db.js";
  * Sec. 4 & Sec. 11 RFCTLARR Act 2013 and the DPDP Act 2023.
  */
 export const publicRouter = Router();
+
+const bypassLoginBody = z.object({
+  password: z.string(),
+  role: z.enum(["DOLR_SECRETARY", "DISTRICT_COLLECTOR", "LAO", "STATE_REVENUE"]),
+});
+
+/**
+ * POST /api/public/auth/bypass — demo sign-in that doesn't need Supabase.
+ * See server/src/lib/bypassAuth.ts for why this exists and its limits.
+ */
+publicRouter.post("/auth/bypass", (req, res) => {
+  const parsed = bypassLoginBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid request", details: parsed.error.flatten() });
+    return;
+  }
+  if (parsed.data.password !== BYPASS_PASSWORD) {
+    res.status(401).json({ error: "Incorrect bypass password" });
+    return;
+  }
+  const principal = BYPASS_PERSONAS[parsed.data.role as Role];
+  const token = issueBypassToken(principal);
+  res.json({
+    token,
+    role: principal.role,
+    name: principal.name,
+    email: principal.email,
+    states: principal.states,
+  });
+});
 
 publicRouter.get("/proposals/search", async (req, res) => {
   const { state, district, name } = req.query;
@@ -18,7 +51,14 @@ publicRouter.get("/proposals/search", async (req, res) => {
 
   const proposals = await prisma.proposal.findMany({
     where,
-    select: { id: true, projectName: true, state: true, district: true, currentStage: true, initiatedAt: true },
+    select: {
+      id: true,
+      projectName: true,
+      state: true,
+      district: true,
+      currentStage: true,
+      initiatedAt: true,
+    },
     take: 50,
   });
 
@@ -50,7 +90,9 @@ publicRouter.get("/proposals/:id", async (req, res) => {
     aggregateMetrics: {
       totalParcelsNotified: proposal.parcels.length,
       aggregateAreaNotifiedHectares: Number(totalAreaHa.toFixed(2)),
-      aggregateCompensationDisbursedCrores: Number((totalCompensationDisbursed / 10_000_000).toFixed(2)),
+      aggregateCompensationDisbursedCrores: Number(
+        (totalCompensationDisbursed / 10_000_000).toFixed(2),
+      ),
       affectedFamilies: proposal.affectedFamilies,
     },
     transparencyNotice:
