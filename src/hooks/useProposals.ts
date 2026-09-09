@@ -39,12 +39,25 @@ export function useAdvanceStageMutation(id: string) {
 
 export interface AuditLogEntry {
   id: string;
-  action: "STAGE_ADVANCE" | "DOCUMENT_UPLOAD" | "DOCUMENT_VERIFY";
+  action:
+    | "STAGE_ADVANCE"
+    | "DOCUMENT_UPLOAD"
+    | "DOCUMENT_VERIFY"
+    | "COMPENSATION_CALCULATED"
+    | "GRIEVANCE_SUBMITTED"
+    | "GRIEVANCE_RESOLVED"
+    | "RISK_SCORED"
+    | string;
   fromStage: string | null;
   toStage: string | null;
   metadata: Record<string, unknown> | null;
   createdAt: string;
   actor: { name: string; role: string } | null;
+  chainHash: string | null;
+  previousHash: string | null;
+  eventPayloadHash: string | null;
+  fileHash: string | null;
+  blockHeight: number;
 }
 
 export function useAuditLogQuery(id: string) {

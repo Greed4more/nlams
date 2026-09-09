@@ -45,6 +45,15 @@ proposalsRouter.get("/:id/audit-log", async (req, res) => {
     return;
   }
 
+  const allLogIds = await prisma.auditLog.findMany({
+    select: { id: true },
+    orderBy: { createdAt: "asc" },
+  });
+  const heightMap = new Map<string, number>();
+  allLogIds.forEach((item, index) => {
+    heightMap.set(item.id, index + 1);
+  });
+
   const entries = await prisma.auditLog.findMany({
     where: { proposalId: proposal.id },
     include: { user: { select: { name: true, role: true } } },
@@ -59,6 +68,11 @@ proposalsRouter.get("/:id/audit-log", async (req, res) => {
       metadata: e.metadata,
       createdAt: e.createdAt.toISOString(),
       actor: e.user ? { name: e.user.name, role: e.user.role } : null,
+      chainHash: e.chainHash,
+      previousHash: e.previousHash,
+      eventPayloadHash: e.eventPayloadHash,
+      fileHash: e.fileHash,
+      blockHeight: heightMap.get(e.id) ?? 1,
     })),
   );
 });
@@ -96,6 +110,12 @@ proposalsRouter.patch("/:id/advance-stage", async (req, res) => {
       action: "STAGE_ADVANCE",
       fromStage: proposal.currentStage,
       toStage: to,
+      eventPayload: {
+        fromStage: proposal.currentStage,
+        toStage: to,
+        projectName: proposal.projectName,
+        advancedAt: new Date().toISOString(),
+      },
     });
     return proposalUpdate;
   });

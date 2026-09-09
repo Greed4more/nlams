@@ -60,6 +60,19 @@ function synthesizeFile(proposalId: string, docName: string, docType: string): B
   );
 }
 
+import { addAuditEntry, verifyChainIntegrity } from "../src/lib/auditVault.js";
+import type { AuditAction, RfctlarrStage } from "@prisma/client";
+
+interface PendingAuditEvent {
+  proposalId: string;
+  action: AuditAction;
+  fromStage?: RfctlarrStage | null;
+  toStage?: RfctlarrStage | null;
+  fileBuffer?: Buffer | null;
+  eventPayload: Record<string, unknown>;
+  createdAt: Date;
+}
+
 async function main() {
   console.log("Wiping existing proposal data…");
   await prisma.auditLog.deleteMany();
@@ -68,7 +81,11 @@ async function main() {
   const proposals = buildProposals();
   console.log(`Seeding ${proposals.length} proposals…`);
 
+  const pendingAuditEvents: PendingAuditEvent[] = [];
+
   for (const p of proposals) {
+    const docBuffers: { doc: (typeof p.documents)[0]; buffer: Buffer }[] = [];
+
     await prisma.proposal.create({
       data: {
         id: p.id,
@@ -96,6 +113,7 @@ async function main() {
         documents: {
           create: p.documents.map((doc) => {
             const buffer = synthesizeFile(p.id, doc.name, doc.type);
+            docBuffers.push({ doc, buffer });
             return {
               name: doc.name,
               type: doc.type,
@@ -111,6 +129,40 @@ async function main() {
       },
     });
 
+    // Queue document upload blocks for the audit chain
+    for (const { doc, buffer } of docBuffers) {
+      pendingAuditEvents.push({
+        proposalId: p.id,
+        action: "DOCUMENT_UPLOAD",
+        fileBuffer: buffer,
+        eventPayload: {
+          documentName: doc.name,
+          documentType: doc.type,
+          sha256: sha256Hex(buffer),
+          sizeKb: Math.max(1, Math.round(buffer.byteLength / 1024)),
+          projectName: p.projectName,
+        },
+        createdAt: new Date(doc.uploadedAt),
+      });
+    }
+
+    // Queue stage transition block if advanced past INTAKE
+    if (p.currentStage !== "INTAKE") {
+      pendingAuditEvents.push({
+        proposalId: p.id,
+        action: "STAGE_ADVANCE",
+        fromStage: "INTAKE",
+        toStage: p.currentStage,
+        eventPayload: {
+          fromStage: "INTAKE",
+          toStage: p.currentStage,
+          projectName: p.projectName,
+          stageEnteredAt: p.stageEnteredAt,
+        },
+        createdAt: new Date(p.stageEnteredAt),
+      });
+    }
+
     const base = DISTRICT_COORDS[p.district];
     if (base) {
       for (const parcel of p.parcels) {
@@ -124,6 +176,26 @@ async function main() {
     }
   }
 
+  // Sort all events chronologically so the hash chain is built monotonically
+  pendingAuditEvents.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  console.log(`Chaining ${pendingAuditEvents.length} cryptographic audit blocks…`);
+
+  for (const event of pendingAuditEvents) {
+    await addAuditEntry(prisma, {
+      proposalId: event.proposalId,
+      action: event.action,
+      fromStage: event.fromStage,
+      toStage: event.toStage,
+      fileBuffer: event.fileBuffer,
+      eventPayload: event.eventPayload,
+      createdAt: event.createdAt,
+    });
+  }
+
+  const integrity = await verifyChainIntegrity();
+  console.log(
+    `Cryptographic chain integrity verified: intact=${integrity.chainIntact}, ${integrity.verifiedBlocks} blocks verified (head: ${integrity.headHash?.slice(0, 16)}...).`,
+  );
   console.log("Done.");
 }
 
