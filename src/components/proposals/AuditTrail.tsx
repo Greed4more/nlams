@@ -64,7 +64,7 @@ function CopyChip({
   value: string;
   label: string;
   monospace?: boolean;
-  className?: string;
+  className?: string | undefined;
 }) {
   const [copied, setCopied] = useState(false);
 

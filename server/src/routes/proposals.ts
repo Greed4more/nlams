@@ -45,9 +45,10 @@ proposalsRouter.get("/:id/audit-log", async (req, res) => {
     return;
   }
 
+  // Ordered by `id` (insertion order), not `createdAt` — see auditVault.ts.
   const allLogIds = await prisma.auditLog.findMany({
     select: { id: true },
-    orderBy: { createdAt: "asc" },
+    orderBy: { id: "asc" },
   });
   const heightMap = new Map<string, number>();
   allLogIds.forEach((item, index) => {
@@ -57,7 +58,7 @@ proposalsRouter.get("/:id/audit-log", async (req, res) => {
   const entries = await prisma.auditLog.findMany({
     where: { proposalId: proposal.id },
     include: { user: { select: { name: true, role: true } } },
-    orderBy: { createdAt: "desc" },
+    orderBy: { id: "desc" },
   });
   res.json(
     entries.map((e) => ({

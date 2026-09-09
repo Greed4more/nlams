@@ -18,9 +18,10 @@ auditRouter.get("/verify", async (_req, res) => {
 auditRouter.get("/chain", async (req, res) => {
   const limit = Math.min(200, Math.max(1, Number(req.query["limit"]) || 100));
 
+  // Ordered by `id` (insertion order), not `createdAt` — see auditVault.ts.
   const allLogs = await prisma.auditLog.findMany({
     select: { id: true },
-    orderBy: { createdAt: "asc" },
+    orderBy: { id: "asc" },
   });
   const heightMap = new Map<string, number>();
   allLogs.forEach((item, index) => {
@@ -32,7 +33,7 @@ auditRouter.get("/chain", async (req, res) => {
       proposal: { select: { id: true, projectName: true, state: true, district: true } },
       user: { select: { name: true, role: true } },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { id: "desc" },
     take: limit,
   });
 

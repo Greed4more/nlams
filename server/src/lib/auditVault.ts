@@ -50,7 +50,10 @@ export async function addAuditEntry(
     createdAt?: Date;
   },
 ) {
-  const lastEntry = await db.auditLog.findFirst({ orderBy: { createdAt: "desc" } });
+  // Ordered by `id` (Prisma's cuid is monotonically increasing per insertion),
+  // not `createdAt` — that field is caller-supplied (seed data backdates it),
+  // so two events can share a timestamp and break tie-resolution.
+  const lastEntry = await db.auditLog.findFirst({ orderBy: { id: "desc" } });
   const previousHash = lastEntry?.chainHash ?? GENESIS_HASH;
 
   const fileHash = params.fileBuffer ? computeHash(params.fileBuffer) : null;
@@ -89,7 +92,7 @@ export interface ChainVerification {
 
 /** Walks the full audit_logs table in insertion order and recomputes every hash. */
 export async function verifyChainIntegrity(): Promise<ChainVerification> {
-  const logs = await prisma.auditLog.findMany({ orderBy: { createdAt: "asc" } });
+  const logs = await prisma.auditLog.findMany({ orderBy: { id: "asc" } });
   if (logs.length === 0) {
     return {
       chainIntact: true,
