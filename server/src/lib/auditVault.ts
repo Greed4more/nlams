@@ -2,15 +2,29 @@ import crypto from "crypto";
 import { Prisma, type AuditAction, type RfctlarrStage } from "@prisma/client";
 import { prisma } from "../db.js";
 
-/** First block in the chain has no predecessor — matches Bhumitra's genesis hash. */
-const GENESIS_HASH = "0".repeat(64);
+export const GENESIS_HASH = "0".repeat(64);
 
 type Db = Prisma.TransactionClient | typeof prisma;
+
+/** Recursively sorts object keys for deterministic canonical JSON serialization. */
+export function canonicalJsonStringify(obj: unknown): string {
+  if (obj === null || typeof obj !== "object") {
+    return JSON.stringify(obj);
+  }
+  if (Array.isArray(obj)) {
+    return `[${obj.map(canonicalJsonStringify).join(",")}]`;
+  }
+  const keys = Object.keys(obj as Record<string, unknown>).sort();
+  const entries = keys.map(
+    (k) => `${JSON.stringify(k)}:${canonicalJsonStringify((obj as Record<string, unknown>)[k])}`,
+  );
+  return `{${entries.join(",")}}`;
+}
 
 export function computeHash(data: Buffer | string | Record<string, unknown>): string {
   const hash = crypto.createHash("sha256");
   if (Buffer.isBuffer(data)) hash.update(data);
-  else if (typeof data === "object") hash.update(JSON.stringify(data));
+  else if (typeof data === "object") hash.update(canonicalJsonStringify(data));
   else hash.update(String(data));
   return hash.digest("hex");
 }
@@ -33,6 +47,7 @@ export async function addAuditEntry(
     toStage?: RfctlarrStage | null;
     fileBuffer?: Buffer | null;
     eventPayload?: Record<string, unknown>;
+    createdAt?: Date;
   },
 ) {
   const lastEntry = await db.auditLog.findFirst({ orderBy: { createdAt: "desc" } });
@@ -56,6 +71,7 @@ export async function addAuditEntry(
       eventPayloadHash,
       previousHash,
       chainHash,
+      ...(params.createdAt ? { createdAt: params.createdAt } : {}),
     },
   });
 }
@@ -63,6 +79,9 @@ export async function addAuditEntry(
 export interface ChainVerification {
   chainIntact: boolean;
   totalRecords: number;
+  verifiedBlocks: number;
+  genesisHash: string;
+  headHash: string | null;
   brokenRecordId?: string;
   brokenAtIndex?: number;
   reason?: string;
@@ -72,10 +91,19 @@ export interface ChainVerification {
 export async function verifyChainIntegrity(): Promise<ChainVerification> {
   const logs = await prisma.auditLog.findMany({ orderBy: { createdAt: "asc" } });
   if (logs.length === 0) {
-    return { chainIntact: true, totalRecords: 0 };
+    return {
+      chainIntact: true,
+      totalRecords: 0,
+      verifiedBlocks: 0,
+      genesisHash: GENESIS_HASH,
+      headHash: null,
+    };
   }
 
   let expectedPrevious = GENESIS_HASH;
+  let verifiedCount = 0;
+  let headHash: string | null = null;
+
   for (let i = 0; i < logs.length; i++) {
     const log = logs[i]!;
     // Entries written before the Audit Vault existed have no hash fields —
@@ -87,9 +115,12 @@ export async function verifyChainIntegrity(): Promise<ChainVerification> {
       return {
         chainIntact: false,
         totalRecords: logs.length,
+        verifiedBlocks: verifiedCount,
+        genesisHash: GENESIS_HASH,
+        headHash,
         brokenAtIndex: i,
         brokenRecordId: log.id,
-        reason: "Stored previousHash does not match the prior record's chainHash.",
+        reason: `Block #${i + 1} previousHash (${log.previousHash?.slice(0, 16)}...) does not match expected parent hash (${expectedPrevious.slice(0, 16)}...).`,
       };
     }
     const recomputed = computeHash(
@@ -99,13 +130,24 @@ export async function verifyChainIntegrity(): Promise<ChainVerification> {
       return {
         chainIntact: false,
         totalRecords: logs.length,
+        verifiedBlocks: verifiedCount,
+        genesisHash: GENESIS_HASH,
+        headHash,
         brokenAtIndex: i,
         brokenRecordId: log.id,
-        reason: "Chain hash mismatch — record was tampered with.",
+        reason: `Block #${i + 1} chainHash mismatch (${log.chainHash.slice(0, 16)}... vs calculated ${recomputed.slice(0, 16)}...) — record data or payload was tampered with.`,
       };
     }
     expectedPrevious = log.chainHash;
+    headHash = log.chainHash;
+    verifiedCount++;
   }
 
-  return { chainIntact: true, totalRecords: logs.length };
+  return {
+    chainIntact: true,
+    totalRecords: logs.length,
+    verifiedBlocks: verifiedCount,
+    genesisHash: GENESIS_HASH,
+    headHash,
+  };
 }
