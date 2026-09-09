@@ -23,3 +23,13 @@ export const WB_DISTRICT_DISPLAY_NAME: Record<string, string> = {
 export function wbDistrictDisplayName(distName: string): string {
   return WB_DISTRICT_DISPLAY_NAME[distName] ?? distName;
 }
+
+/**
+ * Same LGD-transliteration quirk applies to every state's district file
+ * (they share the geoBoundaries/LGD source), but only West Bengal's spelling
+ * differences have been curated into a display-name table so far. Falls
+ * back to the raw LGD name for every other state.
+ */
+export function districtDisplayName(distName: string, stateCode: string): string {
+  return stateCode === "WB" ? wbDistrictDisplayName(distName) : distName;
+}

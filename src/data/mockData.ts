@@ -102,6 +102,130 @@ export const GLOSSARY: Record<string, VernacularTerm[]> = {
     { local: "Dag", script: "দাগ", standard: "Plot Number" },
     { local: "Khatian", script: "খতিয়ান", standard: "Record of Rights" },
   ],
+  "Andhra Pradesh": [
+    { local: "Pahani", script: "పహాణీ", standard: "Record of Rights / Crop Inspection Register" },
+    { local: "Adangal", script: "అడంగల్", standard: "Village Land Register" },
+  ],
+  "Arunachal Pradesh": [
+    {
+      local: "Land Possession Certificate",
+      script: "LPC",
+      standard: "Community Land Possession Certificate",
+    },
+  ],
+  Bihar: [
+    { local: "Khesra", script: "खेसरा", standard: "Plot Number" },
+    { local: "Khatiyan", script: "खतियान", standard: "Record of Rights" },
+  ],
+  Chhattisgarh: [
+    { local: "Khasra", script: "खसरा", standard: "Plot Number" },
+    { local: "B-1 Khatauni", script: "बी-1 खतौनी", standard: "Holding Register Entry" },
+  ],
+  Gujarat: [
+    { local: "Sat-Bar", script: "સાત-બાર", standard: "Record of Rights (7/12 Extract)" },
+    { local: "Gam Namuna", script: "ગામ નમૂનો", standard: "Village Form Register" },
+  ],
+  Haryana: [
+    { local: "Khasra", script: "खसरा", standard: "Plot Number" },
+    { local: "Khatauni", script: "खतौनी", standard: "Holding Register Entry" },
+  ],
+  "Himachal Pradesh": [
+    { local: "Khasra", script: "खसरा", standard: "Plot Number" },
+    { local: "Jamabandi", script: "जमाबंदी", standard: "Record of Rights" },
+  ],
+  Jharkhand: [
+    { local: "Khatian", script: "खतियान", standard: "Record of Rights" },
+    { local: "Dag", script: "डैग", standard: "Plot Number" },
+  ],
+  Karnataka: [
+    { local: "Pahani (RTC)", script: "ಪಹಣಿ", standard: "Record of Rights, Tenancy and Crops" },
+    { local: "Sy. No.", script: "ಸರ್ವೆ ನಂ", standard: "Survey Number" },
+  ],
+  Kerala: [
+    { local: "Thandaper", script: "തണ്ടപ്പേർ", standard: "Land Revenue Registry Account" },
+    { local: "Pokkuvaravu", script: "പോക്കുവരവ്", standard: "Mutation Record" },
+  ],
+  "Madhya Pradesh": [
+    { local: "Khasra", script: "खसरा", standard: "Plot Number" },
+    { local: "B-1 Khatauni", script: "बी-1 खतौनी", standard: "Holding Register Entry" },
+  ],
+  Manipur: [
+    { local: "Patta", script: "Patta", standard: "Title Deed" },
+    { local: "Dag", script: "Dag", standard: "Plot Number" },
+  ],
+  // Meghalaya, Mizoram, Nagaland, Arunachal Pradesh: most land is held under
+  // customary/community tenure (Sixth Schedule / Art. 371A), so there's no
+  // Khasra-Khatauni system like the mainland states — these use the actual
+  // certificate types those states issue instead.
+  Meghalaya: [
+    {
+      local: "Land Possession Certificate",
+      script: "LPC",
+      standard: "Certificate of Customary Land Possession",
+    },
+  ],
+  Mizoram: [
+    { local: "LSC", script: "LSC", standard: "Land Settlement Certificate" },
+    { local: "Periodic Patta", script: "Patta", standard: "Renewable Land Grant" },
+  ],
+  Nagaland: [
+    {
+      local: "Community Land Record",
+      script: "—",
+      standard: "Customary Land Ownership Record (Art. 371A)",
+    },
+  ],
+  Odisha: [
+    { local: "Khatian", script: "ଖତିୟାନ", standard: "Record of Rights" },
+    { local: "Plot No.", script: "ପ୍ଲଟ ନମ୍ବର", standard: "Plot Number" },
+  ],
+  Rajasthan: [
+    { local: "Khasra", script: "खसरा", standard: "Plot Number" },
+    { local: "Jamabandi", script: "जमाबंदी", standard: "Record of Rights" },
+  ],
+  Sikkim: [{ local: "Parcha", script: "पर्चा", standard: "Land Title Certificate" }],
+  Telangana: [
+    { local: "Pahani", script: "పహాణీ", standard: "Record of Rights / Crop Inspection Register" },
+    { local: "Dharani ROR 1B", script: "ధరణి", standard: "Digital Record of Rights" },
+  ],
+  Tripura: [
+    { local: "Khatian", script: "খতিয়ান", standard: "Record of Rights" },
+    { local: "Dag", script: "দাগ", standard: "Plot Number" },
+  ],
+  "Uttar Pradesh": [
+    { local: "Khasra", script: "खसरा", standard: "Plot Number" },
+    { local: "Khatauni", script: "खतौनी", standard: "Holding Register Entry" },
+  ],
+  Uttarakhand: [
+    { local: "Khasra", script: "खसरा", standard: "Plot Number" },
+    { local: "Khatauni", script: "खतौनी", standard: "Holding Register Entry" },
+  ],
+  "Andaman and Nicobar Islands": [
+    { local: "Plot No.", script: "Plot No.", standard: "Land Allotment Number" },
+  ],
+  Chandigarh: [
+    { local: "Khasra", script: "ਖਸਰਾ", standard: "Plot Number" },
+    { local: "Khatauni", script: "ਖਤੌਨੀ", standard: "Holding Register Entry" },
+  ],
+  "Dadra and Nagar Haveli and Daman and Diu": [
+    { local: "Survey No.", script: "Survey No.", standard: "Survey Number" },
+  ],
+  Delhi: [
+    { local: "Khasra", script: "खसरा", standard: "Plot Number" },
+    { local: "Khatauni", script: "खतौनी", standard: "Holding Register Entry" },
+  ],
+  "Jammu and Kashmir": [
+    { local: "Khewat", script: "Khewat", standard: "Ownership Share Register" },
+    { local: "Girdawari", script: "Girdawari", standard: "Periodic Crop Inspection Record" },
+  ],
+  Ladakh: [{ local: "Khewat", script: "Khewat", standard: "Ownership Share Register" }],
+  Lakshadweep: [
+    { local: "Land Registration No.", script: "—", standard: "Island Land Registration Number" },
+  ],
+  Puducherry: [
+    { local: "Chitta", script: "சிட்டா", standard: "Land Revenue Account" },
+    { local: "Adangal", script: "அடங்கல்", standard: "Village Land Register" },
+  ],
 };
 
 /* ---------------------------------------------------------------- *
@@ -133,6 +257,36 @@ const STATE_CODE: Record<string, string> = {
   Goa: "GA",
   Punjab: "PB",
   "West Bengal": "WB",
+  "Andhra Pradesh": "AP",
+  "Arunachal Pradesh": "AR",
+  Bihar: "BR",
+  Chhattisgarh: "CG",
+  Gujarat: "GJ",
+  Haryana: "HR",
+  "Himachal Pradesh": "HP",
+  Jharkhand: "JH",
+  Karnataka: "KA",
+  Kerala: "KL",
+  "Madhya Pradesh": "MP",
+  Manipur: "MN",
+  Meghalaya: "ML",
+  Mizoram: "MZ",
+  Nagaland: "NL",
+  Odisha: "OD",
+  Rajasthan: "RJ",
+  Sikkim: "SK",
+  Telangana: "TS",
+  Tripura: "TR",
+  "Uttar Pradesh": "UP",
+  Uttarakhand: "UK",
+  "Andaman and Nicobar Islands": "AN",
+  Chandigarh: "CH",
+  "Dadra and Nagar Haveli and Daman and Diu": "DN",
+  Delhi: "DL",
+  "Jammu and Kashmir": "JK",
+  Ladakh: "LA",
+  Lakshadweep: "LD",
+  Puducherry: "PY",
 };
 
 /**
@@ -142,8 +296,8 @@ const STATE_CODE: Record<string, string> = {
  * exactly — see src/lib/westBengalDistrictNames.ts for display labels.
  */
 const DISTRICTS: Record<string, string[]> = {
-  Maharashtra: ["Palghar", "Thane", "Raigad", "Nashik", "Pune", "Nagpur"],
-  "Tamil Nadu": ["Kancheepuram", "Coimbatore", "Tiruvallur", "Madurai", "Salem"],
+  Maharashtra: ["Palghar", "Thane", "Raigarh", "Nashik", "Pune", "Nagpur"],
+  "Tamil Nadu": ["Kancheepuram", "Coimbatore", "Thiruvallur", "Madurai", "Salem"],
   Assam: ["Kamrup", "Dibrugarh", "Nagaon", "Sonitpur", "Barpeta"],
   Goa: ["South Goa", "North Goa"],
   Punjab: ["Ludhiana", "Patiala", "Bathinda", "Jalandhar", "Amritsar"],
@@ -155,6 +309,36 @@ const DISTRICTS: Record<string, string[]> = {
     "South Twenty Four Parganas",
     "Paschim Medinipur",
   ],
+  "Andhra Pradesh": ["Visakhapatnam", "Krishna", "Guntur"],
+  "Arunachal Pradesh": ["Papum Pare", "East Siang", "West Kameng"],
+  Bihar: ["Patna", "Muzaffarpur", "Gaya"],
+  Chhattisgarh: ["Raipur", "Bilaspur", "Durg"],
+  Gujarat: ["Ahmadabad", "Surat", "Vadodara"],
+  Haryana: ["Gurgaon", "Faridabad", "Panipat"],
+  "Himachal Pradesh": ["Shimla", "Kangra", "Mandi"],
+  Jharkhand: ["Ranchi", "Dhanbad", "Purbi Singhbhum"],
+  Karnataka: ["Bangalore", "Mysore", "Belgaum"],
+  Kerala: ["Ernakulam", "Thiruvananthapuram", "Kozhikode"],
+  "Madhya Pradesh": ["Indore", "Bhopal", "Jabalpur"],
+  Manipur: ["Imphal West", "Imphal East"],
+  Meghalaya: ["East Khasi Hills", "West Garo Hills"],
+  Mizoram: ["Aizawl", "Lunglei"],
+  Nagaland: ["Kohima", "Wokha"],
+  Odisha: ["Khordha", "Cuttack", "Ganjam"],
+  Rajasthan: ["Jaipur", "Jodhpur", "Udaipur"],
+  Sikkim: ["East District", "South District"],
+  Telangana: ["Hydrabad", "Rangareddy", "Warangal (U)"],
+  Tripura: ["West Tripura", "Gomati"],
+  "Uttar Pradesh": ["Lucknow", "Kanpur Nagar", "Ghaziabad"],
+  Uttarakhand: ["Dehradun", "Hardwar", "Nainital"],
+  "Andaman and Nicobar Islands": ["South Andaman", "North  & Middle Andaman"],
+  Chandigarh: ["Chandigarh"],
+  "Dadra and Nagar Haveli and Daman and Diu": ["Diu", "Daman"],
+  Delhi: ["New Delhi", "South", "North West"],
+  "Jammu and Kashmir": ["Srinagar", "Jammu"],
+  Ladakh: ["Leh(Ladakh)", "Kargil"],
+  Lakshadweep: ["Lakshadweep"],
+  Puducherry: ["Puducherry", "Karaikal"],
 };
 
 const OWNER_NAMES: Record<string, string[]> = {
@@ -205,6 +389,246 @@ const OWNER_NAMES: Record<string, string[]> = {
     "Mousumi Bhattacharya",
     "Tapan Kumar Das",
     "Ananya Roy",
+  ],
+  "Andhra Pradesh": [
+    "K. Venkata Rao",
+    "P. Lakshmi Devi",
+    "G. Ramesh Babu",
+    "S. Padmavathi",
+    "N. Srinivasa Rao",
+    "M. Anitha",
+  ],
+  "Arunachal Pradesh": [
+    "Tai Tagak",
+    "Yumlam Riba",
+    "Nabam Doni",
+    "Kani Nada",
+    "Taba Tedir",
+    "Gyati Rondo",
+  ],
+  Bihar: [
+    "Ramesh Kumar Singh",
+    "Sunita Devi",
+    "Anil Kumar Yadav",
+    "Kavita Kumari",
+    "Rajesh Prasad",
+    "Meena Devi",
+  ],
+  Chhattisgarh: [
+    "Suresh Kumar Sahu",
+    "Rekha Netam",
+    "Dilip Sinha",
+    "Anita Baghel",
+    "Manoj Dewangan",
+    "Savitri Nag",
+  ],
+  Gujarat: [
+    "Kiran Patel",
+    "Bharat Shah",
+    "Nirali Desai",
+    "Jayesh Rathwa",
+    "Meera Trivedi",
+    "Ashok Bhatt",
+  ],
+  Haryana: [
+    "Jagdish Chand Yadav",
+    "Sunita Devi Sheoran",
+    "Rajbir Singh Malik",
+    "Kavita Rani Hooda",
+    "Ravinder Dahiya",
+    "Poonam Beniwal",
+  ],
+  "Himachal Pradesh": [
+    "Ramesh Chand Thakur",
+    "Kamla Devi Sharma",
+    "Vijay Kumar Rana",
+    "Suman Verma",
+    "Dinesh Negi",
+    "Anita Chauhan",
+  ],
+  Jharkhand: [
+    "Birsa Soren",
+    "Sushila Hansda",
+    "Ram Prasad Mahto",
+    "Nirmala Kisku",
+    "Sanjay Oraon",
+    "Kiran Devi",
+  ],
+  Karnataka: [
+    "H. R. Gowda",
+    "Lakshmi Shastri",
+    "B. K. Nayak",
+    "Shobha Kulkarni",
+    "Manjunath Reddy",
+    "Sharada Hegde",
+  ],
+  Kerala: [
+    "P. K. Mohanan Nair",
+    "Suja Thomas",
+    "K. V. Rajan Pillai",
+    "Beena Varghese",
+    "M. Sasidharan",
+    "Latha Menon",
+  ],
+  "Madhya Pradesh": [
+    "Ram Kishore Chouhan",
+    "Sunita Malviya",
+    "Rajesh Dubey",
+    "Kavita Tiwari",
+    "Suresh Baghel",
+    "Mamta Sharma",
+  ],
+  Manipur: [
+    "Yumnam Ibomcha",
+    "Laishram Ibetombi",
+    "Thokchom Rajen",
+    "Khumanthem Sarju",
+    "Nongmaithem Rebika",
+    "Wahengbam Bijoy",
+  ],
+  Meghalaya: [
+    "Lyngdoh Nongkynrih",
+    "Pyngrope Kharkongor",
+    "Sangma Momin",
+    "Wanhun Marak",
+    "Kharsyntiew Diengdoh",
+    "Shullai Rynjah",
+  ],
+  Mizoram: [
+    "Lalthanhawla Ralte",
+    "Zothanmawii Sailo",
+    "Vanlalruata Colney",
+    "Lalrinawmi Hnamte",
+    "Zoramthanga Pachuau",
+    "Lalfakzuali Renthlei",
+  ],
+  Nagaland: [
+    "Neizhalhou Kire",
+    "Akum Longkumer",
+    "Imtienla Ao",
+    "Zhaleo Rio",
+    "Chubatemjen Ozukum",
+    "Alemla Jamir",
+  ],
+  Odisha: [
+    "Bijoy Ku. Mohanty",
+    "Manorama Sahoo",
+    "Prasanna Ku. Behera",
+    "Sanjukta Panda",
+    "Ranjit Nayak",
+    "Basanti Mallick",
+  ],
+  Rajasthan: [
+    "Om Prakash Rathore",
+    "Kamla Devi Choudhary",
+    "Bhanwar Singh Rajput",
+    "Santosh Kanwar",
+    "Mahendra Meena",
+    "Sushila Bishnoi",
+  ],
+  Sikkim: [
+    "Pemba Bhutia",
+    "Tshering Lepcha",
+    "Kumar Chettri",
+    "Sonam Tamang",
+    "Yangchen Bhutia",
+    "Dawa Sherpa",
+  ],
+  Telangana: [
+    "K. Narsimha Reddy",
+    "P. Sujatha",
+    "G. Ravi Kumar",
+    "M. Padma",
+    "S. Venkatesh",
+    "T. Anuradha",
+  ],
+  Tripura: [
+    "Biplab Debbarma",
+    "Sabitri Reang",
+    "Ranjit Tripura",
+    "Anita Jamatia",
+    "Dilip Kumar Nath",
+    "Rina Choudhury",
+  ],
+  "Uttar Pradesh": [
+    "Rajendra Prasad Yadav",
+    "Kamla Devi Singh",
+    "Suresh Chandra Tiwari",
+    "Meera Gupta",
+    "Anil Kumar Verma",
+    "Sushila Sharma",
+  ],
+  Uttarakhand: [
+    "Prem Singh Rawat",
+    "Kamla Devi Bisht",
+    "Devendra Negi",
+    "Sunita Bhandari",
+    "Rajendra Panwar",
+    "Meena Rana",
+  ],
+  "Andaman and Nicobar Islands": [
+    "Ashok Kumar Halder",
+    "Bina Mondal",
+    "Selvam Pillai",
+    "Rekha Biswas",
+    "Muthu Krishnan",
+    "Sabita Roy",
+  ],
+  Chandigarh: [
+    "Harpreet Singh Sethi",
+    "Kiran Bedi Kapoor",
+    "Manjeet Singh Chadha",
+    "Simran Kaur Anand",
+    "Rajiv Mehta",
+    "Neeta Arora",
+  ],
+  "Dadra and Nagar Haveli and Daman and Diu": [
+    "Ramesh Dubla",
+    "Kanta Bhoya",
+    "Suresh Vasava",
+    "Meena Halpati",
+    "Ashok Gamit",
+    "Sunita Talpada",
+  ],
+  Delhi: [
+    "Rakesh Kumar Sharma",
+    "Sunita Gupta",
+    "Vijay Malhotra",
+    "Pooja Khanna",
+    "Ashok Bhalla",
+    "Neha Kapoor",
+  ],
+  "Jammu and Kashmir": [
+    "Ghulam Nabi Wani",
+    "Shazia Bano",
+    "Bashir Ahmad Dar",
+    "Rukhsana Begum",
+    "Mohd Yaseen Malik",
+    "Farida Bhat",
+  ],
+  Ladakh: [
+    "Tsering Angchok",
+    "Padma Dolma",
+    "Sonam Wangchuk",
+    "Rigzin Chodon",
+    "Stanzin Norbu",
+    "Diskit Angmo",
+  ],
+  Lakshadweep: [
+    "Koya Musaliar",
+    "Fathima Beevi",
+    "Ibrahim Kunhi",
+    "Ayesha Kutty",
+    "Abdul Khader",
+    "Sulaiku Beevi",
+  ],
+  Puducherry: [
+    "Selvam Pillai",
+    "Kamatchi Ammal",
+    "Raghunathan Chettiar",
+    "Vijayalakshmi Naidu",
+    "Antoine Perumal",
+    "Marie Bagavathy",
   ],
 };
 
@@ -419,6 +843,12 @@ export function buildProposals(): Proposal[] {
 }
 
 export const STATES = Object.keys(STATE_CODE);
+
+/** {name, code} pairs sorted alphabetically — for state-picker UI (e.g. the
+ * GIS Map View's district/block boundary selector). */
+export const STATE_LIST = Object.entries(STATE_CODE)
+  .map(([name, code]) => ({ name, code }))
+  .sort((a, b) => a.name.localeCompare(b.name));
 export const REQUIRING_BODY_LIST = [...REQUIRING_BODIES];
 
 export function formatINR(value: number): string {

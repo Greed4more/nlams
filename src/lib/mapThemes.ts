@@ -67,6 +67,7 @@ export const SELECTED_PARCEL_COLOR = "#00c2d1";
  * of the cadastral parcel theme above.
  */
 export const ADMIN_BOUNDARY_COLORS = {
+  state: "#0f2942",
   district: "#c0392b",
   block: "#ec0c8c",
 } as const;
@@ -77,6 +78,37 @@ const STATE_LULC_LAYER: Record<string, string> = {
   Assam: "basemap:AS_LULC",
   Goa: "basemap:GA_LULC",
   Punjab: "basemap:PB_LULC",
+  "West Bengal": "basemap:WB_LULC",
+  "Andhra Pradesh": "basemap:AP_LULC",
+  "Arunachal Pradesh": "basemap:AR_LULC",
+  Bihar: "basemap:BR_LULC",
+  Chhattisgarh: "basemap:CG_LULC",
+  Gujarat: "basemap:GJ_LULC",
+  Haryana: "basemap:HR_LULC",
+  "Himachal Pradesh": "basemap:HP_LULC",
+  Jharkhand: "basemap:JH_LULC",
+  Karnataka: "basemap:KA_LULC",
+  Kerala: "basemap:KL_LULC",
+  "Madhya Pradesh": "basemap:MP_LULC",
+  Manipur: "basemap:MN_LULC",
+  Meghalaya: "basemap:ML_LULC",
+  Mizoram: "basemap:MZ_LULC",
+  Nagaland: "basemap:NL_LULC",
+  Odisha: "basemap:OD_LULC",
+  Rajasthan: "basemap:RJ_LULC",
+  Sikkim: "basemap:SK_LULC",
+  Telangana: "basemap:TS_LULC",
+  Tripura: "basemap:TR_LULC",
+  "Uttar Pradesh": "basemap:UP_LULC",
+  Uttarakhand: "basemap:UK_LULC",
+  "Andaman and Nicobar Islands": "basemap:AN_LULC",
+  Chandigarh: "basemap:CH_LULC",
+  "Dadra and Nagar Haveli and Daman and Diu": "basemap:DN_LULC",
+  Delhi: "basemap:DL_LULC",
+  "Jammu and Kashmir": "basemap:JK_LULC",
+  Ladakh: "basemap:LA_LULC",
+  Lakshadweep: "basemap:LD_LULC",
+  Puducherry: "basemap:PY_LULC",
 };
 
 /** ISRO Bhuvan's per-state Land Use / Land Cover WMS layer, if we have one. */
