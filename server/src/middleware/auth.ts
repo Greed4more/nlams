@@ -32,7 +32,7 @@ export async function requireNlamsUser(req: Request, res: Response, next: NextFu
 
   // Demo bypass path — never calls Supabase, only needs the local Postgres.
   // See server/src/lib/bypassAuth.ts.
-  if (token.startsWith(BYPASS_TOKEN_PREFIX)) {
+  if (process.env.ALLOW_DEMO_AUTH === "true" && token.startsWith(BYPASS_TOKEN_PREFIX)) {
     const principal = resolveBypassToken(token);
     if (!principal) {
       res.status(401).json({ error: "Invalid or expired bypass session" });

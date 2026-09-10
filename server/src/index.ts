@@ -45,8 +45,12 @@ app.use(
     res.status(500).json({ error: "Internal server error" });
   },
 );
-
+if (process.env.NODE_ENV === "production" && process.env.ALLOW_DEMO_AUTH === "true") {
+  console.error("Fatal: ALLOW_DEMO_AUTH MUST NOT BE TRUE in production");
+  process.exit(1);
+}
 const port = Number(process.env["PORT"] ?? 4000);
+
 app.listen(port, () => {
   console.log(`NLAMS API listening on http://localhost:${port}`);
   startSlaAlertScheduler();
