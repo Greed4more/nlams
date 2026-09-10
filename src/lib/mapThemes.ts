@@ -72,6 +72,17 @@ export const ADMIN_BOUNDARY_COLORS = {
   block: "#ec0c8c",
 } as const;
 
+/**
+ * NLAMS West Bengal 28-district target-state parcel demo (public/geo/wb_parcels).
+ * Colors deliberately distinct from ADMIN_BOUNDARY_COLORS and every
+ * MAP_THEMES.parcelStroke so the layer reads as its own thing: real
+ * Banglarbhumi-captured parcels vs. synthetic block-filler ones.
+ */
+export const WB_PARCEL_FABRIC_COLORS = {
+  real: "#16a34a",
+  synthetic: "#b45309",
+} as const;
+
 const STATE_LULC_LAYER: Record<string, string> = {
   Maharashtra: "basemap:MH_LULC",
   "Tamil Nadu": "basemap:TN_LULC",

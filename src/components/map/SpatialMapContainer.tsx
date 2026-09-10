@@ -7,8 +7,9 @@ import {
   useMap,
   useMapEvents,
 } from "react-leaflet";
+import { canvas } from "leaflet";
 import type { Layer, LeafletMouseEvent, Polygon as LeafletPolygon } from "leaflet";
-import type { Feature, FeatureCollection, Geometry, Polygon } from "geojson";
+import type { Feature, FeatureCollection, Geometry, MultiPolygon, Polygon } from "geojson";
 import { Link } from "@tanstack/react-router";
 import {
   X,
@@ -35,12 +36,18 @@ import {
   type BlockFeature,
   type BlockFeatureProperties,
 } from "@/hooks/useAdminBoundaries";
+import {
+  useWbParcelManifest,
+  useWbParcelDistrict,
+  type WbParcelFeatureProperties,
+} from "@/hooks/useWbParcels";
 import { useRole } from "@/context/RoleContext";
 import {
   MAP_THEMES,
   MAP_THEME_LIST,
   SELECTED_PARCEL_COLOR,
   ADMIN_BOUNDARY_COLORS,
+  WB_PARCEL_FABRIC_COLORS,
   lulcLayerFor,
   type MapThemeId,
 } from "@/lib/mapThemes";
@@ -101,7 +108,23 @@ type Selection =
       centroid: [number, number];
     }
   | { kind: "district"; properties: DistrictFeatureProperties; centroid: [number, number] }
-  | { kind: "block"; properties: BlockFeatureProperties; centroid: [number, number] };
+  | { kind: "block"; properties: BlockFeatureProperties; centroid: [number, number] }
+  | {
+      kind: "wbParcel";
+      properties: WbParcelFeatureProperties;
+      district: string;
+      /** [lat, lng] — from the Leaflet layer's bounds center (geometry can be
+       * Polygon or MultiPolygon), not a surveyed centroid. */
+      centroid: [number, number];
+    };
+
+/** Human-readable labels for the wb_parcels manifest's `status` field. */
+const WB_DISTRICT_STATUS_LABEL: Record<string, string> = {
+  CURRENT_23_DISTRICT: "current district",
+  CURRENT_PARENT_MINUS_PROPOSED_CARVEOUT: "current, minus proposed carve-out",
+  PROPOSED_DISTRICT_2026_BUDGET: "proposed — 2026 budget",
+  PROPOSED_REVENUE_DISTRICT_VIEW: "proposed revenue-district view",
+};
 
 /** Bumped on every "zoom to" request so repeated clicks on the same feature still refocus. */
 interface FocusRequest {
@@ -221,6 +244,25 @@ function FitToData({
   return null;
 }
 
+/** WB parcels use a dedicated Canvas renderer (thousands of polygons per
+ * district) in its own pane with an explicit z-index above the shared
+ * default overlay pane (z-index 400). Without this, whichever renderer
+ * happens to mount second — the wb_parcels static file usually beats the
+ * authenticated /api/parcels/geojson call — wins the stacking order, which
+ * would otherwise make district/block clicks silently swallow wb parcel
+ * clicks (or vice versa) depending on network timing. */
+const WB_PARCELS_PANE = "wbParcels";
+function WbParcelsPaneSetup() {
+  const map = useMap();
+  useEffect(() => {
+    if (!map.getPane(WB_PARCELS_PANE)) {
+      const pane = map.createPane(WB_PARCELS_PANE);
+      pane.style.zIndex = "410";
+    }
+  }, [map]);
+  return null;
+}
+
 /** Reports the current zoom level up so district/block layers can hide
  * detail that isn't legible at the current scale. */
 function ZoomWatcher({ onZoom }: { onZoom: (zoom: number) => void }) {
@@ -264,12 +306,27 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
   const [fitAllSignal, setFitAllSignal] = useState(0);
   const [focusRequest, setFocusRequest] = useState<FocusRequest | null>(null);
   const [zoom, setZoom] = useState(5);
+  const [showWbParcels, setShowWbParcels] = useState(false);
+  const [wbParcelDistrictSlug, setWbParcelDistrictSlug] = useState<string | null>(null);
 
   const theme = MAP_THEMES[themeId];
   const geojson = data as FeatureCollection<Polygon, ParcelFeatureProperties> | undefined;
   const lulcLayer = selected?.kind === "parcel" ? lulcLayerFor(selected.properties.state) : null;
   const blocksVisible = showBlocks && zoom >= BLOCK_VISIBLE_ZOOM;
   const adminLabelsVisible = zoom >= ADMIN_LABEL_ZOOM;
+
+  /** NLAMS West Bengal 28-district target-state parcel demo — see
+   * public/geo/wb_parcels. Opt-in and WB-only: 28 districts x up to ~9.5k
+   * parcels each is too much to fetch or render at once. */
+  const { data: wbManifest } = useWbParcelManifest();
+  const wbParcelsEnabled = stateCode === "WB" && showWbParcels;
+  const { data: wbParcelData, isLoading: wbParcelsLoading } = useWbParcelDistrict(
+    wbParcelsEnabled ? wbParcelDistrictSlug : null,
+  );
+  const wbCanvasRenderer = useMemo(
+    () => canvas({ padding: 0.5, pane: WB_PARCELS_PANE }),
+    [],
+  );
 
   /** Fly to the newly-selected state's extent and drop any stale selection
    * from the previous state — skipped on first mount, when the initial
@@ -300,6 +357,20 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
       });
     }
   }, [highlightedUlpin, geojson]);
+
+  /** Fly to a newly-selected WB parcel-fabric district once its geometry
+   * loads — fires once per slug, not on every re-render/refetch. */
+  const wbFittedSlug = useRef<string | null>(null);
+  useEffect(() => {
+    if (!wbParcelDistrictSlug || !wbParcelData || wbParcelData.features.length === 0) return;
+    if (wbFittedSlug.current === wbParcelDistrictSlug) return;
+    wbFittedSlug.current = wbParcelDistrictSlug;
+    setFocusRequest({
+      bounds: boundsOfGeometries(wbParcelData.features.map((f) => f.geometry)),
+      nonce: Date.now(),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wbParcelDistrictSlug, wbParcelData]);
 
   const selectParcel = (feature: Feature<Geometry, ParcelFeatureProperties>) => {
     if (feature.geometry.type !== "Polygon") return;
@@ -332,6 +403,19 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
   const selectBlock = (feature: BlockFeature, layer: Layer, fly: boolean) => {
     const centroid = fly ? focusOn(layer) : polygonBoundsCentroid(layer);
     setSelected({ kind: "block", properties: feature.properties, centroid });
+  };
+
+  /** wb_parcels geometry is Polygon or MultiPolygon (the real Banglarbhumi
+   * captures are MultiPolygon) — the layer's own bounds center is the only
+   * centroid that works for both. */
+  const selectWbParcel = (
+    feature: Feature<Polygon | MultiPolygon, WbParcelFeatureProperties>,
+    layer: Layer,
+  ) => {
+    const centroid = polygonBoundsCentroid(layer);
+    const district =
+      wbManifest?.find((m) => m.slug === wbParcelDistrictSlug)?.district ?? wbParcelDistrictSlug ?? "";
+    setSelected({ kind: "wbParcel", properties: feature.properties, district, centroid });
   };
 
   /** Used by the block info panel's "back to district" link, which only has
@@ -439,6 +523,30 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
     }
   };
 
+  const wbParcelStyleFor = (feature: Feature<Geometry, WbParcelFeatureProperties> | undefined) => {
+    const p = feature?.properties;
+    const active = selected?.kind === "wbParcel" && selected.properties.id === p?.id;
+    const base = p?.real ? WB_PARCEL_FABRIC_COLORS.real : WB_PARCEL_FABRIC_COLORS.synthetic;
+    return {
+      color: active ? SELECTED_PARCEL_COLOR : base,
+      weight: active ? 3 : 1,
+      fillColor: active ? SELECTED_PARCEL_COLOR : base,
+      fillOpacity: active ? 0.3 : p?.real ? 0.18 : 0.06,
+    };
+  };
+
+  // No permanent tooltips here — up to ~9.5k parcels per district would be
+  // unreadable noise (and slow); click a parcel for details instead.
+  const onEachWbParcel = (
+    feature: Feature<Geometry, WbParcelFeatureProperties>,
+    layer: Layer,
+  ) => {
+    layer.on("click", (() =>
+      selectWbParcel(feature as Feature<Polygon | MultiPolygon, WbParcelFeatureProperties>, layer)) as (
+      e: LeafletMouseEvent,
+    ) => void);
+  };
+
   // Force GeoJSON re-render when toggles that affect style/tooltips change.
   const geojsonKey = useMemo(
     () =>
@@ -454,6 +562,11 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
     () =>
       `${stateCode}-${adminLabelsVisible}-${blocksVisible}-${selected?.kind === "block" ? selected.properties.blockName : ""}`,
     [stateCode, adminLabelsVisible, blocksVisible, selected],
+  );
+  const wbParcelsKey = useMemo(
+    () =>
+      `${wbParcelDistrictSlug}-${selected?.kind === "wbParcel" ? selected.properties.id : ""}`,
+    [wbParcelDistrictSlug, selected],
   );
 
   /** WB parcels whose centroid falls inside the given block — computed lazily
@@ -574,16 +687,33 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
           <GeoJSON key={geojsonKey} data={geojson} style={styleFor} onEachFeature={onEachFeature} />
         )}
 
+        {wbParcelsEnabled && wbParcelData && (
+          <>
+            <WbParcelsPaneSetup />
+            <GeoJSON
+              key={wbParcelsKey}
+              data={wbParcelData}
+              style={wbParcelStyleFor as (feature?: Feature<Geometry>) => object}
+              onEachFeature={onEachWbParcel as (feature: Feature<Geometry>, layer: Layer) => void}
+              pane={WB_PARCELS_PANE}
+              // react-leaflet's GeoJSONProps doesn't type `renderer`, but Leaflet's
+              // GeoJSON layer forwards it to every created Path — needed here since
+              // a district's fabric can run into the thousands of polygons.
+              {...({ renderer: wbCanvasRenderer } as Record<string, unknown>)}
+            />
+          </>
+        )}
+
         <FitToData data={geojson} highlightedUlpin={highlightedUlpin} fitAllSignal={fitAllSignal} />
         <FocusOnRequest request={focusRequest} />
         <ZoomWatcher onZoom={setZoom} />
       </MapContainer>
 
-      {isLoading && (
+      {(isLoading || wbParcelsLoading) && (
         <div className="pointer-events-none absolute inset-0 grid place-items-center bg-background/40">
           <div className="flex items-center gap-2 rounded-[6px] bg-card px-3 py-2 text-[12.5px] shadow">
             <Loader2 className="size-4 animate-spin" />
-            Loading cadastral parcels…
+            {wbParcelsLoading ? "Loading WB cadastral fabric…" : "Loading cadastral parcels…"}
           </div>
         </div>
       )}
@@ -688,6 +818,47 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
             </button>
           </div>
 
+          {stateCode === "WB" && (
+            <div className="mt-3 border-t border-border pt-3">
+              <div className="label-xs">WB Cadastral Fabric (28-district demo)</div>
+              <p className="mt-1 text-[10.5px] text-muted-foreground">
+                Block-constrained demo parcels covering West Bengal's 23 current + 5 proposed
+                target districts. Mostly synthetic — not an authoritative land record.
+              </p>
+              <div className="mt-2">
+                <LayerRow
+                  label="Show cadastral fabric"
+                  checked={showWbParcels}
+                  onChange={setShowWbParcels}
+                />
+              </div>
+              <select
+                value={wbParcelDistrictSlug ?? ""}
+                onChange={(e) => setWbParcelDistrictSlug(e.target.value || null)}
+                disabled={!showWbParcels || !wbManifest}
+                className="mt-2 w-full rounded-[4px] border border-border bg-card px-2 py-1.5 text-[11.5px] font-medium text-foreground disabled:opacity-50"
+              >
+                <option value="">Select a district…</option>
+                {[...(wbManifest ?? [])]
+                  .sort((a, b) => a.district.localeCompare(b.district))
+                  .map((m) => {
+                    const statusLabel = WB_DISTRICT_STATUS_LABEL[m.status] ?? m.status;
+                    const realNote = m.realCount > 0 ? `, ${m.realCount} real` : "";
+                    return (
+                      <option key={m.slug} value={m.slug}>
+                        {m.district} ({statusLabel}) — {m.count.toLocaleString()} parcels{realNote}
+                      </option>
+                    );
+                  })}
+              </select>
+              {showWbParcels && wbParcelDistrictSlug && wbParcelData && (
+                <p className="mt-2 text-[10.5px] text-muted-foreground">
+                  {wbParcelData.disclaimer}
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="mt-3 border-t border-border pt-3">
             <div className="label-xs">Basemap</div>
             <RadioGroup
@@ -756,6 +927,28 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
           />
           <span className="text-[11px] text-muted-foreground">Block boundary</span>
         </div>
+        {wbParcelsEnabled && (
+          <>
+            <div className="mt-1 flex items-center gap-2">
+              <span
+                className="size-2.5 rounded-[2px]"
+                style={{ backgroundColor: WB_PARCEL_FABRIC_COLORS.real }}
+              />
+              <span className="text-[11px] text-muted-foreground">
+                WB fabric — real Banglarbhumi capture
+              </span>
+            </div>
+            <div className="mt-1 flex items-center gap-2">
+              <span
+                className="size-2.5 rounded-[2px]"
+                style={{ backgroundColor: WB_PARCEL_FABRIC_COLORS.synthetic }}
+              />
+              <span className="text-[11px] text-muted-foreground">
+                WB fabric — synthetic demo parcel
+              </span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Selection info panel — parcel, district, or block */}
@@ -768,7 +961,9 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
                   ? "Land Parcel Information"
                   : selected.kind === "district"
                     ? "District"
-                    : "Block"}
+                    : selected.kind === "block"
+                      ? "Block"
+                      : "WB Cadastral Fabric (Demo)"}
               </div>
               <div className="num mt-1 text-[11px] text-muted-foreground">
                 {selected.centroid[0].toFixed(6)}, {selected.centroid[1].toFixed(6)}
@@ -922,6 +1117,45 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
                 </>
               );
             })()}
+
+          {selected.kind === "wbParcel" && (
+            <>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <InfoBox label="District" value={selected.district} />
+                <InfoBox label="Block" value={selected.properties.block} />
+              </div>
+              <div
+                className={cn(
+                  "mt-3 rounded-[4px] px-2.5 py-1.5 text-[11px] font-semibold",
+                  selected.properties.real
+                    ? "bg-status-ok/10 text-status-ok"
+                    : "bg-amber-500/10 text-amber-700",
+                )}
+              >
+                {selected.properties.real
+                  ? "Real Banglarbhumi capture — approximate demo georeferencing"
+                  : "Synthetic demo parcel — not a cadastral boundary"}
+              </div>
+              <dl className="mt-4 space-y-2.5 text-[12.5px]">
+                <Row label="Parcel ID" value={selected.properties.id} mono />
+                <Row label="Mouza" value={selected.properties.mouza} />
+                <Row label="Plot No" value={selected.properties.plot} mono />
+                <Row
+                  label="Area"
+                  value={
+                    selected.properties.areaSqm > 0
+                      ? `${selected.properties.areaSqm.toLocaleString()} m²`
+                      : "Not recorded (synthetic demo)"
+                  }
+                  mono
+                />
+              </dl>
+              <p className="mt-4 border-t border-border pt-3 text-[10.5px] text-muted-foreground">
+                Demo cadastral fabric — NOT an authoritative land record. See the layers panel for
+                the full dataset disclaimer.
+              </p>
+            </>
+          )}
         </aside>
       )}
     </div>

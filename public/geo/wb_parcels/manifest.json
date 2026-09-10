@@ -1,0 +1,226 @@
+[
+  {
+    "slug": "Alipurduar",
+    "district": "Alipurduar",
+    "parentDistrict": "Alipurduar",
+    "status": "CURRENT_23_DISTRICT",
+    "count": 2075,
+    "realCount": 0
+  },
+  {
+    "slug": "Arambagh",
+    "district": "Arambagh",
+    "parentDistrict": "Hooghly",
+    "status": "PROPOSED_DISTRICT_2026_BUDGET",
+    "count": 2497,
+    "realCount": 0
+  },
+  {
+    "slug": "Bankura",
+    "district": "Bankura",
+    "parentDistrict": "Bankura",
+    "status": "CURRENT_23_DISTRICT",
+    "count": 8329,
+    "realCount": 89
+  },
+  {
+    "slug": "Basirhat",
+    "district": "Basirhat",
+    "parentDistrict": "North 24 Parganas",
+    "status": "PROPOSED_DISTRICT_2026_BUDGET",
+    "count": 3802,
+    "realCount": 0
+  },
+  {
+    "slug": "Birbhum",
+    "district": "Birbhum",
+    "parentDistrict": "Birbhum",
+    "status": "CURRENT_23_DISTRICT",
+    "count": 7846,
+    "realCount": 0
+  },
+  {
+    "slug": "Cooch_Behar",
+    "district": "Cooch Behar",
+    "parentDistrict": "Cooch Behar",
+    "status": "CURRENT_23_DISTRICT",
+    "count": 4167,
+    "realCount": 0
+  },
+  {
+    "slug": "Dakshin_Dinajpur",
+    "district": "Dakshin Dinajpur",
+    "parentDistrict": "Dakshin Dinajpur",
+    "status": "CURRENT_23_DISTRICT",
+    "count": 3255,
+    "realCount": 0
+  },
+  {
+    "slug": "Darjeeling",
+    "district": "Darjeeling",
+    "parentDistrict": "Darjeeling",
+    "status": "CURRENT_23_DISTRICT",
+    "count": 3345,
+    "realCount": 0
+  },
+  {
+    "slug": "Hooghly",
+    "district": "Hooghly",
+    "parentDistrict": "Hooghly",
+    "status": "CURRENT_PARENT_MINUS_PROPOSED_CARVEOUT",
+    "count": 5195,
+    "realCount": 0
+  },
+  {
+    "slug": "Howrah",
+    "district": "Howrah",
+    "parentDistrict": "Howrah",
+    "status": "CURRENT_23_DISTRICT",
+    "count": 5464,
+    "realCount": 0
+  },
+  {
+    "slug": "Jalpaiguri",
+    "district": "Jalpaiguri",
+    "parentDistrict": "Jalpaiguri",
+    "status": "CURRENT_23_DISTRICT",
+    "count": 2817,
+    "realCount": 0
+  },
+  {
+    "slug": "Jangipur",
+    "district": "Jangipur",
+    "parentDistrict": "Murshidabad",
+    "status": "PROPOSED_DISTRICT_2026_BUDGET",
+    "count": 2542,
+    "realCount": 0
+  },
+  {
+    "slug": "Jhargram",
+    "district": "Jhargram",
+    "parentDistrict": "Jhargram",
+    "status": "CURRENT_23_DISTRICT",
+    "count": 2999,
+    "realCount": 0
+  },
+  {
+    "slug": "Kalimpong",
+    "district": "Kalimpong",
+    "parentDistrict": "Kalimpong",
+    "status": "CURRENT_23_DISTRICT",
+    "count": 1763,
+    "realCount": 0
+  },
+  {
+    "slug": "Kolkata",
+    "district": "Kolkata",
+    "parentDistrict": "Kolkata",
+    "status": "CURRENT_23_DISTRICT",
+    "count": 329,
+    "realCount": 0
+  },
+  {
+    "slug": "Kolkata_Revenue_District",
+    "district": "Kolkata_Revenue_District",
+    "parentDistrict": "Kolkata",
+    "status": "PROPOSED_REVENUE_DISTRICT_VIEW",
+    "count": 329,
+    "realCount": 0
+  },
+  {
+    "slug": "Malda",
+    "district": "Malda",
+    "parentDistrict": "Malda",
+    "status": "CURRENT_23_DISTRICT",
+    "count": 5747,
+    "realCount": 0
+  },
+  {
+    "slug": "Murshidabad",
+    "district": "Murshidabad",
+    "parentDistrict": "Murshidabad",
+    "status": "CURRENT_PARENT_MINUS_PROPOSED_CARVEOUT",
+    "count": 7277,
+    "realCount": 0
+  },
+  {
+    "slug": "Nadia",
+    "district": "Nadia",
+    "parentDistrict": "Nadia",
+    "status": "CURRENT_23_DISTRICT",
+    "count": 7256,
+    "realCount": 0
+  },
+  {
+    "slug": "North_24_Parganas",
+    "district": "North 24 Parganas",
+    "parentDistrict": "North 24 Parganas",
+    "status": "CURRENT_PARENT_MINUS_PROPOSED_CARVEOUT",
+    "count": 5776,
+    "realCount": 1183
+  },
+  {
+    "slug": "Paschim_Bardhaman",
+    "district": "Paschim Bardhaman",
+    "parentDistrict": "Paschim Bardhaman",
+    "status": "CURRENT_23_DISTRICT",
+    "count": 3426,
+    "realCount": 0
+  },
+  {
+    "slug": "Paschim_Medinipur",
+    "district": "Paschim Medinipur",
+    "parentDistrict": "Paschim Medinipur",
+    "status": "CURRENT_23_DISTRICT",
+    "count": 8483,
+    "realCount": 0
+  },
+  {
+    "slug": "Purba_Bardhaman",
+    "district": "Purba Bardhaman",
+    "parentDistrict": "Purba Bardhaman",
+    "status": "CURRENT_23_DISTRICT",
+    "count": 8428,
+    "realCount": 0
+  },
+  {
+    "slug": "Purba_Medinipur",
+    "district": "Purba Medinipur",
+    "parentDistrict": "Purba Medinipur",
+    "status": "CURRENT_23_DISTRICT",
+    "count": 9510,
+    "realCount": 0
+  },
+  {
+    "slug": "Purulia",
+    "district": "Purulia",
+    "parentDistrict": "Purulia",
+    "status": "CURRENT_23_DISTRICT",
+    "count": 7719,
+    "realCount": 0
+  },
+  {
+    "slug": "South_24_Parganas",
+    "district": "South 24 Parganas",
+    "parentDistrict": "South 24 Parganas",
+    "status": "CURRENT_PARENT_MINUS_PROPOSED_CARVEOUT",
+    "count": 8040,
+    "realCount": 0
+  },
+  {
+    "slug": "Sundarbans",
+    "district": "Sundarbans",
+    "parentDistrict": "South 24 Parganas",
+    "status": "PROPOSED_DISTRICT_2026_BUDGET",
+    "count": 2981,
+    "realCount": 0
+  },
+  {
+    "slug": "Uttar_Dinajpur",
+    "district": "Uttar Dinajpur",
+    "parentDistrict": "Uttar Dinajpur",
+    "status": "CURRENT_23_DISTRICT",
+    "count": 3483,
+    "realCount": 0
+  }
+]

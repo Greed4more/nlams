@@ -42,7 +42,7 @@ function StageTooltip({ active, payload }: { active?: boolean; payload?: { paylo
 export function StageChart() {
   const { stageBreakdown } = useDerived();
   return (
-    <section className="panel flex h-full flex-col p-4">
+    <section className="panel flex flex-col p-4">
       <header className="mb-3">
         <h2 className="text-[13px] font-semibold text-foreground">Proposals by RFCTLARR stage</h2>
         <p className="label-xs mt-0.5">Stacked by statutory SLA status</p>
