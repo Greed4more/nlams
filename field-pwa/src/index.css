@@ -1,0 +1,233 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  color: #172b4d;
+  background: #eef3f8;
+}
+
+body {
+  margin: 0;
+}
+
+.app-shell {
+  min-height: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 18px 40px;
+}
+
+.app-header,
+.section-heading,
+.status-panel,
+.project-card {
+  display: flex;
+  align-items: center;
+}
+
+.app-header,
+.section-heading {
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.app-header {
+  padding: 12px 0 24px;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: #55708f;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 0;
+  font-size: clamp(1.8rem, 7vw, 2.8rem);
+}
+
+h2 {
+  margin-bottom: 0;
+}
+
+.badge-online,
+.badge-offline {
+  border-radius: 999px;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 10px 12px;
+  white-space: nowrap;
+}
+
+.badge-online {
+  background: #127c56;
+}
+
+.badge-offline {
+  background: #a65f00;
+}
+
+.status-panel,
+.empty-state,
+.project-card {
+  border: 1px solid #cad6e3;
+  border-radius: 10px;
+  background: white;
+  box-shadow: 0 4px 14px rgb(23 43 77 / 8%);
+}
+
+.status-panel {
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 30px;
+  padding: 16px;
+}
+
+.status-panel span,
+.project-card span,
+.project-card small,
+.empty-state p,
+.section-heading span {
+  color: #55708f;
+}
+
+.status-panel span {
+  text-align: right;
+  font-size: 0.9rem;
+}
+
+.section-heading {
+  margin-bottom: 12px;
+}
+
+.section-heading span {
+  font-size: 0.85rem;
+}
+
+.empty-state {
+  padding: 28px 20px;
+}
+
+.empty-state h3,
+.empty-state p {
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  margin-bottom: 0;
+}
+
+.project-list {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.project-card {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 5px;
+  padding: 16px;
+}
+
+.project-card small {
+  font-size: 0.78rem;
+}
+
+@media (max-width: 520px) {
+  .status-panel {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .status-panel span {
+    text-align: left;
+  }
+}
+
+@layer base {
+  html, body, #root {
+    @apply h-full;
+  }
+
+  body {
+    /* Prevent iOS bounce scroll on field app */
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer components {
+  /* Large touch-friendly button for outdoor field use */
+  .btn-field {
+    @apply min-h-[52px] px-5 py-3 rounded-field font-semibold text-field-base
+           flex items-center justify-center gap-2 active:scale-95 transition-transform;
+  }
+
+  .btn-primary {
+    @apply btn-field bg-navy text-white hover:bg-navy-light;
+  }
+
+  .btn-success {
+    @apply btn-field bg-field-green text-white;
+  }
+
+  .btn-danger {
+    @apply btn-field bg-field-red text-white;
+  }
+
+  .btn-warning {
+    @apply btn-field bg-saffron text-white;
+  }
+
+  .btn-outline {
+    @apply btn-field border-2 border-navy text-navy bg-white;
+  }
+
+  /* Card for parcel/project items */
+  .field-card {
+    @apply bg-white rounded-field shadow-sm border border-gray-200 p-4 active:bg-gray-50 transition-colors;
+  }
+
+  /* Input field - large for field use */
+  .field-input {
+    @apply w-full min-h-[52px] px-4 py-3 rounded-field border-2 border-gray-300
+           text-field-base text-gray-900 focus:border-navy focus:outline-none
+           focus:ring-2 focus:ring-navy/20 bg-white;
+  }
+
+  /* Badge styles */
+  .badge-online  { @apply bg-field-green text-white; }
+  .badge-offline { @apply bg-field-amber text-white; }
+  .badge-syncing { @apply bg-blue-600 text-white animate-pulse; }
+  .badge-error   { @apply bg-field-red text-white; }
+
+  /* Status badges for parcels */
+  .status-clear      { @apply bg-green-100 text-green-800 border border-green-300; }
+  .status-restricted { @apply bg-yellow-100 text-yellow-800 border border-yellow-300; }
+  .status-disputed   { @apply bg-red-100 text-red-800 border border-red-300; }
+  .status-possessed  { @apply bg-blue-100 text-blue-800 border border-blue-300; }
+}
+
+/* Leaflet map fix for mobile */
+.leaflet-container {
+  touch-action: none;
+}
+
+/* Safe area for iOS notch */
+.safe-top    { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }

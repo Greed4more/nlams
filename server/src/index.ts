@@ -14,7 +14,12 @@ import { scanForSlaAlerts, startSlaAlertScheduler } from "./jobs/slaAlertScanner
 
 const app = express();
 
-app.use(cors({ origin: process.env["CORS_ORIGIN"] ?? "http://localhost:8080", credentials: true }));
+// Comma-separated so the main web app (8080) and the field-pwa (5173) can
+// both reach this API in local dev without juggling separate server processes.
+const corsOrigins = (process.env["CORS_ORIGIN"] ?? "http://localhost:8080,http://localhost:5173")
+  .split(",")
+  .map((origin) => origin.trim());
+app.use(cors({ origin: corsOrigins, credentials: true }));
 app.use(express.json());
 
 app.get("/health", (_req, res) => res.json({ ok: true }));

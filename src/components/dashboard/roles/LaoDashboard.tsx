@@ -14,6 +14,7 @@ import {
   Layers,
   Scale,
   Lock,
+  Smartphone,
 } from "lucide-react";
 import { formatINR, formatINRFull, formatCrore, type Parcel, type Proposal } from "@/data/mockData";
 import { useDerived } from "../derive";
@@ -199,6 +200,28 @@ export function LaoDashboard() {
           </Link>
         </div>
       </section>
+
+      {/* Field Verification PWA — separate offline-first app (own origin &
+          service-worker scope), so it's linked to rather than embedded. */}
+      <a
+        href={(import.meta.env["VITE_FIELD_PWA_URL"] as string | undefined) ?? "http://localhost:5173"}
+        target="_blank"
+        rel="noreferrer"
+        className="panel flex items-center gap-3 p-3.5 transition-colors hover:border-navy hover:bg-navy/5"
+      >
+        <div className="rounded bg-navy/10 p-2 text-navy">
+          <Smartphone className="size-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h4 className="text-[13px] font-semibold text-foreground">
+            Field Verification App <ExternalLink className="inline size-3 text-muted-foreground" />
+          </h4>
+          <p className="mt-0.5 text-[11.5px] text-muted-foreground">
+            Offline-first PWA for on-site casework — installable, syncs assigned proposals and
+            parcel/grievance submissions automatically once connectivity returns.
+          </p>
+        </div>
+      </a>
 
       {/* Main Interactive Workbench Tabs */}
       <section className="panel overflow-hidden">
