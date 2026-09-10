@@ -13,6 +13,11 @@ import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { MisExport } from "@/components/dashboard/MisExport";
 import { useI18n } from "@/context/I18nContext";
 
+import { DolrSecretaryDashboard } from "@/components/dashboard/roles/DolrSecretaryDashboard";
+import { DistrictCollectorDashboard } from "@/components/dashboard/roles/DistrictCollectorDashboard";
+import { LaoDashboard } from "@/components/dashboard/roles/LaoDashboard";
+import { StateRevenueDashboard } from "@/components/dashboard/roles/StateRevenueDashboard";
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -46,7 +51,7 @@ function useLiveClock() {
 }
 
 function Dashboard() {
-  const { person, roleLabel } = useRole();
+  const { person, roleLabel, role, dashboardTitle } = useRole();
   const { t } = useI18n();
   const now = useLiveClock();
   const stamp = now
@@ -56,30 +61,37 @@ function Dashboard() {
   return (
     <AppShell breadcrumb={["Home", "Dashboard"]}>
       <PageHeader
-        title={t("page.dashboard.title")}
+        title={dashboardTitle || t("page.dashboard.title")}
         subtitle={`Signed in as ${person} (${roleLabel}) · Live as of ${stamp} IST`}
         actions={<MisExport />}
       />
 
-      <div className="space-y-3">
-        <KpiCards />
+      {role === "DOLR_SECRETARY" && <DolrSecretaryDashboard />}
+      {role === "DISTRICT_COLLECTOR" && <DistrictCollectorDashboard />}
+      {role === "LAO" && <LaoDashboard />}
+      {role === "STATE_REVENUE" && <StateRevenueDashboard />}
 
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-5 lg:items-start">
-          <div className="lg:col-span-3">
-            <StageChart />
+      {!role && (
+        <div className="space-y-3">
+          <KpiCards />
+
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-5 lg:items-start">
+            <div className="lg:col-span-3">
+              <StageChart />
+            </div>
+            <div className="flex flex-col gap-3 lg:col-span-2">
+              <DelayQueue />
+              <StateDistribution />
+            </div>
           </div>
-          <div className="flex flex-col gap-3 lg:col-span-2">
-            <DelayQueue />
-            <StateDistribution />
+
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+            <CompensationFlow />
+            <RRProgress />
+            <ActivityFeed />
           </div>
         </div>
-
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-          <CompensationFlow />
-          <RRProgress />
-          <ActivityFeed />
-        </div>
-      </div>
+      )}
     </AppShell>
   );
 }

@@ -1,9 +1,51 @@
-import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import type { Proposal } from "@/data/mockData";
 import { useAuth, ROLE_LABEL, ROLE_CAN_ACT, type Role } from "@/context/AuthContext";
 import { useProposalsQuery } from "@/hooks/useProposals";
 
 export const NO_CREDENTIALS_HINT = "Requires LAO credentials";
+
+export interface PersonaPreset {
+  role: Role;
+  label: string;
+  name: string;
+  states: string[];
+  district?: string;
+  description: string;
+}
+
+export const PERSONA_PRESETS: Record<Role, PersonaPreset> = {
+  DOLR_SECRETARY: {
+    role: "DOLR_SECRETARY",
+    label: "DoLR Secretary",
+    name: "Dr. Alok Kumar",
+    states: [],
+    description: "National apex overview, state comparisons & policy enforcement",
+  },
+  DISTRICT_COLLECTOR: {
+    role: "DISTRICT_COLLECTOR",
+    label: "District Collector",
+    name: "Asvin Chandru, IAS",
+    states: ["Goa"],
+    district: "South Goa",
+    description: "District governance, legal lapse tracking & R&R rehabilitation",
+  },
+  LAO: {
+    role: "LAO",
+    label: "Land Acquisition Officer",
+    name: "Rohan Dessai, GCS",
+    states: ["Goa"],
+    district: "South Goa",
+    description: "Casework execution, Section 26 awards & field title verification",
+  },
+  STATE_REVENUE: {
+    role: "STATE_REVENUE",
+    label: "State Revenue Dept",
+    name: "Vikas Deshmukh",
+    states: ["Maharashtra"],
+    description: "Inter-district monitoring, requiring body outlays & land banks",
+  },
+};
 
 interface RoleContextValue {
   role: Role | null;
@@ -19,6 +61,9 @@ interface RoleContextValue {
   proposalsLoading: boolean;
   scopedProposals: Proposal[];
   inScope: (p: Proposal) => boolean;
+  switchPersona: (role: Role) => void;
+  isOverridden: boolean;
+  resetPersona: () => void;
 }
 
 const RoleContext = createContext<RoleContextValue | null>(null);
@@ -31,15 +76,29 @@ function initialsOf(name: string): string {
 }
 
 export function RoleProvider({ children }: { children: ReactNode }) {
-  const { role, states: rawStates, displayName } = useAuth();
+  const { role: authRole, states: rawAuthStates, displayName: authDisplayName } = useAuth();
+  const [overrideRole, setOverrideRole] = useState<Role | null>(null);
+
   const { data, isLoading } = useProposalsQuery();
   const proposals = useMemo(() => data ?? [], [data]);
 
+  const activePersona = overrideRole ? PERSONA_PRESETS[overrideRole] : null;
+
+  const role = activePersona ? activePersona.role : authRole;
+  const states = activePersona
+    ? activePersona.states.length > 0
+      ? activePersona.states
+      : null
+    : rawAuthStates.length > 0
+      ? rawAuthStates
+      : null;
+
+  const displayName = activePersona ? activePersona.name : authDisplayName;
+
   const value = useMemo<RoleContextValue>(() => {
-    const states = rawStates.length > 0 ? rawStates : null;
     const inScope = (p: Proposal) => !states || states.includes(p.state);
     const roleLabel = role ? ROLE_LABEL[role] : "No role assigned";
-    const scopeLabel = states ? states.join(", ") : "All states";
+    const scopeLabel = states ? states.join(", ") : "All states (National)";
     const dashboardTitle = states ? `${roleLabel} Workspace — ${scopeLabel}` : "National Overview";
 
     return {
@@ -55,8 +114,11 @@ export function RoleProvider({ children }: { children: ReactNode }) {
       proposalsLoading: isLoading,
       scopedProposals: proposals.filter(inScope),
       inScope,
+      switchPersona: (nextRole: Role) => setOverrideRole(nextRole),
+      isOverridden: overrideRole !== null,
+      resetPersona: () => setOverrideRole(null),
     };
-  }, [role, rawStates, displayName, proposals, isLoading]);
+  }, [role, states, displayName, proposals, isLoading, overrideRole]);
 
   return <RoleContext.Provider value={value}>{children}</RoleContext.Provider>;
 }

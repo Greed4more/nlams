@@ -1,8 +1,15 @@
-import { Bell, LogOut, Menu, PlayCircle } from "lucide-react";
+import { Bell, LogOut, Menu, PlayCircle, Shield } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useRole } from "@/context/RoleContext";
-import { useAuth } from "@/context/AuthContext";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useRole, PERSONA_PRESETS } from "@/context/RoleContext";
+import { useAuth, type Role } from "@/context/AuthContext";
 import { useDemo } from "@/context/DemoContext";
 import { useI18n } from "@/context/I18nContext";
 import { LANGUAGES } from "@/lib/translations";
@@ -17,7 +24,7 @@ export function TopBar({
   breadcrumb: string[];
   onOpenNav?: () => void;
 }) {
-  const { initials, person, roleLabel } = useRole();
+  const { initials, person, roleLabel, role, switchPersona } = useRole();
   const { signOut } = useAuth();
   const { lang, setLang, t } = useI18n();
   const { breachedQueue } = useDerived();
@@ -57,6 +64,34 @@ export function TopBar({
       </div>
 
       <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        {/* Role & Persona Switcher */}
+        <div className="hidden sm:flex items-center">
+          <Select
+            value={role ?? "DOLR_SECRETARY"}
+            onValueChange={(val) => switchPersona(val as Role)}
+          >
+            <SelectTrigger className="h-8 w-[230px] rounded-[4px] border-border bg-muted/30 text-[11.5px] font-medium text-foreground">
+              <div className="flex items-center gap-1.5 truncate">
+                <Shield className="size-3.5 text-navy shrink-0" />
+                <SelectValue placeholder="Select persona" />
+              </div>
+            </SelectTrigger>
+            <SelectContent align="end" className="w-[300px]">
+              {(Object.keys(PERSONA_PRESETS) as Role[]).map((r) => {
+                const p = PERSONA_PRESETS[r];
+                return (
+                  <SelectItem key={r} value={r} className="py-2 text-[12px]">
+                    <div className="font-semibold text-foreground">{p.label}</div>
+                    <div className="text-[10.5px] text-muted-foreground leading-tight mt-0.5">
+                      {p.name} · {p.description}
+                    </div>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="inline-flex items-center overflow-hidden rounded-[4px] border border-border text-[11px] font-semibold">
           {LANGUAGES.map((l) => (
             <button
