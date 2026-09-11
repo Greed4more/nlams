@@ -4,9 +4,6 @@ import {
   ShieldCheck,
   ShieldAlert,
   Loader2,
-  Link2,
-  Copy,
-  Check,
   Eye,
   Hash,
   FileCheck2,
@@ -24,7 +21,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -48,59 +44,24 @@ const fmt = (iso: string) =>
     second: "2-digit",
   });
 
-function truncateHash(hash: string | null | undefined, head = 8, tail = 6): string {
-  if (!hash) return "—";
-  if (hash === GENESIS_HASH) return "0000...0000 (GENESIS)";
-  if (hash.length <= head + tail) return hash;
-  return `${hash.slice(0, head)}…${hash.slice(-tail)}`;
-}
-
-function CopyChip({
-  value,
-  label,
-  monospace = true,
-  className,
-}: {
-  value: string;
-  label: string;
-  monospace?: boolean;
-  className?: string | undefined;
-}) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    void navigator.clipboard?.writeText(value);
-    setCopied(true);
-    toast.success(`${label} copied to clipboard`);
-    setTimeout(() => setCopied(false), 1500);
-  };
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          onClick={handleCopy}
-          className={cn(
-            "group inline-flex items-center gap-1 rounded-[4px] border border-border bg-muted/40 px-1.5 py-0.5 text-[10.5px] transition-colors hover:bg-muted",
-            monospace && "font-mono",
-            className,
-          )}
-        >
-          <span>{truncateHash(value)}</span>
-          {copied ? (
-            <Check className="size-2.5 text-status-ok" />
-          ) : (
-            <Copy className="size-2.5 opacity-40 group-hover:opacity-100" />
-          )}
-        </button>
-      </TooltipTrigger>
-      <TooltipContent side="top" className="font-mono text-[11px] max-w-xs break-all">
-        {value} (Click to copy)
-      </TooltipContent>
-    </Tooltip>
-  );
+/** Recursively strips hash-carrying fields so hashes never surface in the vault display. */
+function sanitizePayload(payload: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, rawValue] of Object.entries(payload)) {
+    if (/hash/i.test(key)) continue;
+    if (Array.isArray(rawValue)) {
+      out[key] = rawValue.map((v) =>
+        v && typeof v === "object" && !Array.isArray(v)
+          ? sanitizePayload(v as Record<string, unknown>)
+          : v,
+      );
+    } else if (rawValue && typeof rawValue === "object") {
+      out[key] = sanitizePayload(rawValue as Record<string, unknown>);
+    } else {
+      out[key] = rawValue;
+    }
+  }
+  return out;
 }
 
 export function AuditTrail({ proposalId }: { proposalId: string }) {
@@ -252,57 +213,28 @@ export function AuditTrail({ proposalId }: { proposalId: string }) {
                 </div>
               </div>
 
-              {/* Cryptographic Linkage Row */}
+              {/* Cryptographic Linkage Status — hash values are never exposed to the client */}
               <div className="flex flex-wrap items-center gap-2 rounded-[4px] bg-muted/20 p-2 text-[11px]">
-                {/* Parent Hash */}
-                <div className="flex items-center gap-1">
-                  <span className="text-muted-foreground">Parent:</span>
-                  {entry.previousHash ? (
-                    <CopyChip
-                      value={entry.previousHash}
-                      label="Previous Block Hash"
-                      className={isGenesisChild ? "border-navy/30 bg-navy/5 text-navy" : undefined}
-                    />
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
+                <div className="flex items-center gap-1.5">
+                  <ShieldCheck className="size-3 text-status-ok" />
+                  <span className="text-muted-foreground">Cryptographic link:</span>
+                  <span className="font-semibold text-foreground">
+                    {isGenesisChild ? "Genesis chain root" : "Chained to parent block"}
+                  </span>
                 </div>
 
-                <Link2 className="size-3 text-muted-foreground/60 shrink-0" />
-
-                {/* Current Block Hash */}
-                <div className="flex items-center gap-1">
-                  <span className="font-medium text-foreground">Block Hash:</span>
-                  {entry.chainHash ? (
-                    <CopyChip
-                      value={entry.chainHash}
-                      label="Current Block Hash"
-                      className="border-status-info/30 bg-status-info/5 text-status-info font-bold"
-                    />
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </div>
-
-                {/* Payload Checksum */}
                 {entry.eventPayloadHash && (
-                  <div className="flex items-center gap-1 ml-auto">
-                    <span className="text-muted-foreground">Payload SHA-256:</span>
-                    <CopyChip value={entry.eventPayloadHash} label="Payload Checksum" />
-                  </div>
+                  <span className="inline-flex items-center gap-1 rounded-[4px] border border-status-ok/30 bg-status-ok/10 px-1.5 py-0.5 font-semibold text-status-ok">
+                    <FileCheck2 className="size-3" />
+                    Event payload anchored
+                  </span>
                 )}
 
-                {/* File Checksum */}
                 {entry.fileHash && (
-                  <div className="flex items-center gap-1">
-                    <FileCheck2 className="size-3 text-status-ok" />
-                    <span className="text-muted-foreground">File SHA-256:</span>
-                    <CopyChip
-                      value={entry.fileHash}
-                      label="File Checksum"
-                      className="border-status-ok/30 bg-status-ok/5 text-status-ok"
-                    />
-                  </div>
+                  <span className="inline-flex items-center gap-1 rounded-[4px] border border-status-ok/30 bg-status-ok/10 px-1.5 py-0.5 font-semibold text-status-ok">
+                    <FileCheck2 className="size-3" />
+                    Document bytes anchored
+                  </span>
                 )}
               </div>
 
@@ -310,7 +242,9 @@ export function AuditTrail({ proposalId }: { proposalId: string }) {
               <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                 <span>Signed by:</span>
                 <span className="font-medium text-foreground">
-                  {entry.actor ? `${entry.actor.name} (${entry.actor.role})` : "System Automated Action"}
+                  {entry.actor
+                    ? `${entry.actor.name} (${entry.actor.role})`
+                    : "System Automated Action"}
                 </span>
               </div>
             </div>
@@ -325,7 +259,8 @@ export function AuditTrail({ proposalId }: { proposalId: string }) {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-[16px]">
                 <Hash className="size-4 text-navy" />
-                Cryptographic Block Inspection · Block #{String(inspectingBlock.blockHeight).padStart(3, "0")}
+                Cryptographic Block Inspection · Block #
+                {String(inspectingBlock.blockHeight).padStart(3, "0")}
               </DialogTitle>
               <DialogDescription className="text-[12px]">
                 Mathematical proof and SHA-256 hash chaining under RFCTLARR Act 2013 audit vault.
@@ -337,16 +272,17 @@ export function AuditTrail({ proposalId }: { proposalId: string }) {
               <div className="rounded-[4px] border border-border bg-muted/40 p-2.5">
                 <div className="font-semibold text-foreground text-[11.5px]">Hash Formula:</div>
                 <code className="mt-1 block font-mono text-[11px] text-navy break-all">
-                  chainHash = SHA-256(previousHash : proposalId : action : eventPayloadHash : fileHash)
+                  chainHash = SHA-256(previousHash : proposalId : action : eventPayloadHash :
+                  fileHash)
                 </code>
               </div>
 
               {/* Verification check result */}
               <div className="flex items-center justify-between rounded-[4px] border border-border p-2.5">
                 <div>
-                  <div className="font-medium text-foreground">Client-side Independent Web Crypto Proof:</div>
+                  <div className="font-medium text-foreground">Independent Web Crypto Proof:</div>
                   <div className="text-[11px] text-muted-foreground">
-                    Recomputed directly in your browser using standard Web Crypto API.
+                    Result verification performed against the vault — hash values are never exposed.
                   </div>
                 </div>
                 {isVerifyingBlock ? (
@@ -364,39 +300,6 @@ export function AuditTrail({ proposalId }: { proposalId: string }) {
                 )}
               </div>
 
-              {/* Hash parameters breakdown */}
-              <div className="space-y-2 rounded-[4px] border border-border p-2.5 font-mono text-[11px]">
-                <div>
-                  <span className="text-muted-foreground">previousHash:</span>
-                  <div className="mt-0.5 break-all text-foreground select-all bg-muted/30 p-1 rounded">
-                    {inspectingBlock.previousHash ?? GENESIS_HASH}
-                  </div>
-                </div>
-
-                <div>
-                  <span className="text-muted-foreground">eventPayloadHash:</span>
-                  <div className="mt-0.5 break-all text-foreground select-all bg-muted/30 p-1 rounded">
-                    {inspectingBlock.eventPayloadHash ?? "—"}
-                  </div>
-                </div>
-
-                {inspectingBlock.fileHash && (
-                  <div>
-                    <span className="text-muted-foreground">fileHash (Attached Document):</span>
-                    <div className="mt-0.5 break-all text-status-ok select-all bg-muted/30 p-1 rounded">
-                      {inspectingBlock.fileHash}
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <span className="text-muted-foreground font-semibold">chainHash (Block Signature):</span>
-                  <div className="mt-0.5 break-all text-status-info font-bold select-all bg-status-info/5 p-1 rounded border border-status-info/20">
-                    {inspectingBlock.chainHash}
-                  </div>
-                </div>
-              </div>
-
               {/* Raw payload */}
               {inspectingBlock.metadata && (
                 <div>
@@ -404,7 +307,7 @@ export function AuditTrail({ proposalId }: { proposalId: string }) {
                     Canonical Event Payload (Input Data):
                   </div>
                   <pre className="max-h-36 overflow-auto rounded-[4px] border border-border bg-muted/20 p-2 font-mono text-[10.5px] select-all">
-                    {JSON.stringify(inspectingBlock.metadata, null, 2)}
+                    {JSON.stringify(sanitizePayload(inspectingBlock.metadata), null, 2)}
                   </pre>
                 </div>
               )}
