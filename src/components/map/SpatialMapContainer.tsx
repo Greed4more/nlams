@@ -305,7 +305,7 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
   const [selected, setSelected] = useState<Selection | null>(null);
   const [fitAllSignal, setFitAllSignal] = useState(0);
   const [focusRequest, setFocusRequest] = useState<FocusRequest | null>(null);
-  const [zoom, setZoom] = useState(5);
+  const [zoom, setZoom] = useState(8);
   const [showWbParcels, setShowWbParcels] = useState(false);
   const [wbParcelDistrictSlug, setWbParcelDistrictSlug] = useState<string | null>(null);
 
@@ -330,7 +330,8 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
 
   /** Fly to the newly-selected state's extent and drop any stale selection
    * from the previous state — skipped on first mount, when the initial
-   * [22.5, 79] zoom-5 view is already a reasonable national framing. */
+   * [22.54, 88.21] zoom-8 view already frames the seeded West Bengal
+   * demo districts (Kolkata/Haora/Hugli/24 Parganas/Paschim Medinipur). */
   const mountedStateCode = useRef(stateCode);
   useEffect(() => {
     if (stateCode === mountedStateCode.current) return;
@@ -617,8 +618,8 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
       </div>
 
       <MapContainer
-        center={[22.5, 79]}
-        zoom={5}
+        center={[22.54, 88.21]}
+        zoom={8}
         scrollWheelZoom
         className="size-full"
         style={{ background: "#0b1220" }}
