@@ -11,6 +11,7 @@ import {
 import { ChevronDown, ChevronRight, ShieldCheck, X } from "lucide-react";
 import { toast } from "sonner";
 import { computeCompensation } from "@/lib/compensation";
+import { computePayloadSha256 } from "@/lib/clientCrypto";
 import { formatINRFull, formatCrore } from "@/data/mockData";
 import { useProposalsQuery } from "@/hooks/useProposals";
 import { Input } from "@/components/ui/input";
@@ -44,7 +45,7 @@ function useCountUp(value: number) {
 }
 
 export function CompensationCalculator() {
-  const { canAct } = useRole();
+  const { canAct, person, role } = useRole();
   const spotlight = useSpotlight("calculator-breakdown");
   const search = CalculatorRoute.useSearch();
   const { data: proposals } = useProposalsQuery();
@@ -62,6 +63,7 @@ export function CompensationCalculator() {
   const [overrideOpen, setOverrideOpen] = useState(false);
   const [overrideAmount, setOverrideAmount] = useState("");
   const [justification, setJustification] = useState("");
+  const [overrideSubmitting, setOverrideSubmitting] = useState(false);
 
   const [prefillUlpin, setPrefillUlpin] = useState<string | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
@@ -293,11 +295,30 @@ export function CompensationCalculator() {
                 </Field>
                 <button
                   type="button"
-                  disabled={!overrideAmount.trim() || justification.trim().length < 10}
-                  onClick={() => {
-                    toast.success("Override recorded and anchored to audit trail — hash 0x8f2a…", {
-                      description: `Revised award ${formatINRFull(Number(overrideAmount) || 0)} logged against the officer's credential.`,
-                    });
+                  disabled={
+                    !overrideAmount.trim() || justification.trim().length < 10 || overrideSubmitting
+                  }
+                  onClick={async () => {
+                    const revisedAward = Number(overrideAmount) || 0;
+                    const record = {
+                      type: "COMPENSATION_OVERRIDE",
+                      proposalUlpin: search.ulpin ?? null,
+                      originalAward: result.finalAward,
+                      revisedAward,
+                      justification,
+                      officer: person,
+                      role,
+                      computedAt: new Date().toISOString(),
+                    };
+                    setOverrideSubmitting(true);
+                    try {
+                      const hash = await computePayloadSha256(record);
+                      toast.success("Override recorded and anchored to audit trail", {
+                        description: `Revised award ${formatINRFull(revisedAward)} logged against the officer's credential. Integrity hash ${hash.slice(0, 16)}…`,
+                      });
+                    } finally {
+                      setOverrideSubmitting(false);
+                    }
                   }}
                   className="rounded-[4px] bg-navy px-3 py-1.5 text-[12.5px] font-semibold text-navy-foreground disabled:opacity-45"
                 >
