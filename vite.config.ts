@@ -34,7 +34,9 @@ export default defineConfig(async ({ command, mode }) => {
 
   if (command === "build") {
     const { nitro } = await import("nitro/vite");
-    plugins.push(nitro({ defaultPreset: "cloudflare-module" }));
+    // Overridable via the NITRO_PRESET env var (Nitro reads it automatically);
+    // defaults to Vercel since that's where this app is deployed from.
+    plugins.push(nitro({ defaultPreset: "vercel" }));
   }
 
   const config: UserConfig = {

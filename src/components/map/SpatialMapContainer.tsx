@@ -1149,7 +1149,74 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
                   }
                   mono
                 />
+                <Row
+                  label="Khatian"
+                  value={
+                    selected.properties.khatianNo
+                      ? `${selected.properties.khatianType} ${selected.properties.khatianNo}`
+                      : "—"
+                  }
+                  mono
+                />
               </dl>
+
+              <div className="mt-4 border-t border-border pt-3">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Land Record
+                </div>
+                <dl className="mt-2 space-y-2.5 text-[12.5px]">
+                  <Row
+                    label="Classification"
+                    value={selected.properties.landClassification || "—"}
+                  />
+                  <Row label="Current Use" value={selected.properties.currentLandUse || "—"} />
+                  {selected.properties.cropType && (
+                    <Row
+                      label="Crop"
+                      value={`${selected.properties.cropType} · ${selected.properties.croppingIntensity || "—"}`}
+                    />
+                  )}
+                  <Row
+                    label="Irrigation"
+                    value={
+                      selected.properties.irrigationSource
+                        ? `${selected.properties.irrigationStatus} (${selected.properties.irrigationSource})`
+                        : selected.properties.irrigationStatus || "—"
+                    }
+                  />
+                  <Row
+                    label="Government Land"
+                    value={selected.properties.governmentLand ? "Yes" : "No"}
+                  />
+                </dl>
+              </div>
+
+              <div className="mt-4 border-t border-border pt-3">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Ownership & Status
+                </div>
+                <dl className="mt-2 space-y-2.5 text-[12.5px]">
+                  <Row label="Ownership" value={selected.properties.ownershipType || "—"} />
+                  <Row label="Owners" value={String(selected.properties.ownerCount)} mono />
+                  {selected.properties.tenancyStatus && (
+                    <Row label="Tenancy" value={selected.properties.tenancyStatus} />
+                  )}
+                  <Row label="Mutation" value={selected.properties.mutationStatus || "—"} />
+                  <Row label="RoR Status" value={selected.properties.rorStatus || "—"} />
+                  <Row label="Encumbrance" value={selected.properties.encumbranceStatus || "—"} />
+                  <Row label="Litigation" value={selected.properties.litigationStatus || "—"} />
+                  <Row
+                    label="Field Verification"
+                    value={selected.properties.fieldVerificationStatus || "—"}
+                  />
+                  <Row
+                    label="Last Verified"
+                    value={selected.properties.lastVerifiedDate || "—"}
+                    mono
+                  />
+                </dl>
+              </div>
+
               <p className="mt-4 border-t border-border pt-3 text-[10.5px] text-muted-foreground">
                 Demo cadastral fabric — NOT an authoritative land record. See the layers panel for
                 the full dataset disclaimer.

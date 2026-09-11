@@ -6,7 +6,7 @@
 //
 // Usage: node scripts/convert-wb-parcels.mjs [sourceDir] [outDir]
 // Defaults assume the source folder sits next to this repo, as provided:
-//   ../NLAMS_WB_28_District_Parcels  ->  public/geo/wb_parcels/
+//   ../NLAMS_WB_28_District_Parcels_Modified  ->  public/geo/wb_parcels/
 
 import { readFileSync, readdirSync, writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
 const sourceDir = path.resolve(
-  process.argv[2] ?? path.join(repoRoot, "..", "NLAMS_WB_28_District_Parcels"),
+  process.argv[2] ?? path.join(repoRoot, "..", "NLAMS_WB_28_District_Parcels_Modified"),
 );
 const outDir = path.resolve(process.argv[3] ?? path.join(repoRoot, "public", "geo", "wb_parcels"));
 
@@ -135,6 +135,30 @@ for (const file of files) {
         plot: r[col.plot_no],
         areaSqm: Math.round(Number(r[col.area_sqm]) * 10) / 10,
         real: isReal,
+        // Cadastral record fields, added from the "Modified" source CSVs —
+        // still demo attribute data, not an authoritative land record.
+        khatianType: r[col.khatian_type],
+        khatianNo: r[col.khatian_no],
+        legalStatus: r[col.legal_status],
+        landRecordStatus: r[col.land_record_status],
+        mutationStatus: r[col.mutation_status],
+        rorStatus: r[col.ror_status],
+        landClassification: r[col.land_classification],
+        currentLandUse: r[col.current_land_use],
+        cropType: r[col.crop_type],
+        croppingIntensity: r[col.cropping_intensity],
+        irrigationStatus: r[col.irrigation_status],
+        irrigationSource: r[col.irrigation_source],
+        governmentLand: r[col.government_land_flag] === "Yes",
+        ownerCount: Number(r[col.owner_count]) || 0,
+        ownershipType: r[col.ownership_type],
+        tenancyStatus: r[col.tenancy_status],
+        encumbranceStatus: r[col.encumbrance_status],
+        litigationStatus: r[col.litigation_status],
+        ownershipVerification: r[col.ownership_verification],
+        fieldVerificationStatus: r[col.field_verification_status],
+        boundaryVerification: r[col.boundary_verification],
+        lastVerifiedDate: r[col.last_verified_date],
       },
     });
   }
@@ -161,4 +185,6 @@ for (const file of files) {
 }
 
 writeFileSync(path.join(outDir, "manifest.json"), JSON.stringify(manifest, null, 2));
-console.log(`\nWrote ${files.length} district files + manifest.json (${grandTotal} parcels total) to ${outDir}`);
+console.log(
+  `\nWrote ${files.length} district files + manifest.json (${grandTotal} parcels total) to ${outDir}`,
+);

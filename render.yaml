@@ -1,0 +1,26 @@
+# Render Blueprint for the NLAMS API (server/). Import this repo at
+# render.com/select-repo → Render finds this file automatically.
+# Secrets (marked sync: false) must be filled in on the Render dashboard
+# after the first deploy fails — Render won't let you type them here.
+services:
+  - type: web
+    name: nlams-api
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install && npx prisma generate && npx prisma migrate deploy && npm run build
+    startCommand: npm run start
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false # Supabase Settings → Database → Connection string (URI, port 5432)
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false # your Vercel frontend URL, e.g. https://nlams.vercel.app
+      - key: ALLOW_DEMO_AUTH
+        value: "true"
+      - key: BYPASS_PASSWORD
+        value: "nlams-demo-2026"

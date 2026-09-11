@@ -16,6 +16,30 @@ export interface WbParcelFeatureProperties {
   plot: string;
   areaSqm: number;
   real: boolean;
+  /** Cadastral record fields carried from the "Modified" NLAMS source CSVs —
+   * still demo attribute data, not an authoritative land record. */
+  khatianType: string;
+  khatianNo: string;
+  legalStatus: string;
+  landRecordStatus: string;
+  mutationStatus: string;
+  rorStatus: string;
+  landClassification: string;
+  currentLandUse: string;
+  cropType: string;
+  croppingIntensity: string;
+  irrigationStatus: string;
+  irrigationSource: string;
+  governmentLand: boolean;
+  ownerCount: number;
+  ownershipType: string;
+  tenancyStatus: string;
+  encumbranceStatus: string;
+  litigationStatus: string;
+  ownershipVerification: string;
+  fieldVerificationStatus: string;
+  boundaryVerification: string;
+  lastVerifiedDate: string;
 }
 
 export type WbParcelFeatureCollection = FeatureCollection<
