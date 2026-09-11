@@ -33,12 +33,14 @@ export function LaoDashboard() {
 
   // All parcels in the officer's jurisdiction
   const allParcels: { parcel: Parcel; proposal: Proposal }[] = scopedProposals.flatMap((p) =>
-    p.parcels.map((parcel) => ({ parcel, proposal: p }))
+    p.parcels.map((parcel) => ({ parcel, proposal: p })),
   );
 
   // Parcels needing award calculation (assessed == 0 or not fully disbursed)
   const pendingAwardParcels = allParcels.filter(
-    ({ parcel }) => parcel.compensationAssessed === 0 || parcel.compensationDisbursed < parcel.compensationAssessed
+    ({ parcel }) =>
+      parcel.compensationAssessed === 0 ||
+      parcel.compensationDisbursed < parcel.compensationAssessed,
   );
 
   // Spatial & restriction flagged parcels
@@ -46,13 +48,13 @@ export function LaoDashboard() {
     ({ parcel }) =>
       parcel.restrictionFlags.length > 0 ||
       parcel.provenance === "LEGACY_MIGRATED" ||
-      parcel.provenance === "SELF_DECLARED_PENDING"
+      parcel.provenance === "SELF_DECLARED_PENDING",
   );
 
   // Filter grievances in scope
   const districtProposalIds = new Set(scopedProposals.map((p) => p.id));
   const districtGrievances = grievances.filter(
-    (g) => districtProposalIds.has(g.proposalId) || g.proposal?.district === "South Goa"
+    (g) => districtProposalIds.has(g.proposalId) || g.proposal?.district === "South Goa",
   );
 
   return (
@@ -71,7 +73,8 @@ export function LaoDashboard() {
               Land Acquisition Officer (LAO) Statutory Execution Docket
             </h2>
             <p className="mt-0.5 text-[12.5px] text-white/80">
-              Assigned to {person} (LAO). Authorized statutory casework officer for Section 26 market value awards, ULPIN parcel survey verification, and 15-day objection disposal.
+              Assigned to {person} (LAO). Authorized statutory casework officer for Section 26
+              market value awards, ULPIN parcel survey verification, and 15-day objection disposal.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -204,7 +207,9 @@ export function LaoDashboard() {
       {/* Field Verification PWA — separate offline-first app (own origin &
           service-worker scope), so it's linked to rather than embedded. */}
       <a
-        href={(import.meta.env["VITE_FIELD_PWA_URL"] as string | undefined) ?? "http://localhost:5173"}
+        href={
+          (import.meta.env["VITE_FIELD_PWA_URL"] as string | undefined) ?? "http://localhost:5173"
+        }
         target="_blank"
         rel="noreferrer"
         className="panel flex items-center gap-3 p-3.5 transition-colors hover:border-navy hover:bg-navy/5"
@@ -250,13 +255,25 @@ export function LaoDashboard() {
               <table className="w-full border-collapse text-[12.5px]">
                 <thead className="bg-muted/40">
                   <tr>
-                    <th className="label-xs border-b border-border px-3 py-2 text-left">ULPIN &amp; Survey No</th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-left">
+                      ULPIN &amp; Survey No
+                    </th>
                     <th className="label-xs border-b border-border px-3 py-2 text-left">Project</th>
-                    <th className="label-xs border-b border-border px-3 py-2 text-left">Recorded Owner</th>
-                    <th className="label-xs border-b border-border px-3 py-2 text-right">Area (Ha)</th>
-                    <th className="label-xs border-b border-border px-3 py-2 text-left">Provenance</th>
-                    <th className="label-xs border-b border-border px-3 py-2 text-right">Current Assessed</th>
-                    <th className="label-xs border-b border-border px-3 py-2 text-center">Action</th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-left">
+                      Recorded Owner
+                    </th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-right">
+                      Area (Ha)
+                    </th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-left">
+                      Provenance
+                    </th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-right">
+                      Current Assessed
+                    </th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-center">
+                      Action
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -290,12 +307,14 @@ export function LaoDashboard() {
                         {parcel.areaHa.toFixed(2)}
                       </td>
                       <td className="px-3 py-2.5">
-                        <span className={cn(
-                          "rounded px-1.5 py-0.5 text-[10px] font-medium",
-                          parcel.provenance === "ULPIN_VERIFIED"
-                            ? "bg-status-ok/10 text-status-ok"
-                            : "bg-status-warn/15 text-amber-800"
-                        )}>
+                        <span
+                          className={cn(
+                            "rounded px-1.5 py-0.5 text-[10px] font-medium",
+                            parcel.provenance === "ULPIN_VERIFIED"
+                              ? "bg-status-ok/10 text-status-ok"
+                              : "bg-status-warn/15 text-amber-800",
+                          )}
+                        >
                           {parcel.provenance.replace("_", " ")}
                         </span>
                       </td>
@@ -321,8 +340,12 @@ export function LaoDashboard() {
                   ))}
                   {pendingAwardParcels.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="p-6 text-center text-muted-foreground text-[12.5px]">
-                        All cadastral parcels in jurisdiction have valid Section 26 awards determined.
+                      <td
+                        colSpan={7}
+                        className="p-6 text-center text-muted-foreground text-[12.5px]"
+                      >
+                        All cadastral parcels in jurisdiction have valid Section 26 awards
+                        determined.
                       </td>
                     </tr>
                   )}
@@ -337,19 +360,33 @@ export function LaoDashboard() {
               <table className="w-full border-collapse text-[12.5px]">
                 <thead className="bg-muted/40">
                   <tr>
-                    <th className="label-xs border-b border-border px-3 py-2 text-left">Case ID &amp; Project</th>
-                    <th className="label-xs border-b border-border px-3 py-2 text-left">Current Stage</th>
-                    <th className="label-xs border-b border-border px-3 py-2 text-right">Parcels</th>
-                    <th className="label-xs border-b border-border px-3 py-2 text-right">Affected Families</th>
-                    <th className="label-xs border-b border-border px-3 py-2 text-left">Documents</th>
-                    <th className="label-xs border-b border-border px-3 py-2 text-center">Executive Action</th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-left">
+                      Case ID &amp; Project
+                    </th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-left">
+                      Current Stage
+                    </th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-right">
+                      Parcels
+                    </th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-right">
+                      Affected Families
+                    </th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-left">
+                      Documents
+                    </th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-center">
+                      Executive Action
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {scopedProposals.map((p) => (
                     <tr key={p.id} className="hover:bg-muted/30">
                       <td className="px-3 py-2.5">
-                        <span className="font-mono text-[11px] font-semibold text-navy">{p.id}</span>
+                        <span className="font-mono text-[11px] font-semibold text-navy">
+                          {p.id}
+                        </span>
                         <div className="font-semibold text-foreground">{p.projectName}</div>
                         <div className="text-[11px] text-muted-foreground">{p.requiringBody}</div>
                       </td>
@@ -358,7 +395,11 @@ export function LaoDashboard() {
                           {p.currentStage}
                         </span>
                         <div className="num mt-1 text-[11px] text-muted-foreground">
-                          Entered: {new Date(p.stageEnteredAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}
+                          Entered:{" "}
+                          {new Date(p.stageEnteredAt).toLocaleDateString("en-IN", {
+                            day: "2-digit",
+                            month: "short",
+                          })}
                         </div>
                       </td>
                       <td className="num px-3 py-2.5 text-right font-medium">
@@ -396,10 +437,18 @@ export function LaoDashboard() {
                 <thead className="bg-muted/40">
                   <tr>
                     <th className="label-xs border-b border-border px-3 py-2 text-left">ULPIN</th>
-                    <th className="label-xs border-b border-border px-3 py-2 text-left">Owner / Khasra</th>
-                    <th className="label-xs border-b border-border px-3 py-2 text-left">Verification Flag</th>
-                    <th className="label-xs border-b border-border px-3 py-2 text-left">Statutory Risk</th>
-                    <th className="label-xs border-b border-border px-3 py-2 text-center">Action</th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-left">
+                      Owner / Khasra
+                    </th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-left">
+                      Verification Flag
+                    </th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-left">
+                      Statutory Risk
+                    </th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-center">
+                      Action
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -416,7 +465,10 @@ export function LaoDashboard() {
                       </td>
                       <td className="px-3 py-2.5">
                         {parcel.restrictionFlags.map((flag) => (
-                          <span key={flag} className="mr-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">
+                          <span
+                            key={flag}
+                            className="mr-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800"
+                          >
                             {flag}
                           </span>
                         ))}
@@ -474,10 +526,9 @@ export function LaoDashboard() {
                       {block.projectName || block.proposalId}
                     </span>
                   </div>
-                  <div className="mt-0.5 flex items-center gap-2 font-mono text-[10.5px] text-muted-foreground">
-                    <span>Prev: {block.previousHash.slice(0, 10)}…</span>
-                    <span>→</span>
-                    <span className="text-foreground font-semibold">Block: {block.chainHash.slice(0, 12)}…</span>
+                  <div className="mt-0.5 flex items-center gap-1.5 text-[10.5px] text-muted-foreground">
+                    <ShieldCheck className="size-3 text-status-ok" />
+                    <span>Cryptographically chained — hash values not exposed</span>
                   </div>
                 </div>
                 <div className="text-right shrink-0">
@@ -486,7 +537,12 @@ export function LaoDashboard() {
                     Verified
                   </span>
                   <div className="num mt-0.5 text-[10.5px] text-muted-foreground">
-                    {new Date(block.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    {new Date(block.createdAt).toLocaleDateString("en-IN", {
+                      day: "2-digit",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </div>
                 </div>
               </div>
