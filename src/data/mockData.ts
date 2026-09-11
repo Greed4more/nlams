@@ -332,11 +332,11 @@ const DISTRICTS: Record<string, string[]> = {
   Odisha: ["Khordha", "Cuttack", "Ganjam"],
   Rajasthan: ["Jaipur", "Jodhpur", "Udaipur"],
   Sikkim: ["East District", "South District"],
-  Telangana: ["Hydrabad", "Rangareddy", "Warangal (U)"],
+  Telangana: ["Hyderabad", "Rangareddy", "Warangal (U)"],
   Tripura: ["West Tripura", "Gomati"],
   "Uttar Pradesh": ["Lucknow", "Kanpur Nagar", "Ghaziabad"],
   Uttarakhand: ["Dehradun", "Hardwar", "Nainital"],
-  "Andaman and Nicobar Islands": ["South Andaman", "North  & Middle Andaman"],
+  "Andaman and Nicobar Islands": ["South Andaman", "North & Middle Andaman"],
   Chandigarh: ["Chandigarh"],
   "Dadra and Nagar Haveli and Daman and Diu": ["Diu", "Daman"],
   Delhi: ["New Delhi", "South", "North West"],
@@ -649,38 +649,215 @@ const REQUIRING_BODIES = [
   "State Industrial Development Corp",
 ] as const;
 
-const PROJECT_NAMES = [
-  "Mumbai–Ahmedabad HSR Corridor – Package 4",
-  "NH-66 Six-Laning Kundapura–Surathkal",
-  "Chennai Metro Phase II Reach 3",
-  "Bharatmala Pariyojana NH-548E Link Road",
-  "Guwahati Ring Road – Package 2",
-  "NTPC Talcher Super Thermal Expansion – Ash Dyke",
-  "Mopa Greenfield Airport – Perimeter Access Corridor",
-  "Ludhiana–Bathinda Economic Corridor Package 3",
-  "Dedicated Freight Corridor – Eastern Arm Feeder",
-  "Salem–Coimbatore Expressway Package 1",
-  "Nagpur Metro Phase II Reach 4",
-  "Palghar Industrial Township – Phase I",
-  "NH-37 Widening Nagaon–Dibrugarh Section",
-  "Amritsar Bypass Realignment – Package 2",
-  "Madurai Outer Ring Road – Package 5",
-  "Thane Creek Bridge Approach Works",
-  "NTPC Solar Park – Bathinda Block A",
-  "Coimbatore Airport Runway Extension",
-  "Raigad Port Connectivity Rail Link",
-  "Sonitpur Flood Protection Embankment Corridor",
-  "Patiala Bulk Water Transmission Main",
-  "South Goa Coastal Highway Realignment",
-  "Nashik–Pune Semi High Speed Rail – Package 6",
-  "Tiruvallur Industrial Water Pipeline Corridor",
-  "Kamrup Multimodal Logistics Park",
-  "Kolkata Metro Line 6 Extension",
-  "Hugli River Bridge Approach Corridor",
-  "Paschim Medinipur Industrial Corridor Link Road",
-  "North Twenty Four Parganas Flood Control Embankment",
-  "South Twenty Four Parganas Coastal Protection Works",
-] as const;
+/**
+ * Project names keyed by state — mirrors OWNER_NAMES and DISTRICTS structure.
+ * Every entry is geographically plausible for that state so a project name
+ * from Tamil Nadu can never appear on an Assam proposal.
+ */
+const PROJECT_NAMES_BY_STATE: Record<string, readonly string[]> = {
+  Maharashtra: [
+    "Mumbai–Ahmedabad HSR Corridor – Package 4",
+    "Nagpur Metro Phase II Reach 4",
+    "Palghar Industrial Township – Phase I",
+    "Thane Creek Bridge Approach Works",
+    "Raigad Port Connectivity Rail Link",
+    "Nashik–Pune Semi High Speed Rail – Package 6",
+  ],
+  "Tamil Nadu": [
+    "Chennai Metro Phase II Reach 3",
+    "Salem–Coimbatore Expressway Package 1",
+    "Madurai Outer Ring Road – Package 5",
+    "Coimbatore Airport Runway Extension",
+    "Tiruvallur Industrial Water Pipeline Corridor",
+  ],
+  Assam: [
+    "Guwahati Ring Road – Package 2",
+    "NH-37 Widening Nagaon–Dibrugarh Section",
+    "Sonitpur Flood Protection Embankment Corridor",
+    "Kamrup Multimodal Logistics Park",
+  ],
+  Goa: [
+    "Mopa Greenfield Airport – Perimeter Access Corridor",
+    "South Goa Coastal Highway Realignment",
+    "Goa Coastal Road NH-66 Bypass – Package 1",
+  ],
+  Punjab: [
+    "Ludhiana–Bathinda Economic Corridor Package 3",
+    "Amritsar Bypass Realignment – Package 2",
+    "NTPC Solar Park – Bathinda Block A",
+    "Patiala Bulk Water Transmission Main",
+  ],
+  "West Bengal": [
+    "Kolkata Metro Line 6 Extension",
+    "Hugli River Bridge Approach Corridor",
+    "Paschim Medinipur Industrial Corridor Link Road",
+    "North Twenty Four Parganas Flood Control Embankment",
+    "South Twenty Four Parganas Coastal Protection Works",
+  ],
+  "Andhra Pradesh": [
+    "Visakhapatnam–Chennai Industrial Corridor Package 3",
+    "Amaravati Capital City Outer Ring Road – Phase I",
+    "NH-16 Six-Laning Vijayawada–Rajam Section",
+    "Krishnapatnam Port Rail Connectivity Link",
+  ],
+  "Arunachal Pradesh": [
+    "Trans-Arunachal Highway Package 7 – Itanagar–Ziro",
+    "Sela Tunnel Approach Road – West Kameng",
+    "Pasighat–Roing Road Widening Package 2",
+  ],
+  Bihar: [
+    "Patna Ring Road Package 2",
+    "NH-19 Four-Laning Patna–Gaya Section",
+    "Ganga Bridge Access Corridor – Mokama",
+    "Dedicated Freight Corridor – Eastern Arm Feeder",
+  ],
+  Chhattisgarh: [
+    "NTPC Korba Super Thermal Plant – Expansion Ash Dyke",
+    "Raipur Outer Ring Road – Phase II Package 3",
+    "NH-30 Widening Raipur–Jagdalpur Section",
+    "Bhilai Steel Plant Rail Siding Expansion",
+  ],
+  Gujarat: [
+    "Ahmedabad Metro Phase II Reach 5",
+    "Surat Diamond Bourse Connectivity Road",
+    "Bharuch–Surat Expressway Package 2",
+    "Mundra Port Rail Link – Phase III",
+  ],
+  Haryana: [
+    "Delhi–Amritsar–Katra Expressway Package 4 – Haryana",
+    "Kundli–Manesar–Palwal Expressway Widening",
+    "Gurugram Metro Extension – Badshahpur Spur",
+    "NH-48 Six-Laning Gurugram–Manesar Section",
+  ],
+  "Himachal Pradesh": [
+    "Bhanupali–Bilaspur–Beri Rail Line Package 3",
+    "Shimla Bypass Road – Phase II",
+    "Kiratpur–Nerchowk Four-Laning Package 4",
+  ],
+  Jharkhand: [
+    "Ranchi Ring Road – Package 3",
+    "Jharkhand Industrial Corridor Feeder Road – Jamshedpur",
+    "Dedicated Freight Corridor – Eastern Arm Feeder",
+    "Bokaro Smart City Road Package 2",
+  ],
+  Karnataka: [
+    "NH-66 Six-Laning Kundapura–Surathkal",
+    "Bengaluru Metro Phase III Reach 2",
+    "Tumkur Road Industrial Corridor Package 5",
+    "Belagavi Airport Expansion Approach Road",
+  ],
+  Kerala: [
+    "K-Rail SilverLine Corridor – Package 6 Thiruvananthapuram",
+    "Kochi Metro Phase II Extension – Kakkanad",
+    "NH-66 Kochi Bypass Package 3",
+    "Vizhinjam International Seaport Access Road",
+  ],
+  "Madhya Pradesh": [
+    "Bhopal–Indore Expressway Package 3",
+    "Jabalpur Ring Road – Phase I",
+    "NH-44 Six-Laning Agra–Gwalior Section",
+    "Omkareshwar Floating Solar Park Access Corridor",
+  ],
+  Manipur: [
+    "Imphal–Moreh Highway Improvement Package 2",
+    "NH-102 Widening Imphal–Jiribam Section",
+    "Imphal Airport Cargo Apron Expansion",
+  ],
+  Meghalaya: [
+    "Shillong Bypass Road – Package 3",
+    "NH-44 Widening Jorabat–Barapani Section",
+    "Meghalaya Integrated Basin Development Feeder Road",
+  ],
+  Mizoram: [
+    "Aizawl Bypass Road Package 2",
+    "NH-306 Widening Aizawl–Sairang Section",
+    "Kaladan Multi-Modal Transit Transport Project – Road Component",
+  ],
+  Nagaland: [
+    "Kohima–Dimapur Four-Laning Package 2",
+    "Nagaland Integrated Basin Development Road",
+    "NH-29 Widening Dimapur–Kohima Section",
+  ],
+  Odisha: [
+    "NTPC Talcher Super Thermal Expansion – Ash Dyke",
+    "Paradip Port Connectivity Road – Phase II",
+    "Bhubaneswar–Cuttack Expressway Package 2",
+    "NH-16 Six-Laning Bhubaneswar–Berhampur Section",
+  ],
+  Rajasthan: [
+    "Delhi–Mumbai Expressway Package 7 – Rajasthan",
+    "Jaipur Metro Phase II Reach 3",
+    "NH-48 Six-Laning Jaipur–Ajmer Section",
+    "Rajasthan Solar Park – Bhadla Access Road",
+  ],
+  Sikkim: [
+    "Sikkim State Highway Improvement Package 3 – Gangtok–Rangpo",
+    "Teesta Urja Hydro Project Transmission Corridor",
+    "NH-10 Widening Rangpo–Singtam Section",
+  ],
+  Telangana: [
+    "Hyderabad Metro Phase II Reach 4",
+    "Outer Ring Road Extension – Hyderabad Package 6",
+    "Hyderabad–Warangal Industrial Corridor Package 2",
+    "NH-44 Six-Laning Hyderabad–Nagpur Section",
+  ],
+  Tripura: [
+    "Agartala Bypass Road – Phase II",
+    "NH-08 Widening Agartala–Sabroom Section",
+    "Sabroom Integrated Check Post Access Road",
+  ],
+  "Uttar Pradesh": [
+    "Ganga Expressway Package 6 – Prayagraj",
+    "Bundelkhand Expressway Access Road Package 3",
+    "Dedicated Freight Corridor – Eastern Arm Feeder",
+    "Lucknow Metro Phase II Extension – Amausi",
+  ],
+  Uttarakhand: [
+    "Char Dham All Weather Road – Rishikesh–Karnprayag Package 4",
+    "Dehradun Ring Road – Phase I",
+    "NH-7 Widening Dehradun–Haridwar Section",
+  ],
+  "Andaman and Nicobar Islands": [
+    "Port Blair Ring Road – Phase I",
+    "Andaman Trunk Road Improvement Package 3",
+    "Campbell Bay Naval Base Access Road",
+  ],
+  Chandigarh: [
+    "Chandigarh Peripheral Road Package 2",
+    "Aerocity Chandigarh Connectivity Road",
+    "NH-5 Chandigarh–Ambala Widening Package 1",
+  ],
+  "Dadra and Nagar Haveli and Daman and Diu": [
+    "Silvassa Industrial Estate Connectivity Road",
+    "Daman Coastal Road Improvement Package 2",
+    "NH-48 Vapi–Bhilad Connector Road",
+  ],
+  Delhi: [
+    "Delhi–Meerut Regional Rapid Transit System Package 4",
+    "Delhi Ring Road Elevated Corridor – Package 3",
+    "Delhi Metro Phase IV Reach 6 – Janakpuri West",
+  ],
+  "Jammu and Kashmir": [
+    "Udhampur–Srinagar–Baramulla Rail Link Package 17",
+    "Jammu Ring Road – Phase II",
+    "NH-44 Widening Banihal–Qazigund Section",
+  ],
+  Ladakh: [
+    "Zojila Pass Tunnel Approach Road – Leh Side",
+    "Darbuk–Shyok–DBO Road Improvement Package 3",
+    "Leh Airport Expansion Landside Access Road",
+  ],
+  Lakshadweep: [
+    "Agatti Island Jetty Access Road Improvement",
+    "Kavaratti Island Internal Road Network Package 2",
+    "Minicoy Harbour Access Road",
+  ],
+  Puducherry: [
+    "Puducherry Ring Road – Phase I",
+    "NH-45A Widening Puducherry–Villupuram Section",
+    "Karaikal Port Road Connectivity Package 2",
+  ],
+};
 
 const DOC_TYPES: DocumentRef["type"][] = [
   "SIA_REPORT",
@@ -741,8 +918,18 @@ const STAGE_LIMIT_DAYS: Partial<Record<RfctlarrStage, number>> = {
 };
 
 function buildParcels(state: string, count: number, totalCompensation: number): Parcel[] {
-  const glossary = GLOSSARY[state] ?? GLOSSARY["Goa"]!;
-  const owners = OWNER_NAMES[state] ?? OWNER_NAMES["Goa"]!;
+  const glossary = GLOSSARY[state] ?? (() => {
+    if (process.env['NODE_ENV'] === 'development') {
+      console.warn(`[mockData] No glossary entry for state: "${state}", falling back to Goa`);
+    }
+    return GLOSSARY["Goa"]!;
+  })();
+  const owners = OWNER_NAMES[state] ?? (() => {
+    if (process.env['NODE_ENV'] === 'development') {
+      console.warn(`[mockData] No owner names for state: "${state}", falling back to Goa`);
+    }
+    return OWNER_NAMES["Goa"]!;
+  })();
   const weights = Array.from({ length: count }, () => between(0.5, 1.5));
   const weightSum = weights.reduce((a, b) => a + b, 0);
 
@@ -801,7 +988,8 @@ export function buildProposals(): Proposal[] {
     const id = `PROP-${String(101 + i).padStart(4, "0")}`;
     const state = states[i % states.length]!;
     const district = pick(DISTRICTS[state]!);
-    const projectName = PROJECT_NAMES[i % PROJECT_NAMES.length]!;
+    const stateProjects = PROJECT_NAMES_BY_STATE[state] ?? PROJECT_NAMES_BY_STATE["Maharashtra"]!;
+    const projectName = pick(stateProjects);
 
     // Every proposal that carries an SLA sits on one of the four timed stages.
     const stage: RfctlarrStage =
