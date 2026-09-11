@@ -1,7 +1,11 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import type { Proposal } from "@/data/mockData";
 import { useAuth, ROLE_LABEL, ROLE_CAN_ACT, type Role } from "@/context/AuthContext";
 import { useProposalsQuery } from "@/hooks/useProposals";
+import { api, ApiError } from "@/lib/api";
+import { getBypassSession, DEMO_BYPASS_PASSWORD, type BypassSession } from "@/lib/bypassAuth";
 
 export const NO_CREDENTIALS_HINT = "Requires LAO credentials";
 
@@ -61,9 +65,15 @@ interface RoleContextValue {
   proposalsLoading: boolean;
   scopedProposals: Proposal[];
   inScope: (p: Proposal) => boolean;
-  switchPersona: (role: Role) => void;
-  isOverridden: boolean;
-  resetPersona: () => void;
+  /**
+   * Actually re-authenticates as the chosen demo persona (via the bypass
+   * login endpoint), replacing the whole session — not just a client-side
+   * display override. Only works from an existing Quick Demo Access
+   * session; on a real Supabase login it's a no-op with a toast, since a
+   * client can't silently escalate its own privileges.
+   */
+  switchPersona: (role: Role) => Promise<void>;
+  switchingPersona: boolean;
 }
 
 const RoleContext = createContext<RoleContextValue | null>(null);
@@ -76,24 +86,14 @@ function initialsOf(name: string): string {
 }
 
 export function RoleProvider({ children }: { children: ReactNode }) {
-  const { role: authRole, states: rawAuthStates, displayName: authDisplayName } = useAuth();
-  const [overrideRole, setOverrideRole] = useState<Role | null>(null);
+  const { role, states: rawAuthStates, displayName, signInWithBypass } = useAuth();
+  const [switchingPersona, setSwitchingPersona] = useState(false);
+  const qc = useQueryClient();
 
   const { data, isLoading } = useProposalsQuery();
   const proposals = useMemo(() => data ?? [], [data]);
 
-  const activePersona = overrideRole ? PERSONA_PRESETS[overrideRole] : null;
-
-  const role = activePersona ? activePersona.role : authRole;
-  const states = activePersona
-    ? activePersona.states.length > 0
-      ? activePersona.states
-      : null
-    : rawAuthStates.length > 0
-      ? rawAuthStates
-      : null;
-
-  const displayName = activePersona ? activePersona.name : authDisplayName;
+  const states = rawAuthStates.length > 0 ? rawAuthStates : null;
 
   const value = useMemo<RoleContextValue>(() => {
     const inScope = (p: Proposal) => !states || states.includes(p.state);
@@ -114,11 +114,34 @@ export function RoleProvider({ children }: { children: ReactNode }) {
       proposalsLoading: isLoading,
       scopedProposals: proposals.filter(inScope),
       inScope,
-      switchPersona: (nextRole: Role) => setOverrideRole(nextRole),
-      isOverridden: overrideRole !== null,
-      resetPersona: () => setOverrideRole(null),
+      switchingPersona,
+      switchPersona: async (nextRole: Role) => {
+        if (!getBypassSession()) {
+          toast.error("Persona switching only works for Quick Demo Access sign-ins.", {
+            description: 'Sign out and use "Quick Demo Access" on the sign-in page first.',
+          });
+          return;
+        }
+        setSwitchingPersona(true);
+        try {
+          const res = await api.post<BypassSession>("/api/public/auth/bypass", {
+            password: DEMO_BYPASS_PASSWORD,
+            role: nextRole,
+          });
+          signInWithBypass(res);
+          // Every proposal/grievance/dashboard query is scoped server-side to
+          // the caller's token — the new persona invalidates all of it.
+          await qc.invalidateQueries();
+        } catch (err) {
+          toast.error("Could not switch persona", {
+            description: err instanceof ApiError ? err.message : "Unknown error",
+          });
+        } finally {
+          setSwitchingPersona(false);
+        }
+      },
     };
-  }, [role, states, displayName, proposals, isLoading, overrideRole]);
+  }, [role, states, displayName, proposals, isLoading, switchingPersona, qc, signInWithBypass]);
 
   return <RoleContext.Provider value={value}>{children}</RoleContext.Provider>;
 }

@@ -6,6 +6,17 @@
  */
 const STORAGE_KEY = "nlams-bypass-session";
 
+/**
+ * Matches server/src/lib/bypassAuth.ts's BYPASS_PASSWORD default. Public/
+ * demo-only by design (see that file's doc comment) — already shown in the
+ * clear on the sign-in page. Used so the TopBar persona switcher can
+ * instantly re-authenticate as another demo persona without re-prompting
+ * for a password every time, but only ever from an existing bypass session
+ * (see RoleContext.switchPersona) — a real Supabase session is never
+ * silently swapped.
+ */
+export const DEMO_BYPASS_PASSWORD = "nlams-demo-2026";
+
 export interface BypassSession {
   token: string;
   role: string;

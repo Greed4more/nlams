@@ -434,6 +434,7 @@ export function LaoDashboard() {
                       <td className="px-3 py-2.5 text-center">
                         <Link
                           to="/map-view"
+                          search={{ ulpin: parcel.ulpin }}
                           className="inline-flex items-center gap-1 rounded bg-muted px-2 py-1 text-[11px] font-medium text-foreground hover:bg-muted/80"
                         >
                           <MapPin className="size-3" />

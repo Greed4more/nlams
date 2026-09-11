@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { TRANSLATIONS, type Lang } from "@/lib/translations";
+import { LANGUAGES, TRANSLATIONS, type Lang } from "@/lib/translations";
 
 const STORAGE_KEY = "nlams.lang";
+const VALID_LANGS = new Set<string>(LANGUAGES.map((l) => l.value));
 
 interface I18nContextValue {
   lang: Lang;
@@ -19,7 +20,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
-      if (stored === "hi") setLangState("hi");
+      if (stored && VALID_LANGS.has(stored)) setLangState(stored as Lang);
     } catch {
       // localStorage unavailable (private browsing, etc.) — stay on "en"
     }

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import {
   MapContainer,
   TileLayer,
@@ -43,13 +44,11 @@ import {
 } from "@/hooks/useWbParcels";
 import { useRole } from "@/context/RoleContext";
 import {
-  MAP_THEMES,
-  MAP_THEME_LIST,
+  MAP_THEME,
   SELECTED_PARCEL_COLOR,
   ADMIN_BOUNDARY_COLORS,
   WB_PARCEL_FABRIC_COLORS,
   lulcLayerFor,
-  type MapThemeId,
 } from "@/lib/mapThemes";
 import { districtDisplayName } from "@/lib/westBengalDistrictNames";
 import { Switch } from "@/components/ui/switch";
@@ -223,12 +222,18 @@ function FitToData({
       map.fitBounds(boundsOf(data.features), { padding: [24, 24] });
       return;
     }
-    const target = highlightedUlpin
-      ? data.features.find((f) => f.properties.ulpin === highlightedUlpin)
-      : undefined;
-    if (target) {
-      const [lng, lat] = target.geometry.coordinates[0]![0]!;
-      map.setView([lat!, lng!], 16);
+    if (highlightedUlpin) {
+      // A specific ULPIN was requested (e.g. a "View on map" link) — if it
+      // isn't in this dataset, say so rather than silently jumping to an
+      // unrelated parcel, which used to look like the map "zoomed to the
+      // wrong place" for a parcel/proposal that doesn't exist here.
+      const target = data.features.find((f) => f.properties.ulpin === highlightedUlpin);
+      if (target) {
+        const [lng, lat] = target.geometry.coordinates[0]![0]!;
+        map.setView([lat!, lng!], 16);
+      } else {
+        toast.error(`Parcel ${highlightedUlpin} not found on this map`);
+      }
       return;
     }
     // Individual parcels vary in real-world size, and a proposal's parcels
@@ -292,7 +297,6 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
   const { data: districtsData } = useDistricts(stateCode);
   const { data: blocksData } = useBlocks(stateCode);
   const { person } = useRole();
-  const [themeId, setThemeId] = useState<MapThemeId>("nlams");
   const [panelOpen, setPanelOpen] = useState(true);
   const [showCadastral, setShowCadastral] = useState(true);
   const [showLabels, setShowLabels] = useState(true);
@@ -309,7 +313,7 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
   const [showWbParcels, setShowWbParcels] = useState(false);
   const [wbParcelDistrictSlug, setWbParcelDistrictSlug] = useState<string | null>(null);
 
-  const theme = MAP_THEMES[themeId];
+  const theme = MAP_THEME;
   const geojson = data as FeatureCollection<Polygon, ParcelFeatureProperties> | undefined;
   const lulcLayer = selected?.kind === "parcel" ? lulcLayerFor(selected.properties.state) : null;
   const blocksVisible = showBlocks && zoom >= BLOCK_VISIBLE_ZOOM;
@@ -551,8 +555,8 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
   // Force GeoJSON re-render when toggles that affect style/tooltips change.
   const geojsonKey = useMemo(
     () =>
-      `${showLabels}-${themeId}-${selected?.kind}-${selected?.kind === "parcel" ? selected.properties.ulpin : ""}-${highlightedUlpin}`,
-    [showLabels, themeId, selected, highlightedUlpin],
+      `${showLabels}-${selected?.kind}-${selected?.kind === "parcel" ? selected.properties.ulpin : ""}-${highlightedUlpin}`,
+    [showLabels, selected, highlightedUlpin],
   );
   const districtsKey = useMemo(
     () =>
@@ -722,23 +726,7 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
       {/* Layers and Tools panel */}
       {panelOpen && (
         <div className="panel absolute left-3 top-14 z-[1000] w-[252px] p-3">
-          <div className="label-xs">Portal Style</div>
-          <RadioGroup
-            value={themeId}
-            onValueChange={(v) => setThemeId(v as MapThemeId)}
-            className="mt-2 gap-1.5"
-          >
-            {MAP_THEME_LIST.map((t) => (
-              <div key={t.id} className="flex items-center gap-2">
-                <RadioGroupItem id={`theme-${t.id}`} value={t.id} className="size-3.5" />
-                <Label htmlFor={`theme-${t.id}`} className="text-[11.5px] font-normal">
-                  {t.label}
-                </Label>
-              </div>
-            ))}
-          </RadioGroup>
-
-          <div className="mt-3 border-t border-border pt-3">
+          <div>
             <div className="label-xs">Layers and Tools</div>
             <div className="mt-2 space-y-2">
               <LayerRow

@@ -1,4 +1,4 @@
-import { Bell, LogOut, Menu, PlayCircle, Shield } from "lucide-react";
+import { Bell, LogOut, Menu, PlayCircle, Shield, Languages } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -14,7 +14,6 @@ import { useDemo } from "@/context/DemoContext";
 import { useI18n } from "@/context/I18nContext";
 import { LANGUAGES } from "@/lib/translations";
 import { useDerived } from "@/components/dashboard/derive";
-import { cn } from "@/lib/utils";
 import { DemoPanel } from "./DemoPanel";
 
 export function TopBar({
@@ -24,7 +23,7 @@ export function TopBar({
   breadcrumb: string[];
   onOpenNav?: () => void;
 }) {
-  const { initials, person, roleLabel, role, switchPersona } = useRole();
+  const { initials, person, roleLabel, role, switchPersona, switchingPersona } = useRole();
   const { signOut } = useAuth();
   const { lang, setLang, t } = useI18n();
   const { breachedQueue } = useDerived();
@@ -68,12 +67,13 @@ export function TopBar({
         <div className="hidden sm:flex items-center">
           <Select
             value={role ?? "DOLR_SECRETARY"}
-            onValueChange={(val) => switchPersona(val as Role)}
+            onValueChange={(val) => void switchPersona(val as Role)}
+            disabled={switchingPersona}
           >
             <SelectTrigger className="h-8 w-[230px] rounded-[4px] border-border bg-muted/30 text-[11.5px] font-medium text-foreground">
-              <div className="flex items-center gap-1.5 truncate">
+              <div className="flex min-w-0 items-center gap-1.5">
                 <Shield className="size-3.5 text-navy shrink-0" />
-                <SelectValue placeholder="Select persona" />
+                <SelectValue placeholder="Select persona">{roleLabel}</SelectValue>
               </div>
             </SelectTrigger>
             <SelectContent align="end" className="w-[300px]">
@@ -92,24 +92,29 @@ export function TopBar({
           </Select>
         </div>
 
-        <div className="inline-flex items-center overflow-hidden rounded-[4px] border border-border text-[11px] font-semibold">
-          {LANGUAGES.map((l) => (
-            <button
-              key={l.value}
-              type="button"
-              onClick={() => setLang(l.value)}
-              aria-pressed={lang === l.value}
-              className={cn(
-                "px-2 py-1.5 transition-colors",
-                lang === l.value
-                  ? "bg-navy text-navy-foreground"
-                  : "bg-card text-muted-foreground hover:bg-muted",
-              )}
-            >
-              {l.label}
-            </button>
-          ))}
-        </div>
+        <Select
+          value={lang}
+          onValueChange={(v) => setLang(v as (typeof LANGUAGES)[number]["value"])}
+        >
+          <SelectTrigger
+            aria-label="Select language"
+            className="h-8 w-[150px] rounded-[4px] border-border bg-muted/30 text-[11.5px] font-medium text-foreground"
+          >
+            <div className="flex min-w-0 items-center gap-1.5">
+              <Languages className="size-3.5 text-navy shrink-0" />
+              <SelectValue placeholder="Language">
+                {LANGUAGES.find((l) => l.value === lang)?.label ?? "English"}
+              </SelectValue>
+            </div>
+          </SelectTrigger>
+          <SelectContent align="end">
+            {LANGUAGES.map((l) => (
+              <SelectItem key={l.value} value={l.value} className="text-[12px]">
+                {l.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         <Popover open={demo.open} onOpenChange={demo.setOpen}>
           <PopoverTrigger asChild>
