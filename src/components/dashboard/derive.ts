@@ -50,7 +50,6 @@ export interface ActivityEvent {
   proposalId: string;
   at: Date;
   ago: string;
-  sha: string;
   docType: string;
 }
 
@@ -187,7 +186,6 @@ export function buildDerived(list: Proposal[]) {
         proposalId: p.id,
         at: new Date(d.uploadedAt),
         ago: agoLabel(new Date(d.uploadedAt), now),
-        sha: d.sha256.slice(0, 10),
         docType: d.type,
       })),
     )

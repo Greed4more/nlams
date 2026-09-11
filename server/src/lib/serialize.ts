@@ -19,7 +19,12 @@ export function serializeParcel(p: Parcel) {
   };
 }
 
-/** Document metadata only — never ships the raw file bytes over this endpoint. */
+/**
+ * Document metadata only — never ships the raw file bytes or the SHA-256
+ * content hash over this endpoint. The integrity hash lives exclusively in
+ * the DB (`document_refs.sha256`) and the audit vault; clients only receive
+ * a boolean verification result via POST /api/documents/:id/verify.
+ */
 export function serializeDocument(d: DocumentRef) {
   return {
     id: d.id,
@@ -27,7 +32,6 @@ export function serializeDocument(d: DocumentRef) {
     type: d.type,
     uploadedAt: d.uploadedAt.toISOString(),
     sizeKb: d.sizeKb,
-    sha256: d.sha256,
     verified: d.lastVerifiedAt != null,
     lastVerifiedAt: d.lastVerifiedAt?.toISOString() ?? null,
   };
