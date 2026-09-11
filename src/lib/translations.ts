@@ -1,6 +1,8 @@
 import { LANGUAGES, LANG_CODES, mergeTranslations, type Lang, type TranslationTable } from "./i18n/langs";
 import { BASE_TRANSLATIONS } from "./i18n/base";
 import { COMMON_TRANSLATIONS } from "./i18n/common";
+import { CALCULATOR_TRANSLATIONS } from "./i18n/calculator";
+import { DASHBOARD_DOLR_DISTRICT_TRANSLATIONS } from "./i18n/dashboard-dolr-district";
 
 export type { Lang };
 export { LANGUAGES, LANG_CODES };
@@ -12,4 +14,9 @@ export { LANGUAGES, LANG_CODES };
  * area, so each area can be translated independently without merge
  * conflicts. Add a new domain file under `src/lib/i18n/` and list it here.
  */
-export const TRANSLATIONS: TranslationTable = mergeTranslations(BASE_TRANSLATIONS, COMMON_TRANSLATIONS);
+export const TRANSLATIONS: TranslationTable = mergeTranslations(
+  BASE_TRANSLATIONS,
+  COMMON_TRANSLATIONS,
+  CALCULATOR_TRANSLATIONS,
+  DASHBOARD_DOLR_DISTRICT_TRANSLATIONS,
+);

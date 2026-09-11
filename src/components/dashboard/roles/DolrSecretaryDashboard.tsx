@@ -14,6 +14,7 @@ import { formatCrore, formatINRFull } from "@/data/mockData";
 import { useDerived } from "../derive";
 import { useVerifyAuditChainMutation } from "@/hooks/useAudit";
 import { useStateAdaptersQuery } from "@/hooks/useAdminAdapters";
+import { useI18n } from "@/context/I18nContext";
 import { StageChart } from "../StageChart";
 import { DelayQueue } from "../DelayQueue";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ export function DolrSecretaryDashboard() {
   const { totals, disbursalPct, enriched } = useDerived();
   const verifyChain = useVerifyAuditChainMutation();
   const { data: adaptersData } = useStateAdaptersQuery();
+  const { t } = useI18n();
 
   // Aggregate by state
   const stateStats = Array.from(new Set(enriched.map((e) => e.proposal.state))).map((state) => {
@@ -53,16 +55,14 @@ export function DolrSecretaryDashboard() {
           <div>
             <div className="flex items-center gap-2">
               <span className="rounded bg-white/15 px-2 py-0.5 font-mono text-[11px] font-semibold tracking-wider text-white">
-                NATIONAL APEX COMMAND
+                {t("dolr.banner.badge")}
               </span>
-              <span className="text-[12px] text-white/70">Department of Land Resources · MoRD</span>
+              <span className="text-[12px] text-white/70">{t("dolr.banner.dept")}</span>
             </div>
             <h2 className="mt-1.5 text-[20px] font-semibold tracking-tight">
-              All-India RFCTLARR Land Acquisition &amp; Statutory Compliance Monitor
+              {t("dolr.banner.title")}
             </h2>
-            <p className="mt-0.5 text-[12.5px] text-white/80">
-              National oversight of infrastructure acquisitions, state land registries, and cryptographic audit vault integrity.
-            </p>
+            <p className="mt-0.5 text-[12.5px] text-white/80">{t("dolr.banner.subtitle")}</p>
           </div>
           <div className="flex items-center gap-2">
             <Link
@@ -70,7 +70,7 @@ export function DolrSecretaryDashboard() {
               className="inline-flex items-center gap-1.5 rounded-[4px] bg-white/10 px-3 py-1.5 text-[12px] font-medium text-white transition-colors hover:bg-white/20"
             >
               <Server className="size-3.5" />
-              State Adapters Registry
+              {t("dolr.banner.adaptersRegistry")}
             </Link>
           </div>
         </div>
@@ -80,34 +80,35 @@ export function DolrSecretaryDashboard() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div className="panel relative overflow-hidden px-4 py-3">
           <span className="absolute inset-y-0 left-0 w-[3px] bg-status-info" />
-          <div className="label-xs">National Active Cases</div>
+          <div className="label-xs">{t("dolr.kpi.activeCases")}</div>
           <div className="num mt-2 text-[28px] font-semibold leading-none text-foreground">
             {totals.count}
           </div>
           <div className="mt-1.5 text-[11px] text-muted-foreground">
-            {totals.states} States/UTs actively acquiring land
+            {totals.states} {t("dolr.kpi.activeCasesSub")}
           </div>
         </div>
 
         <div className="panel relative overflow-hidden px-4 py-3">
           <span className="absolute inset-y-0 left-0 w-[3px] bg-navy" />
-          <div className="label-xs">National Land Area Under Acquisition</div>
+          <div className="label-xs">{t("dolr.kpi.landArea")}</div>
           <div className="num mt-2 text-[28px] font-semibold leading-none text-foreground">
             {totals.areaHa.toLocaleString("en-IN", { maximumFractionDigits: 1 })} Ha
           </div>
           <div className="mt-1.5 text-[11px] text-muted-foreground">
-            {totals.families.toLocaleString("en-IN")} affected families identified
+            {totals.families.toLocaleString("en-IN")} {t("dolr.kpi.landAreaSub")}
           </div>
         </div>
 
         <div className="panel relative overflow-hidden px-4 py-3">
           <span className="absolute inset-y-0 left-0 w-[3px] bg-status-ok" />
-          <div className="label-xs">National Compensation Budget</div>
+          <div className="label-xs">{t("dolr.kpi.budget")}</div>
           <div className="num mt-2 text-[28px] font-semibold leading-none text-foreground">
             {formatCrore(totals.disbursed)}
           </div>
           <div className="mt-1.5 text-[11px] text-muted-foreground">
-            {disbursalPct}% disbursed of {formatCrore(totals.assessed)} assessed
+            {disbursalPct}% {t("dolr.kpi.disbursedOf")} {formatCrore(totals.assessed)}{" "}
+            {t("dolr.kpi.assessedSuffix")}
           </div>
           <div className="mt-2 h-[3px] w-full bg-muted">
             <div className="h-full bg-status-ok" style={{ width: `${disbursalPct}%` }} />
@@ -116,12 +117,12 @@ export function DolrSecretaryDashboard() {
 
         <div className="panel relative overflow-hidden px-4 py-3">
           <span className="absolute inset-y-0 left-0 w-[3px] bg-status-critical" />
-          <div className="label-xs">Statutory Legal Breaches</div>
+          <div className="label-xs">{t("dolr.kpi.breaches")}</div>
           <div className="num mt-2 text-[28px] font-semibold leading-none text-status-critical">
             {totals.breached}
           </div>
           <div className="mt-1.5 text-[11px] text-muted-foreground">
-            +{totals.atRisk} approaching statutory breach (&lt;60d)
+            +{totals.atRisk} {t("dolr.kpi.breachesSub")}
           </div>
         </div>
       </div>
@@ -135,22 +136,34 @@ export function DolrSecretaryDashboard() {
             <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
               <div className="flex items-center gap-1.5">
                 <Globe2 className="size-3.5 text-muted-foreground" />
-                <div className="label-xs">State-Wise RFCTLARR Performance &amp; Compliance</div>
+                <div className="label-xs">{t("dolr.section.statePerf")}</div>
               </div>
               <span className="num text-[11px] text-muted-foreground">
-                {stateStats.length} reporting states
+                {stateStats.length} {t("dolr.section.reportingStates")}
               </span>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-[12.5px]">
                 <thead className="bg-muted/40">
                   <tr>
-                    <th className="label-xs border-b border-border px-3 py-2 text-left">State</th>
-                    <th className="label-xs border-b border-border px-3 py-2 text-right">Cases</th>
-                    <th className="label-xs border-b border-border px-3 py-2 text-right">Area (Ha)</th>
-                    <th className="label-xs border-b border-border px-3 py-2 text-right">Disbursed / Assessed</th>
-                    <th className="label-xs border-b border-border px-3 py-2 text-center">Statutory Breaches</th>
-                    <th className="label-xs border-b border-border px-3 py-2 text-right">Compliance</th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-left">
+                      {t("common.state")}
+                    </th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-right">
+                      {t("dolr.table.cases")}
+                    </th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-right">
+                      {t("dolr.table.area")}
+                    </th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-right">
+                      {t("dolr.table.disbursedAssessed")}
+                    </th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-center">
+                      {t("dolr.table.breaches")}
+                    </th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-right">
+                      {t("dolr.table.compliance")}
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -166,11 +179,11 @@ export function DolrSecretaryDashboard() {
                       <td className="px-3 py-2 text-center">
                         {row.breached > 0 ? (
                           <span className="num inline-flex rounded bg-status-critical/10 px-1.5 py-0.5 text-[11px] font-bold text-status-critical">
-                            {row.breached} breached
+                            {row.breached} {t("common.breached")}
                           </span>
                         ) : (
                           <span className="num inline-flex rounded bg-status-ok/10 px-1.5 py-0.5 text-[11px] font-medium text-status-ok">
-                            0 on track
+                            0 {t("common.onTrack")}
                           </span>
                         )}
                       </td>
@@ -191,7 +204,7 @@ export function DolrSecretaryDashboard() {
             <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
               <div className="flex items-center gap-1.5">
                 <Building2 className="size-3.5 text-muted-foreground" />
-                <div className="label-xs">Central &amp; State Requiring Bodies (Demand &amp; Outlay)</div>
+                <div className="label-xs">{t("dolr.section.reqBodies")}</div>
               </div>
             </div>
             <div className="divide-y divide-border">
@@ -205,12 +218,16 @@ export function DolrSecretaryDashboard() {
                         <div className="h-1.5 w-32 rounded bg-muted">
                           <div className="h-full rounded bg-navy" style={{ width: `${pct}%` }} />
                         </div>
-                        <span className="num text-[11px] text-muted-foreground">{pct}% of national budget</span>
+                        <span className="num text-[11px] text-muted-foreground">
+                          {pct}% {t("dolr.pctOfBudget")}
+                        </span>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="num font-semibold text-foreground">{formatCrore(item.assessed)}</div>
-                      <div className="num text-[11px] text-muted-foreground">{item.count} proposals</div>
+                      <div className="num text-[11px] text-muted-foreground">
+                        {item.count} {t("common.proposals")}
+                      </div>
                     </div>
                   </div>
                 );
@@ -233,27 +250,27 @@ export function DolrSecretaryDashboard() {
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <div className="label-xs flex items-center gap-1.5">
                   <Server className="size-3.5 text-navy" />
-                  State Land Records Sync (Module 9)
+                  {t("dolr.module9.title")}
                 </div>
                 <Link to="/admin/adapters" className="text-[11px] font-medium text-status-info hover:underline">
-                  Manage
+                  {t("dolr.module9.manage")}
                 </Link>
               </div>
               <div className="mt-2.5 space-y-2 text-[12px]">
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Reference Adapter:</span>
-                  <span className="font-medium text-foreground">West Bengal (Banglarbhumi)</span>
+                  <span className="text-muted-foreground">{t("dolr.module9.referenceAdapter")}</span>
+                  <span className="font-medium text-foreground">{t("dolr.module9.wbBanglarbhumi")}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Sync Engine Status:</span>
+                  <span className="text-muted-foreground">{t("dolr.module9.syncStatus")}</span>
                   <span className="inline-flex items-center gap-1 rounded bg-status-ok/10 px-1.5 py-0.5 text-[10.5px] font-semibold text-status-ok">
-                    Active (Idle)
+                    {t("dolr.module9.activeIdle")}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Registered States:</span>
+                  <span className="text-muted-foreground">{t("dolr.module9.registeredStates")}</span>
                   <span className="num font-semibold text-foreground">
-                    {adaptersData?.totalStatesSupported ?? 6} States/UTs
+                    {adaptersData?.totalStatesSupported ?? 6} {t("dolr.module9.statesUts")}
                   </span>
                 </div>
               </div>
@@ -263,7 +280,7 @@ export function DolrSecretaryDashboard() {
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <div className="label-xs flex items-center gap-1.5">
                   <ShieldCheck className="size-3.5 text-status-info" />
-                  National Cryptographic Audit Vault
+                  {t("dolr.vault.title")}
                 </div>
                 <button
                   type="button"
@@ -271,23 +288,27 @@ export function DolrSecretaryDashboard() {
                   disabled={verifyChain.isPending}
                   className="text-[11px] font-medium text-status-info hover:underline disabled:opacity-50"
                 >
-                  Verify
+                  {t("dolr.vault.verify")}
                 </button>
               </div>
               <div className="mt-2.5 space-y-2 text-[12px]">
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Ledger Status:</span>
+                  <span className="text-muted-foreground">{t("dolr.vault.ledgerStatus")}</span>
                   <span className="inline-flex items-center gap-1 rounded bg-status-ok/10 px-1.5 py-0.5 text-[10.5px] font-semibold text-status-ok">
-                    Cryptographically Intact
+                    {t("dolr.vault.cryptoIntact")}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Block Hashing:</span>
-                  <span className="font-mono text-[11px] text-foreground">SHA-256 Chained</span>
+                  <span className="text-muted-foreground">{t("dolr.vault.blockHashing")}</span>
+                  <span className="font-mono text-[11px] text-foreground">
+                    {t("dolr.vault.sha256Chained")}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Tamper Protection:</span>
-                  <span className="text-[11px] font-medium text-status-ok">Zero Discrepancies</span>
+                  <span className="text-muted-foreground">{t("dolr.vault.tamperProtection")}</span>
+                  <span className="text-[11px] font-medium text-status-ok">
+                    {t("dolr.vault.zeroDiscrepancies")}
+                  </span>
                 </div>
               </div>
             </section>

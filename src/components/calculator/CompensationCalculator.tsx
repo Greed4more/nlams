@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useRole, NO_CREDENTIALS_HINT } from "@/context/RoleContext";
 import { useSpotlight } from "@/context/DemoContext";
+import { useI18n } from "@/context/I18nContext";
 import { cn } from "@/lib/utils";
 import { Route as CalculatorRoute } from "@/routes/calculator";
 
@@ -45,6 +46,7 @@ function useCountUp(value: number) {
 
 export function CompensationCalculator() {
   const { canAct } = useRole();
+  const { t } = useI18n();
   const spotlight = useSpotlight("calculator-breakdown");
   const search = CalculatorRoute.useSearch();
   const { data: proposals } = useProposalsQuery();
@@ -109,7 +111,7 @@ export function CompensationCalculator() {
 
   const chartData = [
     {
-      name: "Award",
+      name: t("calc.chart.awardSeriesName"),
       land: result.multipliedLandValue,
       assets: result.assetValue,
       solatium: result.solatium,
@@ -122,13 +124,13 @@ export function CompensationCalculator() {
       {prefillUlpin && !bannerDismissed && (
         <div className="mb-3 flex items-center justify-between gap-3 rounded-[4px] border border-status-info/30 bg-status-info/10 px-3 py-2 text-[12px] text-status-info">
           <span>
-            Prefilled from parcel{" "}
-            <span className="num font-mono font-semibold">{prefillUlpin}</span> — adjust before
-            submitting.
+            {t("calc.prefillPrefix")}{" "}
+            <span className="num font-mono font-semibold">{prefillUlpin}</span> —{" "}
+            {t("calc.prefillSuffix")}
           </span>
           <button
             type="button"
-            aria-label="Dismiss"
+            aria-label={t("calc.dismiss")}
             onClick={() => setBannerDismissed(true)}
             className="shrink-0 text-status-info/70 transition-colors hover:text-status-info"
           >
@@ -140,22 +142,19 @@ export function CompensationCalculator() {
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1fr_440px]">
         {/* LEFT — inputs */}
         <section className="panel p-4">
-          <div className="label-xs">Award Parameters</div>
+          <div className="label-xs">{t("calc.awardParameters")}</div>
 
           <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Land Area (hectares)">
+            <Field label={t("calc.landArea")}>
               <NumInput value={areaHa} onChange={setAreaHa} step={0.1} />
             </Field>
-            <Field
-              label="Base Market Value per Hectare (₹)"
-              helper="Higher of circle rate or avg. of top 50% of recent sale deeds — Sec. 26(1)"
-            >
+            <Field label={t("calc.baseMarketValue")} helper={t("calc.baseMarketValueHelper")}>
               <NumInput value={marketValuePerHa} onChange={setMarketValuePerHa} step={10000} />
             </Field>
           </div>
 
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Land Classification">
+            <Field label={t("calc.landClassification")}>
               <div className="inline-flex w-full overflow-hidden rounded-[4px] border border-border">
                 {(["RURAL", "URBAN"] as const).map((c) => (
                   <button
@@ -169,18 +168,18 @@ export function CompensationCalculator() {
                         : "bg-card text-muted-foreground hover:bg-muted",
                     )}
                   >
-                    {c === "RURAL" ? "Rural" : "Urban"}
+                    {c === "RURAL" ? t("calc.rural") : t("calc.urban")}
                   </button>
                 ))}
               </div>
             </Field>
 
             <Field
-              label={`Distance from Urban Centre — ${distance} km`}
+              label={`${t("calc.distanceLabelPrefix")} — ${distance} km`}
               helper={
                 classification === "URBAN"
-                  ? "Not applicable for urban land; factor fixed at 1.00"
-                  : `Derived factor ${result.factor.toFixed(2)}× (First Schedule)`
+                  ? t("calc.distanceHelperUrban")
+                  : `${t("calc.derivedFactorPrefix")} ${result.factor.toFixed(2)}× ${t("calc.derivedFactorSuffix")}`
               }
             >
               <div
@@ -202,24 +201,24 @@ export function CompensationCalculator() {
           </div>
 
           <div className="mt-5 border-t border-border pt-4">
-            <div className="label-xs">Attached Assets — Sec. 29</div>
+            <div className="label-xs">{t("calc.attachedAssets")}</div>
             <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <Field label="Trees & Standing Crops (₹)">
+              <Field label={t("calc.trees")}>
                 <NumInput value={trees} onChange={setTrees} step={10000} />
               </Field>
-              <Field label="Structures & Buildings (₹)">
+              <Field label={t("calc.structures")}>
                 <NumInput value={structures} onChange={setStructures} step={10000} />
               </Field>
-              <Field label="Wells & Irrigation Works (₹)">
+              <Field label={t("calc.wells")}>
                 <NumInput value={wells} onChange={setWells} step={10000} />
               </Field>
             </div>
           </div>
 
           <div className="mt-5 border-t border-border pt-4">
-            <div className="label-xs">Interest Computation Window — Sec. 30(3)</div>
+            <div className="label-xs">{t("calc.interestWindow")}</div>
             <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="SIA Notification Date">
+              <Field label={t("calc.siaNotificationDate")}>
                 <Input
                   type="date"
                   value={siaDate}
@@ -227,7 +226,7 @@ export function CompensationCalculator() {
                   className="num h-8 rounded-[4px] text-[13px]"
                 />
               </Field>
-              <Field label="Award Date">
+              <Field label={t("calc.awardDate")}>
                 <Input
                   type="date"
                   value={awardDate}
@@ -237,7 +236,7 @@ export function CompensationCalculator() {
               </Field>
             </div>
             <p className="num mt-2 text-[11px] text-muted-foreground">
-              {result.interestDays} days elapsed between notification and award.
+              {result.interestDays} {t("calc.interestDaysElapsedSuffix")}
             </p>
           </div>
 
@@ -259,7 +258,7 @@ export function CompensationCalculator() {
                   ) : (
                     <ChevronRight className="size-3.5" />
                   )}
-                  Officer Override
+                  {t("calc.officerOverride")}
                 </button>
               );
               if (canAct) return toggle;
@@ -274,7 +273,7 @@ export function CompensationCalculator() {
             })()}
             {overrideOpen && canAct && (
               <div className="mt-3 space-y-3">
-                <Field label="Override Award Amount (₹)">
+                <Field label={t("calc.overrideAmount")}>
                   <Input
                     value={overrideAmount}
                     onChange={(e) => setOverrideAmount(e.target.value)}
@@ -282,12 +281,12 @@ export function CompensationCalculator() {
                     className="num h-8 rounded-[4px] text-[13px]"
                   />
                 </Field>
-                <Field label="Justification (mandatory)">
+                <Field label={t("calc.justification")}>
                   <Textarea
                     value={justification}
                     onChange={(e) => setJustification(e.target.value)}
                     rows={3}
-                    placeholder="Record the statutory basis and evidence relied upon for the override…"
+                    placeholder={t("calc.justificationPlaceholder")}
                     className="rounded-[4px] text-[13px]"
                   />
                 </Field>
@@ -295,13 +294,13 @@ export function CompensationCalculator() {
                   type="button"
                   disabled={!overrideAmount.trim() || justification.trim().length < 10}
                   onClick={() => {
-                    toast.success("Override recorded against the officer credential for audit", {
-                      description: `Revised award ${formatINRFull(Number(overrideAmount) || 0)} logged for the officer's review.`,
+                    toast.success(t("calc.overrideToastTitle"), {
+                      description: `${t("calc.overrideToastDescPrefix")} ${formatINRFull(Number(overrideAmount) || 0)} ${t("calc.overrideToastDescSuffix")}`,
                     });
                   }}
                   className="rounded-[4px] bg-navy px-3 py-1.5 text-[12.5px] font-semibold text-navy-foreground disabled:opacity-45"
                 >
-                  Save Override
+                  {t("calc.saveOverride")}
                 </button>
               </div>
             )}
@@ -311,7 +310,7 @@ export function CompensationCalculator() {
         {/* RIGHT — breakdown */}
         <section className={cn("panel sticky top-[72px] overflow-hidden", spotlight)}>
           <div className="border-b border-border px-4 py-2.5">
-            <div className="label-xs">Statutory Breakdown</div>
+            <div className="label-xs">{t("calc.statutoryBreakdown")}</div>
           </div>
 
           <div className="divide-y divide-border">
@@ -334,7 +333,7 @@ export function CompensationCalculator() {
                         isSolatium ? "font-bold text-status-ok" : "text-foreground",
                       )}
                     >
-                      {row.label}
+                      {t(row.label)}
                     </div>
                     <div className="text-[10.5px] text-muted-foreground">{row.statute}</div>
                   </div>
@@ -352,20 +351,20 @@ export function CompensationCalculator() {
           </div>
 
           <div className="bg-navy px-4 py-4 text-navy-foreground">
-            <div className="label-xs text-navy-muted">Final Award Compensation</div>
+            <div className="label-xs text-navy-muted">{t("calc.finalAwardCompensation")}</div>
             <div className="num mt-1 text-[30px] font-bold leading-none tracking-tight">
               {formatINRFull(animated)}
             </div>
             <div className="num mt-1.5 text-[11.5px] text-navy-muted">
-              {formatCrore(result.finalAward, 2)} · Sec. 27 read with Sec. 30
+              {formatCrore(result.finalAward, 2)} · {t("calc.secRefSuffix")}
             </div>
             <span className="num mt-3 inline-block rounded-[4px] bg-white/10 px-2 py-1 text-[11.5px] font-semibold">
-              {result.effectiveMultiple.toFixed(2)}× base market value
+              {result.effectiveMultiple.toFixed(2)}× {t("calc.baseMarketValueSuffix")}
             </span>
           </div>
 
           <div className="px-4 py-3">
-            <div className="label-xs mb-2">Award Decomposition</div>
+            <div className="label-xs mb-2">{t("calc.awardDecomposition")}</div>
             <ResponsiveContainer width="100%" height={92}>
               <BarChart
                 data={chartData}
@@ -380,17 +379,32 @@ export function CompensationCalculator() {
                   contentStyle={{ fontSize: 11, borderRadius: 6 }}
                 />
                 <Legend wrapperStyle={{ fontSize: 10.5 }} iconSize={8} />
-                <Bar dataKey="land" stackId="a" name="Land" fill="var(--navy)" />
-                <Bar dataKey="assets" stackId="a" name="Assets" fill="var(--status-info)" />
-                <Bar dataKey="solatium" stackId="a" name="Solatium" fill="var(--status-ok)" />
-                <Bar dataKey="interest" stackId="a" name="Interest" fill="var(--status-warn)" />
+                <Bar dataKey="land" stackId="a" name={t("calc.chart.land")} fill="var(--navy)" />
+                <Bar
+                  dataKey="assets"
+                  stackId="a"
+                  name={t("calc.chart.assets")}
+                  fill="var(--status-info)"
+                />
+                <Bar
+                  dataKey="solatium"
+                  stackId="a"
+                  name={t("calc.chart.solatium")}
+                  fill="var(--status-ok)"
+                />
+                <Bar
+                  dataKey="interest"
+                  stackId="a"
+                  name={t("calc.chart.interest")}
+                  fill="var(--status-warn)"
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
           <div className="flex items-center gap-1.5 border-t border-border bg-muted/40 px-4 py-2 text-[10.5px] text-muted-foreground">
             <ShieldCheck className="size-3" />
-            Computation logged against the officer credential for audit.
+            {t("calc.computationLoggedFooter")}
           </div>
         </section>
       </div>

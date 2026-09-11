@@ -68,14 +68,15 @@ export function computeCompensation(input: CompensationInput): CompensationResul
   const finalAward = subtotal + solatium + interest;
   const effectiveMultiple = baseLandValue > 0 ? finalAward / baseLandValue : 0;
 
+  // label values are i18n keys (src/lib/i18n/calculator.ts `calc.row.*`) — wrap with `t()`.
   const rows: CompensationRow[] = [
-    { key: "base", label: "Base Land Value (area × market value)", value: baseLandValue, statute: "Sec. 26" },
-    { key: "factor", label: "Multiplication Factor", value: factor, statute: "First Schedule" },
-    { key: "multiplied", label: "Multiplied Land Value", value: multipliedLandValue, statute: "Sec. 26(1)" },
-    { key: "assets", label: "Value of Attached Assets", value: assetValue, statute: "Sec. 29" },
-    { key: "subtotal", label: "Subtotal", value: subtotal, statute: "Sec. 27" },
-    { key: "solatium", label: "Solatium @ 100% of subtotal", value: solatium, statute: "Sec. 30(1)" },
-    { key: "interest", label: "Interest @ 12% p.a. (SIA notification → award)", value: interest, statute: "Sec. 30(3)" },
+    { key: "base", label: "calc.row.base", value: baseLandValue, statute: "Sec. 26" },
+    { key: "factor", label: "calc.row.factor", value: factor, statute: "First Schedule" },
+    { key: "multiplied", label: "calc.row.multiplied", value: multipliedLandValue, statute: "Sec. 26(1)" },
+    { key: "assets", label: "calc.row.assets", value: assetValue, statute: "Sec. 29" },
+    { key: "subtotal", label: "calc.row.subtotal", value: subtotal, statute: "Sec. 27" },
+    { key: "solatium", label: "calc.row.solatium", value: solatium, statute: "Sec. 30(1)" },
+    { key: "interest", label: "calc.row.interest", value: interest, statute: "Sec. 30(3)" },
   ];
 
   return {
