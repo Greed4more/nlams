@@ -3,7 +3,7 @@ import { prisma } from "../db.js";
 import { requireNlamsUser } from "../middleware/auth.js";
 import { serializeProposal } from "../lib/serialize.js";
 import { canAct, nextStage } from "../lib/stages.js";
-import { proposalScopeWhere } from "../lib/scope.js";
+import { proposalScopeWhere, isStateInScope } from "../lib/scope.js";
 import { addAuditEntry } from "../lib/auditVault.js";
 import { triggerRiskEvaluation } from "../services/riskBridge.js";
 import { z } from "zod";
@@ -21,6 +21,80 @@ proposalsRouter.get("/", async (req, res) => {
     orderBy: { id: "asc" },
   });
   res.json(proposals.map(serializeProposal));
+});
+
+const createProposalBody = z.object({
+  projectName: z.string().trim().min(3).max(200),
+  requiringBody: z.string().trim().min(2).max(200),
+  state: z.string().trim().min(2),
+  district: z.string().trim().min(2),
+  affectedFamilies: z.number().int().min(0),
+  initiatedAt: z.string().datetime().optional(),
+});
+
+/** Next sequential PROP-#### id, matching the seeded numbering scheme. */
+async function nextProposalId(): Promise<string> {
+  const rows = await prisma.proposal.findMany({ select: { id: true } });
+  const nums = rows
+    .map((r) => /^PROP-(\d+)$/.exec(r.id)?.[1])
+    .filter((n): n is string => n != null)
+    .map(Number);
+  const next = (nums.length > 0 ? Math.max(...nums) : 100) + 1;
+  return `PROP-${String(next).padStart(4, "0")}`;
+}
+
+/** POST /api/proposals — submit a new RFCTLARR proposal at the INTAKE stage, before any funds are committed. */
+proposalsRouter.post("/", async (req, res) => {
+  const user = req.nlamsUser!;
+  const parsed = createProposalBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid proposal input", details: parsed.error.flatten() });
+    return;
+  }
+  const { projectName, requiringBody, state, district, affectedFamilies, initiatedAt } =
+    parsed.data;
+
+  if (!isStateInScope(user, state)) {
+    res.status(403).json({ error: "Cannot submit a proposal outside your assigned state scope" });
+    return;
+  }
+
+  const id = await nextProposalId();
+  const now = new Date();
+
+  const created = await prisma.$transaction(async (tx) => {
+    const proposal = await tx.proposal.create({
+      data: {
+        id,
+        projectName,
+        requiringBody,
+        state,
+        district,
+        currentStage: "INTAKE",
+        stageEnteredAt: now,
+        initiatedAt: initiatedAt ? new Date(initiatedAt) : now,
+        affectedFamilies,
+      },
+      include,
+    });
+    await addAuditEntry(tx, {
+      proposalId: proposal.id,
+      userId: user.id,
+      action: "PROPOSAL_SUBMITTED",
+      toStage: "INTAKE",
+      eventPayload: {
+        projectName,
+        requiringBody,
+        state,
+        district,
+        affectedFamilies,
+        submittedBy: user.name,
+      },
+    });
+    return proposal;
+  });
+
+  res.status(201).json(serializeProposal(created));
 });
 
 proposalsRouter.get("/:id", async (req, res) => {

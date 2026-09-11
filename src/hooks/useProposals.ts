@@ -37,9 +37,29 @@ export function useAdvanceStageMutation(id: string) {
   });
 }
 
+export interface CreateProposalInput {
+  projectName: string;
+  requiringBody: string;
+  state: string;
+  district: string;
+  affectedFamilies: number;
+}
+
+/** Submits a new proposal at the INTAKE stage — the pre-funding entry point into the RFCTLARR pipeline. */
+export function useCreateProposalMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateProposalInput) => api.post<Proposal>("/api/proposals", input),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["proposals"] });
+    },
+  });
+}
+
 export interface AuditLogEntry {
   id: string;
   action:
+    | "PROPOSAL_SUBMITTED"
     | "STAGE_ADVANCE"
     | "DOCUMENT_UPLOAD"
     | "DOCUMENT_VERIFY"

@@ -341,6 +341,9 @@ const DISTRICTS: Record<string, string[]> = {
   Puducherry: ["Puducherry", "Karaikal"],
 };
 
+/** State → district list for the new-proposal form's cascading select. */
+export const DISTRICTS_BY_STATE: Record<string, string[]> = DISTRICTS;
+
 const OWNER_NAMES: Record<string, string[]> = {
   Maharashtra: [
     "Sakharam B. Patil",

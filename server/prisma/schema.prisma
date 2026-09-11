@@ -54,6 +54,7 @@ enum Role {
 }
 
 enum AuditAction {
+  PROPOSAL_SUBMITTED
   STAGE_ADVANCE
   DOCUMENT_UPLOAD
   DOCUMENT_VERIFY

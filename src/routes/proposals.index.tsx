@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ProposalPipeline } from "@/components/proposals/ProposalPipeline";
+import { NewProposalDialog } from "@/components/proposals/NewProposalDialog";
 import { useI18n } from "@/context/I18nContext";
 
 export const Route = createFileRoute("/proposals/")({
@@ -37,6 +38,7 @@ function ProposalsPage() {
       <PageHeader
         title={t("page.proposals.title")}
         subtitle="All acquisition proposals recorded against notified requiring bodies"
+        actions={<NewProposalDialog />}
       />
       <ProposalPipeline />
     </AppShell>
