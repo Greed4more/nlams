@@ -77,34 +77,50 @@ documentsRouter.post(
   },
 );
 
-/** POST /api/documents/:id/verify — recomputes SHA-256 over the stored bytes and compares. */
-documentsRouter.post("/documents/:id/verify", async (req, res) => {
-  const doc = await prisma.documentRef.findFirst({
-    where: { id: req.params.id, proposal: proposalScopeWhere(req.nlamsUser!) },
-  });
-  if (!doc) {
-    res.status(404).json({ error: "Document not found" });
-    return;
-  }
-
-  const recomputed = sha256Hex(Buffer.from(doc.fileData));
-  const matches = recomputed === doc.sha256;
-
-  const updated = await prisma.$transaction(async (tx) => {
-    const d = matches
-      ? await tx.documentRef.update({ where: { id: doc.id }, data: { lastVerifiedAt: new Date() } })
-      : doc;
-    await addAuditEntry(tx, {
-      proposalId: doc.proposalId,
-      userId: req.nlamsUser!.id,
-      action: "DOCUMENT_VERIFY",
-      eventPayload: { documentId: doc.id, matches, recomputedSha256: recomputed },
+/**
+ * POST /api/documents/:id/verify — integrity check for a specific document.
+ *
+ * Accepts an optional multipart `file`. When a file is submitted, the server
+ * computes its SHA-256 over the submitted bytes and compares it against the
+ * hash stored in the DB at upload time (`document_refs.sha256`). This verifies
+ * that the specific uploaded document is byte-identical to the one anchored to
+ * the audit vault. Without a file, it falls back to re-hashing the stored bytes
+ * (an internal self-consistency check against the DB record).
+ *
+ * The hash itself is never returned to the client — only a boolean result.
+ */
+documentsRouter.post(
+  "/documents/:id/verify",
+  upload.single("file") as unknown as RequestHandler,
+  async (req, res) => {
+    const doc = await prisma.documentRef.findFirst({
+      where: { id: req.params.id, proposal: proposalScopeWhere(req.nlamsUser!) },
     });
-    return d;
-  });
+    if (!doc) {
+      res.status(404).json({ error: "Document not found" });
+      return;
+    }
 
-  res.json({ ...serializeDocument(updated), integrityMatch: matches });
-});
+    const submittedHash = req.file ? sha256Hex(req.file.buffer) : null;
+    const recomputed = submittedHash ?? sha256Hex(Buffer.from(doc.fileData));
+    const matches = recomputed === doc.sha256;
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const d = matches
+        ? await tx.documentRef.update({ where: { id: doc.id }, data: { lastVerifiedAt: new Date() } })
+        : doc;
+      await addAuditEntry(tx, {
+        proposalId: doc.proposalId,
+        userId: req.nlamsUser!.id,
+        action: "DOCUMENT_VERIFY",
+        eventPayload: { documentId: doc.id, matches, recomputedSha256: recomputed },
+      });
+      return d;
+    });
+
+    res.json({ ...serializeDocument(updated), integrityMatch: matches });
+  },
+);
 
 /** GET /api/documents/:id/download — streams the stored bytes back. */
 documentsRouter.get("/documents/:id/download", async (req, res) => {

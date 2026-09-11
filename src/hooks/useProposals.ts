@@ -95,7 +95,6 @@ export interface DocumentUploadResult {
   type: string;
   uploadedAt: string;
   sizeKb: number;
-  sha256: string;
   verified: boolean;
   lastVerifiedAt: string | null;
 }
@@ -112,15 +111,26 @@ export function useUploadDocumentMutation(proposalId: string) {
   });
 }
 
+/**
+ * Verifies a specific document's integrity against the SHA-256 hash stored in
+ * the server DB. Submit the original file via `form` to perform the byte-level
+ * check; an empty FormData triggers the server-side stored-bytes self-check.
+ * The response only carries `integrityMatch` — hashes never leave the server.
+ */
 export interface VerifyDocumentResult extends DocumentUploadResult {
   integrityMatch: boolean;
+}
+
+export interface VerifyDocumentInput {
+  documentId: string;
+  form: FormData;
 }
 
 export function useVerifyDocumentMutation(proposalId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (documentId: string) =>
-      api.post<VerifyDocumentResult>(`/api/documents/${documentId}/verify`),
+    mutationFn: ({ documentId, form }: VerifyDocumentInput) =>
+      api.postForm<VerifyDocumentResult>(`/api/documents/${documentId}/verify`, form),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["proposals", proposalId] });
       void qc.invalidateQueries({ queryKey: ["proposals"] });

@@ -3,12 +3,11 @@ import {
   FileText,
   ShieldCheck,
   ShieldAlert,
-  Copy,
-  Check,
   Loader2,
   ChevronDown,
   ChevronRight,
   Upload,
+  SearchCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { DocumentRef, Proposal } from "@/data/mockData";
@@ -23,7 +22,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { computeFileSha256 } from "@/lib/clientCrypto";
 import { cn } from "@/lib/utils";
 
 const DOC_TYPE_LABEL: Record<DocumentRef["type"], string> = {
@@ -51,23 +49,14 @@ export function DocumentRepository({ proposal }: { proposal: Proposal }) {
 
   const handleFileSelected = async (file: File | undefined) => {
     if (!file) return;
-    let clientChecksum = "";
-    try {
-      clientChecksum = await computeFileSha256(file);
-    } catch (e) {
-      console.warn("Client-side hash computation error:", e);
-    }
 
     const form = new FormData();
     form.append("file", file);
     form.append("type", uploadType);
     uploadMutation.mutate(form, {
-      onSuccess: (res) => {
-        const matchesClient = !clientChecksum || res.sha256 === clientChecksum;
-        toast.success("Document uploaded & hashed", {
-          description: matchesClient
-            ? `${file.name} stored · Client & Server SHA-256 checksums match (${res.sha256.slice(0, 16)}...) · Added to audit vault.`
-            : `${file.name} stored · SHA-256: ${res.sha256.slice(0, 16)}...`,
+      onSuccess: () => {
+        toast.success("Document uploaded", {
+          description: `${file.name} stored securely · content hash recorded in the audit vault.`,
         });
       },
       onError: (err) =>
@@ -151,7 +140,8 @@ export function DocumentRepository({ proposal }: { proposal: Proposal }) {
       </div>
 
       <div className="border-t border-border bg-muted/40 px-4 py-2 text-[10.5px] leading-snug text-muted-foreground">
-        Integrity is guaranteed via SHA-256 content checksums linked directly into the NLAMS Cryptographic Audit Vault ledger.
+        Integrity is guaranteed via SHA-256 content checksums linked directly into the NLAMS
+        Cryptographic Audit Vault ledger.
       </div>
     </section>
   );
@@ -167,18 +157,26 @@ function DocumentCard({
   autoVerifySignal?: number | undefined;
 }) {
   const [open, setOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
   const verifyMutation = useVerifyDocumentMutation(proposalId);
   const lastResult = verifyMutation.data;
+  const verifyFileInput = useRef<HTMLInputElement>(null);
 
-  const reverify = () => {
-    verifyMutation.mutate(doc.id);
+  const verifyStored = () => {
+    verifyMutation.mutate({ documentId: doc.id, form: new FormData() });
+  };
+
+  const verifyPickedFile = (file: File | undefined) => {
+    if (!file) return;
+    const form = new FormData();
+    form.append("file", file);
+    verifyMutation.mutate({ documentId: doc.id, form });
+    if (verifyFileInput.current) verifyFileInput.current.value = "";
   };
 
   useEffect(() => {
     if (!autoVerifySignal) return;
     setOpen(true);
-    reverify();
+    verifyStored();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoVerifySignal]);
 
@@ -204,7 +202,7 @@ function DocumentCard({
             )}
           >
             <ShieldCheck className="size-3" />
-            {doc.verified ? "Hash verified" : "Not yet verified"}
+            {doc.verified ? "Integrity verified" : "Not yet verified"}
           </span>
         </div>
         {open ? (
@@ -216,27 +214,6 @@ function DocumentCard({
 
       {open && (
         <div className="space-y-2.5 border-t border-border bg-muted/30 px-4 py-3">
-          <div>
-            <div className="label-xs">SHA-256 Hash</div>
-            <div className="mt-1 flex items-start gap-1.5">
-              <code className="num break-all font-mono text-[10.5px] leading-snug text-foreground">
-                {doc.sha256}
-              </code>
-              <button
-                type="button"
-                aria-label="Copy hash"
-                onClick={() => {
-                  void navigator.clipboard?.writeText(doc.sha256);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 1400);
-                }}
-                className="shrink-0 text-muted-foreground hover:text-foreground"
-              >
-                {copied ? <Check className="size-3 text-status-ok" /> : <Copy className="size-3" />}
-              </button>
-            </div>
-          </div>
-
           <div>
             <div className="label-xs">Last Verified</div>
             <div className="num mt-0.5 text-[12px]">
@@ -252,15 +229,43 @@ function DocumentCard({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={reverify}
-            disabled={verifyMutation.isPending}
-            className="inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-card px-2.5 py-1.5 text-[11.5px] font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-70"
-          >
-            {verifyMutation.isPending && <Loader2 className="size-3 animate-spin" />}
-            {verifyMutation.isPending ? "Recomputing hash…" : "Re-verify Hash"}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => verifyFileInput.current?.click()}
+              disabled={verifyMutation.isPending}
+              className="inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-card px-2.5 py-1.5 text-[11.5px] font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-70"
+            >
+              {verifyMutation.isPending ? (
+                <Loader2 className="size-3 animate-spin" />
+              ) : (
+                <SearchCheck className="size-3.5" />
+              )}
+              {verifyMutation.isPending ? "Checking integrity…" : "Check document integrity"}
+            </button>
+
+            <button
+              type="button"
+              onClick={verifyStored}
+              disabled={verifyMutation.isPending}
+              className="inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-card px-2.5 py-1.5 text-[11.5px] font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-70"
+            >
+              Verify stored copy
+            </button>
+
+            <input
+              ref={verifyFileInput}
+              type="file"
+              className="hidden"
+              accept="*/*"
+              onChange={(e) => verifyPickedFile(e.target.files?.[0])}
+            />
+          </div>
+
+          <p className="text-[10.5px] leading-snug text-muted-foreground">
+            Pick the original document to re-check it byte-for-byte against the hash recorded in the
+            server database.
+          </p>
 
           {lastResult && !verifyMutation.isPending && (
             <div
@@ -277,8 +282,8 @@ function DocumentCard({
                 <ShieldAlert className="size-3.5" />
               )}
               {lastResult.integrityMatch
-                ? "Integrity confirmed — recomputed hash matches the stored record"
-                : "Integrity check FAILED — stored bytes no longer match the recorded hash"}
+                ? "Integrity confirmed — the document matches the record stored in the database"
+                : "Integrity check FAILED — the document does not match the stored record"}
             </div>
           )}
         </div>
