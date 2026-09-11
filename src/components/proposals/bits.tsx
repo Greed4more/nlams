@@ -1,24 +1,27 @@
 import { STAGE_ORDER, STAGE_LABELS, type RfctlarrStage } from "@/data/mockData";
 import type { SlaResult, SlaStatus } from "@/lib/slaRules";
+import { useI18n } from "@/context/I18nContext";
 import { cn } from "@/lib/utils";
 
+/** Values are i18n keys (see src/lib/i18n/common.ts `stageShort.*`) — wrap with `t()`. */
 export const SHORT_STAGE: Record<RfctlarrStage, string> = {
-  INTAKE: "Intake",
-  SIA: "SIA Study",
-  SIA_APPRAISAL: "SIA Appraisal",
-  SEC_11: "Sec. 11 Notification",
-  SEC_19: "Sec. 19 Declaration",
-  AWARD: "Sec. 26 Award",
-  RR_COMPLETE: "R&R Completion",
+  INTAKE: "stageShort.INTAKE",
+  SIA: "stageShort.SIA",
+  SIA_APPRAISAL: "stageShort.SIA_APPRAISAL",
+  SEC_11: "stageShort.SEC_11",
+  SEC_19: "stageShort.SEC_19",
+  AWARD: "stageShort.AWARD",
+  RR_COMPLETE: "stageShort.RR_COMPLETE",
 };
 
 export function StagePill({ stage }: { stage: RfctlarrStage }) {
+  const { t } = useI18n();
   return (
     <span
       className="inline-block whitespace-nowrap rounded-[4px] border border-border bg-muted px-1.5 py-0.5 text-[11px] font-medium text-foreground/80"
-      title={STAGE_LABELS[stage]}
+      title={t(STAGE_LABELS[stage]!)}
     >
-      {SHORT_STAGE[stage]}
+      {t(SHORT_STAGE[stage]!)}
     </span>
   );
 }
@@ -47,12 +50,13 @@ const SLA_TONE: Record<SlaStatus, string> = {
 };
 
 export function SlaBadge({ sla, size = "sm" }: { sla: SlaResult; size?: "sm" | "lg" }) {
+  const { t } = useI18n();
   const text =
     sla.limitDays == null
-      ? "No clock"
+      ? t("common.noClock")
       : sla.status === "BREACHED"
-        ? `${Math.abs(sla.daysRemaining)}d overdue`
-        : `${sla.daysRemaining}d left`;
+        ? `${Math.abs(sla.daysRemaining)}${t("common.dOverdue")}`
+        : `${sla.daysRemaining}${t("common.dLeft")}`;
   return (
     <span
       className={cn(
@@ -60,7 +64,7 @@ export function SlaBadge({ sla, size = "sm" }: { sla: SlaResult; size?: "sm" | "
         SLA_TONE[sla.status],
         size === "lg" ? "px-3 py-1.5 text-[13px]" : "px-1.5 py-0.5 text-[11px]",
       )}
-      title={sla.consequence}
+      title={t(sla.consequence)}
     >
       {text}
     </span>

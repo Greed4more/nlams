@@ -5,7 +5,9 @@ export type SlaStatus = "OK" | "AT_RISK" | "BREACHED";
 export interface SlaRule {
   limitDays: number;
   statuteRef: string;
+  /** i18n key (src/lib/i18n/common.ts `sla.consequence.*`) — wrap with `t()`. */
   consequence: string;
+  /** i18n key (src/lib/i18n/common.ts `sla.description.*`) — wrap with `t()`. */
   description: string;
 }
 
@@ -14,26 +16,26 @@ export const SLA_RULES: Partial<Record<RfctlarrStage, SlaRule>> = {
   SIA: {
     limitDays: 180,
     statuteRef: "Sec. 4(2)",
-    consequence: "SIA study must be completed and made public within 6 months.",
-    description: "SIA commencement → SIA report",
+    consequence: "sla.consequence.SIA",
+    description: "sla.description.SIA",
   },
   SIA_APPRAISAL: {
     limitDays: 365,
     statuteRef: "Sec. 14",
-    consequence: "SIA lapses; fresh Social Impact Assessment required.",
-    description: "SIA appraisal → Sec. 11 preliminary notification",
+    consequence: "sla.consequence.SIA_APPRAISAL",
+    description: "sla.description.SIA_APPRAISAL",
   },
   SEC_11: {
     limitDays: 365,
     statuteRef: "Sec. 19(7)",
-    consequence: "Preliminary notification lapses; acquisition must restart.",
-    description: "Sec. 11 notification → Sec. 19 declaration",
+    consequence: "sla.consequence.SEC_11",
+    description: "sla.description.SEC_11",
   },
   SEC_19: {
     limitDays: 365,
     statuteRef: "Sec. 25",
-    consequence: "Proceedings lapse; entire acquisition stands abated.",
-    description: "Sec. 19 declaration → Award",
+    consequence: "sla.consequence.SEC_19",
+    description: "sla.description.SEC_19",
   },
 };
 
@@ -44,8 +46,10 @@ export interface SlaResult {
   daysRemaining: number;
   status: SlaStatus;
   statuteRef: string;
+  /** i18n key — wrap with `t()`. */
   consequence: string;
   limitDays: number | null;
+  /** i18n key — wrap with `t()`. */
   description: string;
 }
 
@@ -60,9 +64,9 @@ export function getSlaStatus(proposal: Proposal, now: Date = new Date()): SlaRes
       daysRemaining: Infinity,
       status: "OK",
       statuteRef: "—",
-      consequence: "No statutory clock applies at this stage.",
+      consequence: "sla.consequence.default",
       limitDays: null,
-      description: "Not time-bound",
+      description: "sla.description.default",
     };
   }
 
@@ -81,8 +85,9 @@ export function getSlaStatus(proposal: Proposal, now: Date = new Date()): SlaRes
   };
 }
 
+/** Values are i18n keys (src/lib/i18n/common.ts `slaStatus.*`) — wrap with `t()`. */
 export const SLA_STATUS_LABEL: Record<SlaStatus, string> = {
-  OK: "On track",
-  AT_RISK: "Approaching breach",
-  BREACHED: "Statutory breach",
+  OK: "slaStatus.OK",
+  AT_RISK: "slaStatus.AT_RISK",
+  BREACHED: "slaStatus.BREACHED",
 };

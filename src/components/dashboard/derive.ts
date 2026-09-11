@@ -3,6 +3,7 @@ import type { Proposal, RfctlarrStage } from "@/data/mockData";
 import { getSlaStatus, SLA_RULES, type SlaStatus } from "@/lib/slaRules";
 import { STAGE_ORDER, STAGE_LABELS } from "@/data/mockData";
 import { useRole } from "@/context/RoleContext";
+import { useI18n } from "@/context/I18nContext";
 
 export const CHART_COLORS = {
   ok: "var(--status-ok)",
@@ -17,14 +18,15 @@ export interface Enriched {
   sla: ReturnType<typeof getSlaStatus>;
 }
 
+/** Values are i18n keys (src/lib/i18n/common.ts `stageChart.*`) — already translated below. */
 const SHORT_LABEL: Record<RfctlarrStage, string> = {
-  INTAKE: "Intake",
-  SIA: "SIA",
-  SIA_APPRAISAL: "Appraisal",
-  SEC_11: "Sec. 11",
-  SEC_19: "Sec. 19",
-  AWARD: "Award",
-  RR_COMPLETE: "R&R",
+  INTAKE: "stageChart.INTAKE",
+  SIA: "stageChart.SIA",
+  SIA_APPRAISAL: "stageChart.SIA_APPRAISAL",
+  SEC_11: "stageChart.SEC_11",
+  SEC_19: "stageChart.SEC_19",
+  AWARD: "stageChart.AWARD",
+  RR_COMPLETE: "stageChart.RR_COMPLETE",
 };
 
 export interface StageRow {
@@ -53,25 +55,26 @@ export interface ActivityEvent {
   docType: string;
 }
 
+/** Values are i18n keys (src/lib/i18n/common.ts `activity.*`). */
 const ACTION_LABEL: Record<string, string> = {
-  SIA_REPORT: "SIA report filed",
-  SEC_11_NOTIFICATION: "Sec. 11 notification published",
-  SEC_19_DECLARATION: "Sec. 19 declaration issued",
-  AWARD_ORDER: "Award order passed",
-  RR_SCHEME: "R&R scheme approved",
+  SIA_REPORT: "activity.SIA_REPORT",
+  SEC_11_NOTIFICATION: "activity.SEC_11_NOTIFICATION",
+  SEC_19_DECLARATION: "activity.SEC_19_DECLARATION",
+  AWARD_ORDER: "activity.AWARD_ORDER",
+  RR_SCHEME: "activity.RR_SCHEME",
 };
 
-function agoLabel(at: Date, now: Date): string {
+function agoLabel(at: Date, now: Date, t: (key: string) => string): string {
   const mins = Math.max(1, Math.round((now.getTime() - at.getTime()) / 60000));
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 60) return `${mins}${t("common.minAgo")}`;
   const hrs = Math.round(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
+  if (hrs < 24) return `${hrs}${t("common.hourAgo")}`;
   const days = Math.round(hrs / 24);
-  if (days < 30) return `${days}d ago`;
-  return `${Math.round(days / 30)}mo ago`;
+  if (days < 30) return `${days}${t("common.dayAgo")}`;
+  return `${Math.round(days / 30)}${t("common.monthAgo")}`;
 }
 
-export function buildDerived(list: Proposal[]) {
+export function buildDerived(list: Proposal[], t: (key: string) => string) {
   const now = new Date();
   const enriched: Enriched[] = list.map((proposal) => ({
     proposal,
@@ -99,13 +102,13 @@ export function buildDerived(list: Proposal[]) {
     const by = (s: SlaStatus) => rows.filter((e) => e.sla.status === s).length;
     return {
       stage,
-      label: STAGE_LABELS[stage],
-      short: SHORT_LABEL[stage],
+      label: t(STAGE_LABELS[stage]!),
+      short: t(SHORT_LABEL[stage]!),
       OK: by("OK"),
       AT_RISK: by("AT_RISK"),
       BREACHED: by("BREACHED"),
       total: rows.length,
-      statuteRef: SLA_RULES[stage]?.statuteRef ?? "No statutory clock",
+      statuteRef: SLA_RULES[stage]?.statuteRef ?? t("common.noStatutoryClock"),
     };
   });
 
@@ -171,9 +174,9 @@ export function buildDerived(list: Proposal[]) {
     return {
       total: compensated + partial + pending,
       data: [
-        { name: "Compensated", value: compensated, color: CHART_COLORS.ok },
-        { name: "Partially compensated", value: partial, color: CHART_COLORS.warn },
-        { name: "Pending", value: pending, color: CHART_COLORS.critical },
+        { name: t("common.compensated"), value: compensated, color: CHART_COLORS.ok },
+        { name: t("common.partiallyCompensated"), value: partial, color: CHART_COLORS.warn },
+        { name: t("common.pending"), value: pending, color: CHART_COLORS.critical },
       ],
     };
   })();
@@ -182,10 +185,10 @@ export function buildDerived(list: Proposal[]) {
     .flatMap((p) =>
       p.documents.map((d) => ({
         id: d.id,
-        action: ACTION_LABEL[d.type] ?? d.type,
+        action: ACTION_LABEL[d.type] ? t(ACTION_LABEL[d.type]!) : d.type,
         proposalId: p.id,
         at: new Date(d.uploadedAt),
-        ago: agoLabel(new Date(d.uploadedAt), now),
+        ago: agoLabel(new Date(d.uploadedAt), now, t),
         docType: d.type,
       })),
     )
@@ -210,5 +213,6 @@ export type Derived = ReturnType<typeof buildDerived>;
 /** Role-scoped derived dataset for every dashboard widget. */
 export function useDerived(): Derived {
   const { scopedProposals } = useRole();
-  return useMemo(() => buildDerived(scopedProposals), [scopedProposals]);
+  const { t } = useI18n();
+  return useMemo(() => buildDerived(scopedProposals, t), [scopedProposals, t]);
 }

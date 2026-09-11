@@ -46,14 +46,19 @@ export interface Proposal {
   compensation: { assessed: number; disbursed: number; pending: number };
 }
 
+/**
+ * Values are i18n keys (see src/lib/i18n/common.ts `stage.*`), not literal
+ * text — callers must wrap access with `t()` from useI18n(), e.g.
+ * `t(STAGE_LABELS[stage])`.
+ */
 export const STAGE_LABELS: Record<RfctlarrStage, string> = {
-  INTAKE: "Intake",
-  SIA: "Social Impact Assessment",
-  SIA_APPRAISAL: "SIA Appraisal (Expert Group)",
-  SEC_11: "Sec. 11 Preliminary Notification",
-  SEC_19: "Sec. 19 Declaration",
-  AWARD: "Sec. 23 Award",
-  RR_COMPLETE: "R&R Complete",
+  INTAKE: "stage.INTAKE",
+  SIA: "stage.SIA",
+  SIA_APPRAISAL: "stage.SIA_APPRAISAL",
+  SEC_11: "stage.SEC_11",
+  SEC_19: "stage.SEC_19",
+  AWARD: "stage.AWARD",
+  RR_COMPLETE: "stage.RR_COMPLETE",
 };
 
 export const STAGE_ORDER: RfctlarrStage[] = [
