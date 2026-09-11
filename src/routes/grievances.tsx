@@ -11,7 +11,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 export const Route = createFileRoute("/grievances")({
   head: () => ({
     meta: [
-      { title: "Grievances — NLAMS" },
+      { title: "Grievances — BHUMITRA" },
       {
         name: "description",
         content: "Land-title and parcel correction grievance tickets, 15-day statutory SLA.",

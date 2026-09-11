@@ -49,9 +49,9 @@ export function MisExport() {
       ];
     });
     const stamp = new Date().toISOString().slice(0, 10);
-    downloadCsv(`nlams-mis-report-${stamp}.csv`, CSV_HEADERS, rows);
+    downloadCsv(`bhumitra-mis-report-${stamp}.csv`, CSV_HEADERS, rows);
     toast.success("MIS report exported", {
-      description: `${rows.length} proposals (${scopeLabel}) — nlams-mis-report-${stamp}.csv`,
+      description: `${rows.length} proposals (${scopeLabel}) — bhumitra-mis-report-${stamp}.csv`,
     });
   };
 

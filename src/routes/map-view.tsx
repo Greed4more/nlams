@@ -16,13 +16,13 @@ export const Route = createFileRoute("/map-view")({
   }),
   head: () => ({
     meta: [
-      { title: "Cadastral GIS Viewer — NLAMS" },
+      { title: "Cadastral GIS Viewer — BHUMITRA" },
       {
         name: "description",
         content:
           "Spatial view of ULPIN cadastral parcels over OpenStreetMap, with ISRO Bhuvan administrative boundary overlays.",
       },
-      { property: "og:title", content: "Cadastral GIS Viewer — NLAMS" },
+      { property: "og:title", content: "Cadastral GIS Viewer — BHUMITRA" },
       {
         property: "og:description",
         content:
@@ -46,7 +46,7 @@ function MapViewPage() {
   useEffect(() => setMounted(true), []);
 
   return (
-    <AppShell breadcrumb={["NLAMS", "GIS Map View"]}>
+    <AppShell breadcrumb={["BHUMITRA", "GIS Map View"]}>
       <PageHeader
         title={t("page.map.title")}
         subtitle="ULPIN-linked cadastral parcels on OpenStreetMap · ISRO Bhuvan boundary overlay available"

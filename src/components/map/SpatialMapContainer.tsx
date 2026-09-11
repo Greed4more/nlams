@@ -319,7 +319,7 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
   const blocksVisible = showBlocks && zoom >= BLOCK_VISIBLE_ZOOM;
   const adminLabelsVisible = zoom >= ADMIN_LABEL_ZOOM;
 
-  /** NLAMS West Bengal 28-district target-state parcel demo — see
+  /** BHUMITRA West Bengal 28-district target-state parcel demo — see
    * public/geo/wb_parcels. Opt-in and WB-only: 28 districts x up to ~9.5k
    * parcels each is too much to fetch or render at once. */
   const { data: wbManifest } = useWbParcelManifest();

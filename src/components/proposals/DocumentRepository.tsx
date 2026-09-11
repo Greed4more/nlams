@@ -140,7 +140,7 @@ export function DocumentRepository({ proposal }: { proposal: Proposal }) {
       </div>
 
       <div className="border-t border-border bg-muted/40 px-4 py-2 text-[10.5px] leading-snug text-muted-foreground">
-        Integrity is guaranteed via SHA-256 content checksums linked directly into the NLAMS
+        Integrity is guaranteed via SHA-256 content checksums linked directly into the BHUMITRA
         Cryptographic Audit Vault ledger.
       </div>
     </section>

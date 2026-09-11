@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 
 export const Route = createFileRoute("/sign-in")({
-  head: () => ({ meta: [{ title: "Sign in — NLAMS" }] }),
+  head: () => ({ meta: [{ title: "Sign in — BHUMITRA" }] }),
   component: SignInPage,
 });
 
@@ -95,7 +95,7 @@ function SignInPage() {
             <ShieldCheck className="size-5" />
           </div>
           <div>
-            <div className="text-[15px] font-semibold text-foreground">NLAMS</div>
+            <div className="text-[15px] font-semibold text-foreground">BHUMITRA</div>
             <div className="text-[11px] text-muted-foreground">
               National Land Acquisition &amp; Management System
             </div>

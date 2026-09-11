@@ -42,7 +42,7 @@ export function WorkflowStepper({ proposal }: { proposal: Proposal }) {
                     done && "border-navy bg-navy text-navy-foreground",
                     current &&
                       cn(
-                        "border-2 bg-card nlams-pulse",
+                        "border-2 bg-card bhumitra-pulse",
                         sla.status === "BREACHED"
                           ? "border-status-critical text-status-critical ring-4 ring-status-critical/15"
                           : "border-status-info text-status-info ring-4 ring-status-info/15",

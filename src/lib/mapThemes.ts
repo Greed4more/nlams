@@ -11,10 +11,10 @@ export interface MapTheme {
   labelColor: string;
 }
 
-/** Single visual skin for the cadastral map — the NLAMS standard portal chrome. */
+/** Single visual skin for the cadastral map — the BHUMITRA standard portal chrome. */
 export const MAP_THEME: MapTheme = {
-  label: "NLAMS Standard",
-  portalTitle: "NLAMS Cadastral Viewer",
+  label: "BHUMITRA Standard",
+  portalTitle: "BHUMITRA Cadastral Viewer",
   portalSubtitle: "National Land Acquisition & Management System",
   accent: "#0f2942",
   accentForeground: "#ffffff",
@@ -37,7 +37,7 @@ export const ADMIN_BOUNDARY_COLORS = {
 } as const;
 
 /**
- * NLAMS West Bengal 28-district target-state parcel demo (public/geo/wb_parcels).
+ * BHUMITRA West Bengal 28-district target-state parcel demo (public/geo/wb_parcels).
  * Colors deliberately distinct from ADMIN_BOUNDARY_COLORS and every
  * MAP_THEMES.parcelStroke so the layer reads as its own thing: real
  * Banglarbhumi-captured parcels vs. synthetic block-filler ones.

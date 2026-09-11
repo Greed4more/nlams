@@ -10,7 +10,7 @@ import { ApiError } from "@/lib/api";
 export const Route = createFileRoute("/admin/adapters")({
   head: () => ({
     meta: [
-      { title: "State Adapters — NLAMS" },
+      { title: "State Adapters — BHUMITRA" },
       {
         name: "description",
         content: "Pluggable per-state land-records adapter registry (Module 9).",

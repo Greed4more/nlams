@@ -16,7 +16,7 @@ import {
 export const Route = createFileRoute("/public/")({
   head: () => ({
     meta: [
-      { title: "Public Case Search — NLAMS" },
+      { title: "Public Case Search — BHUMITRA" },
       {
         name: "description",
         content:

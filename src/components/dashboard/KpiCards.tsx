@@ -69,7 +69,7 @@ export function KpiCards() {
         to="/proposals"
         search={{ filter: "breached" }}
         className={cn(
-          "panel nlams-pulse relative block overflow-hidden px-4 py-3 transition-colors hover:bg-accent/40",
+          "panel bhumitra-pulse relative block overflow-hidden px-4 py-3 transition-colors hover:bg-accent/40",
           spotlight,
         )}
       >

@@ -16,7 +16,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
             <Landmark className="size-5 shrink-0" strokeWidth={1.75} />
             <div>
               <div className="text-[14px] font-bold leading-tight tracking-[0.1em]">
-                NLAMS PUBLIC PORTAL
+                BHUMITRA PUBLIC PORTAL
               </div>
               <div className="text-[10.5px] leading-tight text-navy-muted">
                 Department of Land Resources · Ministry of Rural Development

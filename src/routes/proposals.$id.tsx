@@ -20,7 +20,7 @@ import { useAdvanceStageMutation, useProposalQuery } from "@/hooks/useProposals"
 export const Route = createFileRoute("/proposals/$id")({
   head: ({ params }) => ({
     meta: [
-      { title: `${params.id} — NLAMS` },
+      { title: `${params.id} — BHUMITRA` },
       {
         name: "description",
         content: `Statutory status, parcels and compensation for acquisition proposal ${params.id}.`,
@@ -37,7 +37,7 @@ function ProposalNotFound() {
         <div>
           <div className="label-xs">Record not found</div>
           <p className="mt-2 text-[13px] text-muted-foreground">
-            No proposal exists against this identifier in the NLAMS register.
+            No proposal exists against this identifier in the BHUMITRA register.
           </p>
           <Link
             to="/proposals"

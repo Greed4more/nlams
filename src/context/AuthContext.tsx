@@ -53,7 +53,7 @@ interface AuthContextValue {
   loading: boolean;
   session: Session | null;
   user: User | null;
-  /** null when the account has no NLAMS role assigned yet (app_metadata.role unset). */
+  /** null when the account has no BHUMITRA role assigned yet (app_metadata.role unset). */
   role: Role | null;
   /** Empty = national scope. */
   states: string[];

@@ -12,13 +12,13 @@ export const Route = createFileRoute("/proposals/")({
   }),
   head: () => ({
     meta: [
-      { title: "Proposal Pipeline — NLAMS" },
+      { title: "Proposal Pipeline — BHUMITRA" },
       {
         name: "description",
         content:
           "Register of RFCTLARR land acquisition proposals with stage progress, ULPIN parcels and statutory SLA status.",
       },
-      { property: "og:title", content: "Proposal Pipeline — NLAMS" },
+      { property: "og:title", content: "Proposal Pipeline — BHUMITRA" },
       {
         property: "og:description",
         content:
