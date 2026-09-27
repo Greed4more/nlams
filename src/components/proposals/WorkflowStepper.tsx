@@ -34,12 +34,15 @@ export function WorkflowStepper({ proposal }: { proposal: Proposal }) {
             <div key={stage} className="flex min-w-[132px] flex-1 flex-col items-center">
               <div className="flex w-full items-center">
                 <span
-                  className={cn("h-[2px] flex-1", i === 0 ? "bg-transparent" : done || current ? "bg-navy" : "bg-border")}
+                  className={cn(
+                    "h-[2px] flex-1",
+                    i === 0 ? "bg-transparent" : done || current ? "bg-ink" : "bg-border",
+                  )}
                 />
                 <span
                   className={cn(
                     "grid size-7 shrink-0 place-items-center rounded-full border text-[11px] font-semibold",
-                    done && "border-navy bg-navy text-navy-foreground",
+                    done && "border-ink bg-ink text-ink-foreground",
                     current &&
                       cn(
                         "border-2 bg-card bhumitra-pulse",
@@ -55,7 +58,7 @@ export function WorkflowStepper({ proposal }: { proposal: Proposal }) {
                 <span
                   className={cn(
                     "h-[2px] flex-1",
-                    i === STAGE_ORDER.length - 1 ? "bg-transparent" : done ? "bg-navy" : "bg-border",
+                    i === STAGE_ORDER.length - 1 ? "bg-transparent" : done ? "bg-ink" : "bg-border",
                   )}
                 />
               </div>
@@ -63,7 +66,11 @@ export function WorkflowStepper({ proposal }: { proposal: Proposal }) {
               <div
                 className={cn(
                   "mt-2 px-1 text-center text-[11.5px] font-semibold leading-tight",
-                  current ? "text-foreground" : done ? "text-foreground/80" : "text-muted-foreground",
+                  current
+                    ? "text-foreground"
+                    : done
+                      ? "text-foreground/80"
+                      : "text-muted-foreground",
                 )}
               >
                 {SHORT_STAGE[stage]}
@@ -71,7 +78,11 @@ export function WorkflowStepper({ proposal }: { proposal: Proposal }) {
               <div className="num mt-1 px-1 text-center text-[10.5px] leading-tight text-muted-foreground">
                 {current ? (
                   rule ? (
-                    <span className={sla.status === "BREACHED" ? "font-semibold text-status-critical" : ""}>
+                    <span
+                      className={
+                        sla.status === "BREACHED" ? "font-semibold text-status-critical" : ""
+                      }
+                    >
                       {sla.daysElapsed} / {rule.limitDays} days
                       <br />
                       {rule.statuteRef}

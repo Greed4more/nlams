@@ -11,7 +11,7 @@ export function TopNav() {
   const items = role === "DOLR_SECRETARY" ? [...NAV, ADMIN_NAV] : NAV;
 
   return (
-    <nav aria-label="Main" className="hidden bg-navy md:block">
+    <nav aria-label="Main" className="hidden bg-ink md:block">
       <ul className="mx-auto flex max-w-[1600px] items-stretch px-2 sm:px-4">
         {items.map(({ to, labelKey, icon: Icon }) => {
           const label = t(labelKey);
@@ -21,9 +21,9 @@ export function TopNav() {
                 to={to}
                 title={label}
                 activeOptions={{ exact: to === "/dashboard" }}
-                className="flex items-center gap-2 border-b-2 border-transparent px-3.5 py-2.5 text-[11.5px] font-semibold uppercase tracking-[0.08em] text-navy-foreground/75 transition-colors hover:bg-navy-hover hover:text-navy-foreground lg:px-4"
+                className="flex items-center gap-2 border-b-2 border-transparent px-3.5 py-2.5 text-[11.5px] font-semibold uppercase tracking-[0.08em] text-ink-foreground/75 transition-colors hover:bg-ink-hover hover:text-ink-foreground lg:px-4"
                 activeProps={{
-                  className: "border-saffron bg-navy-hover text-navy-foreground",
+                  className: "border-saffron bg-ink-hover text-ink-foreground",
                 }}
               >
                 <Icon className="size-4 shrink-0" strokeWidth={1.75} />
@@ -44,19 +44,19 @@ export function MobileNavList({ onNavigate }: { onNavigate?: () => void }) {
   const items = role === "DOLR_SECRETARY" ? [...NAV, ADMIN_NAV] : NAV;
 
   return (
-    <div className="flex h-full flex-col bg-navy text-navy-foreground">
+    <div className="flex h-full flex-col bg-ink text-ink-foreground">
       <div className="border-b border-white/10 px-4 py-4">
         <div className="font-serif text-[16px] font-bold tracking-[0.12em]">
-          BHUMITRA <span className="text-[12px] font-semibold text-navy-muted">भूमित्र</span>
+          BHUMITRA <span className="text-[12px] font-semibold text-ink-muted">भूमित्र</span>
         </div>
-        <div className="mt-1 text-[10.5px] leading-tight text-navy-muted">
+        <div className="mt-1 text-[10.5px] leading-tight text-ink-muted">
           Ministry of Rural Development
           <br />
           Department of Land Resources &middot; भारत सरकार
         </div>
       </div>
       <nav className="flex-1 px-2 py-3">
-        <div className="label-xs px-2 pb-2 text-navy-muted">Navigation</div>
+        <div className="label-xs px-2 pb-2 text-ink-muted">Navigation</div>
         <ul className="space-y-0.5">
           {items.map(({ to, labelKey, icon: Icon }) => {
             const label = t(labelKey);
@@ -68,10 +68,10 @@ export function MobileNavList({ onNavigate }: { onNavigate?: () => void }) {
                   onClick={onNavigate}
                   activeOptions={{ exact: to === "/dashboard" }}
                   className={cn(
-                    "flex items-center gap-2.5 rounded-[4px] px-2.5 py-2 text-[13px] font-medium text-navy-foreground/80 transition-colors hover:bg-navy-hover hover:text-navy-foreground",
+                    "flex items-center gap-2.5 rounded-[4px] px-2.5 py-2 text-[13px] font-medium text-ink-foreground/80 transition-colors hover:bg-ink-hover hover:text-ink-foreground",
                   )}
                   activeProps={{
-                    className: "border-l-2 border-saffron bg-navy-hover pl-2 text-navy-foreground",
+                    className: "border-l-2 border-saffron bg-ink-hover pl-2 text-ink-foreground",
                   }}
                 >
                   <Icon className="size-4 shrink-0" strokeWidth={1.75} />
@@ -82,7 +82,7 @@ export function MobileNavList({ onNavigate }: { onNavigate?: () => void }) {
           })}
         </ul>
       </nav>
-      <div className="border-t border-white/10 px-4 py-3 text-[10px] leading-relaxed text-navy-muted">
+      <div className="border-t border-white/10 px-4 py-3 text-[10px] leading-relaxed text-ink-muted">
         RFCTLARR Act, 2013
         <br />
         Build 4.2.1 · Restricted

@@ -54,12 +54,12 @@ function LandingPage() {
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex w-full max-w-[1240px] flex-wrap items-center justify-between gap-3 px-5 py-3">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="grid size-11 shrink-0 place-items-center rounded-full border border-navy/20 bg-navy text-navy-foreground">
+            <span className="grid size-11 shrink-0 place-items-center rounded-full border border-ink/20 bg-ink text-ink-foreground">
               <AshokaChakra className="size-8" />
             </span>
             <div className="min-w-0 leading-tight">
               <div className="flex items-baseline gap-2">
-                <span className="font-serif text-[20px] font-bold tracking-[0.12em] text-navy">
+                <span className="font-serif text-[20px] font-bold tracking-[0.12em] text-ink">
                   BHUMITRA
                 </span>
                 <span className="text-[12.5px] font-semibold text-muted-foreground">भूमित्र</span>
@@ -71,13 +71,13 @@ function LandingPage() {
           </div>
 
           <div className="flex items-center gap-2.5">
-            <span className="hidden rounded-[3px] border border-navy/20 bg-navy/5 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-navy lg:inline-flex">
+            <span className="hidden rounded-[3px] border border-ink/20 bg-ink/5 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-ink lg:inline-flex">
               Smart India Hackathon 2026 &middot; Ministry Decision Support
             </span>
             {signedIn ? (
               <Link
                 to="/dashboard"
-                className="inline-flex h-9 items-center gap-1.5 rounded-[4px] bg-navy px-3.5 text-[12px] font-semibold text-navy-foreground transition-colors hover:bg-navy-hover"
+                className="inline-flex h-9 items-center gap-1.5 rounded-[4px] bg-ink px-3.5 text-[12px] font-semibold text-ink-foreground transition-colors hover:bg-ink-hover"
               >
                 <ShieldCheck className="size-3.5" />
                 Open Dashboard
@@ -85,7 +85,7 @@ function LandingPage() {
             ) : (
               <Link
                 to="/sign-in"
-                className="inline-flex h-9 items-center gap-1.5 rounded-[4px] border border-navy/25 px-3.5 text-[12px] font-semibold text-navy transition-colors hover:bg-navy/5"
+                className="inline-flex h-9 items-center gap-1.5 rounded-[4px] border border-ink/25 px-3.5 text-[12px] font-semibold text-ink transition-colors hover:bg-ink/5"
               >
                 <ShieldCheck className="size-3.5" />
                 Officer Login
@@ -113,17 +113,17 @@ function LandingPage() {
           aria-hidden
           className="pointer-events-none absolute -right-24 -top-24 size-[420px] rounded-full bg-forest/10 blur-3xl"
         />
-        <OfficialSeal className="pointer-events-none absolute -right-4 top-6 hidden size-[300px] -rotate-[8deg] text-navy opacity-[0.06] lg:block" />
+        <OfficialSeal className="pointer-events-none absolute -right-4 top-6 hidden size-[300px] -rotate-[8deg] text-ink opacity-[0.06] lg:block" />
 
         <div className="relative mx-auto w-full max-w-[1240px] px-5 py-14 lg:py-16">
           <div className="flex items-center gap-2">
             <GovIdentityLockup variant="light" />
           </div>
 
-          <h1 className="mt-8 max-w-3xl font-serif text-[34px] font-semibold leading-[1.15] tracking-tight text-navy sm:text-[42px]">
+          <h1 className="mt-8 max-w-3xl font-serif text-[34px] font-semibold leading-[1.15] tracking-tight text-ink sm:text-[42px]">
             Land Intelligence for Transparent Infrastructure
           </h1>
-          <p className="mt-1.5 max-w-2xl font-serif text-[16px] text-navy/70">
+          <p className="mt-1.5 max-w-2xl font-serif text-[16px] text-ink/70">
             राष्ट्रीय भू-अधिग्रहण एवं प्रबंधन प्रणाली — पारदर्शी अधिग्रहण, समयबद्ध मुआवज़ा
           </p>
           <p className="mt-4 max-w-2xl text-[14.5px] leading-relaxed text-muted-foreground">
@@ -154,7 +154,7 @@ function LandingPage() {
       <main id="main-content" className="mx-auto w-full max-w-[1240px] flex-1 px-5 py-12">
         <div className="mb-7">
           <div className="label-xs">Portal access</div>
-          <h2 className="mt-1.5 text-[22px] font-semibold tracking-tight text-navy">
+          <h2 className="mt-1.5 text-[22px] font-semibold tracking-tight text-ink">
             Choose your entry point
           </h2>
           <p className="mt-1.5 max-w-2xl text-[12.5px] text-muted-foreground">
@@ -250,11 +250,11 @@ function LandingPage() {
           ].map(({ icon: Icon, hi, en, to }) => {
             const body = (
               <>
-                <span className="grid size-9 shrink-0 place-items-center rounded-[3px] border border-border bg-card text-navy">
+                <span className="grid size-9 shrink-0 place-items-center rounded-[3px] border border-border bg-card text-ink">
                   <Icon className="size-4" strokeWidth={1.9} />
                 </span>
                 <span className="min-w-0">
-                  <span className="block font-serif text-[14.5px] font-semibold text-navy">
+                  <span className="block font-serif text-[14.5px] font-semibold text-ink">
                     {hi}
                   </span>
                   <span className="mt-0.5 block text-[11.5px] leading-snug text-muted-foreground">

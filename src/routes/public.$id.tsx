@@ -53,8 +53,8 @@ function PublicProposalDetailPage() {
 
       {data && (
         <>
-          <header className="rounded-[6px] bg-navy px-5 py-4 text-navy-foreground">
-            <div className="num font-mono text-[12px] tracking-wide text-navy-muted">
+          <header className="rounded-[6px] bg-ink px-5 py-4 text-ink-foreground">
+            <div className="num font-mono text-[12px] tracking-wide text-ink-muted">
               {data.projectId}
             </div>
             <h1 className="mt-1 text-[20px] font-semibold leading-tight">{data.projectName}</h1>
@@ -67,7 +67,7 @@ function PublicProposalDetailPage() {
                   key={label}
                   className="rounded-[4px] border border-white/15 bg-white/5 px-2 py-1 text-[11.5px]"
                 >
-                  <span className="text-navy-muted">{label}: </span>
+                  <span className="text-ink-muted">{label}: </span>
                   <span className="num font-medium">{value}</span>
                 </span>
               ))}

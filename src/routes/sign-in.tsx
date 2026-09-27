@@ -114,12 +114,12 @@ function SignInPage() {
         <header className="border-b border-border/70 bg-card/85 backdrop-blur-sm">
           <div className="mx-auto flex w-full max-w-[1240px] items-center justify-between gap-3 px-5 py-3">
             <Link to="/" className="flex min-w-0 items-center gap-3">
-              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-navy text-navy-foreground">
+              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-ink text-ink-foreground">
                 <AshokaChakra className="size-8" />
               </span>
               <span className="min-w-0 leading-tight">
                 <span className="flex items-baseline gap-2">
-                  <span className="font-serif text-[19px] font-bold tracking-[0.12em] text-navy">
+                  <span className="font-serif text-[19px] font-bold tracking-[0.12em] text-ink">
                     BHUMITRA
                   </span>
                   <span className="text-[12px] font-semibold text-muted-foreground">भूमित्र</span>
@@ -137,7 +137,7 @@ function SignInPage() {
                   className="h-8 w-9 justify-center gap-0 rounded-[4px] border-border bg-card/90 px-0 text-[11.5px] font-medium sm:w-[160px] sm:justify-start sm:gap-1.5 sm:px-3"
                 >
                   <div className="flex min-w-0 items-center gap-1.5">
-                    <Languages className="size-3.5 shrink-0 text-navy" />
+                    <Languages className="size-3.5 shrink-0 text-ink" />
                     <SelectValue placeholder="Language">
                       <span className="hidden sm:inline">{currentLangLabel}</span>
                     </SelectValue>
@@ -154,7 +154,7 @@ function SignInPage() {
 
               <Link
                 to="/"
-                className="inline-flex h-8 items-center gap-1.5 rounded-[4px] border border-border bg-card/90 px-3 text-[11.5px] font-semibold text-navy transition-colors hover:bg-muted"
+                className="inline-flex h-8 items-center gap-1.5 rounded-[4px] border border-border bg-card/90 px-3 text-[11.5px] font-semibold text-ink transition-colors hover:bg-muted"
               >
                 <ArrowLeft className="size-3.5" />
                 Back
@@ -166,16 +166,16 @@ function SignInPage() {
         <div className="grid flex-1 lg:grid-cols-[1.05fr_minmax(0,560px)]">
           {/* Left overlay banner over the map canvas */}
           <section className="relative hidden flex-col justify-center overflow-hidden px-10 py-14 lg:flex xl:px-16">
-            <OfficialSeal className="pointer-events-none absolute -bottom-16 -left-10 size-[300px] -rotate-[6deg] text-navy opacity-[0.07]" />
+            <OfficialSeal className="pointer-events-none absolute -bottom-16 -left-10 size-[300px] -rotate-[6deg] text-ink opacity-[0.07]" />
             <div className="relative max-w-xl">
               <div className="flex items-center gap-3">
-                <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-navy">
+                <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-ink">
                   Authorized Access
                 </span>
                 <span aria-hidden className="tricolour-rule h-[3px] w-16" />
               </div>
 
-              <h1 className="mt-5 font-serif text-[40px] font-semibold leading-[1.1] tracking-tight text-navy xl:text-[46px]">
+              <h1 className="mt-5 font-serif text-[40px] font-semibold leading-[1.1] tracking-tight text-ink xl:text-[46px]">
                 Secure access to BHUMITRA
               </h1>
               <p className="mt-4 max-w-md text-[15px] leading-relaxed text-muted-foreground">
@@ -185,9 +185,9 @@ function SignInPage() {
 
               <div className="mt-9 h-px max-w-md bg-border" />
 
-              <div className="mt-9 inline-flex items-center gap-2.5 rounded-[6px] border border-forest/25 bg-card/85 px-4 py-3 shadow-[0_1px_2px_rgba(15,41,66,0.06)] backdrop-blur-sm">
+              <div className="mt-9 inline-flex items-center gap-2.5 rounded-[6px] border border-forest/25 bg-card/85 px-4 py-3 shadow-[0_1px_2px_rgba(42,33,24,0.06)] backdrop-blur-sm">
                 <ShieldCheck className="size-4 shrink-0 text-forest" strokeWidth={2} />
-                <span className="text-[12.5px] font-medium text-navy">
+                <span className="text-[12.5px] font-medium text-ink">
                   Government service access for authorized users
                 </span>
               </div>
@@ -206,12 +206,12 @@ function SignInPage() {
             className="flex items-center justify-center px-5 py-10 lg:px-10 lg:pr-14"
           >
             <div className="w-full max-w-[440px]">
-              <div className="rounded-[10px] border border-border bg-card p-7 shadow-[0_28px_70px_-38px_rgba(15,41,66,0.65)]">
+              <div className="rounded-[10px] border border-border bg-card p-7 shadow-[0_28px_70px_-38px_rgba(42,33,24,0.65)]">
                 <div className="flex flex-col items-center text-center">
-                  <span className="grid size-14 place-items-center rounded-full bg-navy/5 ring-1 ring-navy/10">
-                    <AshokaChakra className="size-9 text-navy" />
+                  <span className="grid size-14 place-items-center rounded-full bg-ink/5 ring-1 ring-ink/10">
+                    <AshokaChakra className="size-9 text-ink" />
                   </span>
-                  <h2 className="mt-4 text-[24px] font-semibold tracking-tight text-navy">
+                  <h2 className="mt-4 text-[24px] font-semibold tracking-tight text-ink">
                     Welcome Back
                   </h2>
                   <p className="mt-1 text-[13px] text-muted-foreground">

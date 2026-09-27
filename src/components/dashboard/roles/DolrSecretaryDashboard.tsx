@@ -52,7 +52,7 @@ export function DolrSecretaryDashboard() {
   return (
     <div className="space-y-4">
       {/* Apex Banner */}
-      <div className="rounded-[6px] border border-navy/20 bg-gradient-to-r from-navy to-[#183d63] p-4 text-white">
+      <div className="rounded-[6px] border border-ink/20 bg-gradient-to-r from-ink to-[#4c3d29] p-4 text-white">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
@@ -92,7 +92,7 @@ export function DolrSecretaryDashboard() {
         </div>
 
         <div className="panel relative overflow-hidden px-4 py-3">
-          <span className="absolute inset-y-0 left-0 w-[3px] bg-navy" />
+          <span className="absolute inset-y-0 left-0 w-[3px] bg-ink" />
           <div className="label-xs">{t("dolr.kpi.landArea")}</div>
           <div className="num mt-2 text-[28px] font-semibold leading-none text-foreground">
             {totals.areaHa.toLocaleString("en-IN", { maximumFractionDigits: 1 })} Ha
@@ -231,7 +231,7 @@ export function DolrSecretaryDashboard() {
                       <div className="font-medium text-foreground">{item.body}</div>
                       <div className="mt-1 flex items-center gap-2">
                         <div className="h-1.5 w-32 rounded bg-muted">
-                          <div className="h-full rounded bg-navy" style={{ width: `${pct}%` }} />
+                          <div className="h-full rounded bg-ink" style={{ width: `${pct}%` }} />
                         </div>
                         <span className="num text-[11px] text-muted-foreground">
                           {pct}% {t("dolr.pctOfBudget")}
@@ -266,7 +266,7 @@ export function DolrSecretaryDashboard() {
             <section className="panel p-3.5">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <div className="label-xs flex items-center gap-1.5">
-                  <Server className="size-3.5 text-navy" />
+                  <Server className="size-3.5 text-ink" />
                   {t("dolr.module9.title")}
                 </div>
                 <Link

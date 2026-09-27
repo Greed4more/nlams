@@ -94,7 +94,7 @@ export function TopBar({ breadcrumb }: { breadcrumb: string[] }) {
                 ? `${activeState} land-records gateway is not connected`
                 : "Select a state to open its land-records gateway"
           }
-          className="inline-flex h-7 items-center gap-1.5 rounded-[4px] border border-navy/25 bg-navy/5 px-2.5 text-[11.5px] font-semibold text-navy transition-colors hover:bg-navy/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="inline-flex h-7 items-center gap-1.5 rounded-[4px] border border-ink/25 bg-ink/5 px-2.5 text-[11.5px] font-semibold text-ink transition-colors hover:bg-ink/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <ExternalLink className="size-3.5" />
           NIC-Bhoomi Gateway

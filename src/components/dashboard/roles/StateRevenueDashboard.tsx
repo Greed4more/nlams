@@ -61,11 +61,11 @@ export function StateRevenueDashboard() {
   return (
     <div className="space-y-4">
       {/* State Coordination Banner */}
-      <div className="rounded-[6px] border border-navy/20 bg-gradient-to-r from-navy via-[#16385d] to-[#1e4875] p-4 text-white">
+      <div className="rounded-[6px] border border-ink/20 bg-gradient-to-r from-ink via-[#3b2f20] to-[#4c3d29] p-4 text-white">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <span className="rounded bg-sky-400/20 px-2 py-0.5 font-mono text-[11px] font-semibold tracking-wider text-sky-200">
+              <span className="rounded bg-saffron/25 px-2 py-0.5 font-mono text-[11px] font-semibold tracking-wider text-saffron">
                 STATE COORDINATION DESK
               </span>
               <span className="text-[12px] text-white/80">
@@ -95,7 +95,7 @@ export function StateRevenueDashboard() {
       {/* State Coordination KPI Cards */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div className="panel relative overflow-hidden px-4 py-3">
-          <span className="absolute inset-y-0 left-0 w-[3px] bg-navy" />
+          <span className="absolute inset-y-0 left-0 w-[3px] bg-ink" />
           <div className="label-xs">Active Projects in State</div>
           <div className="num mt-2 text-[28px] font-semibold leading-none text-foreground">
             {totals.count}
@@ -252,7 +252,7 @@ export function StateRevenueDashboard() {
                       <div className="font-medium text-foreground">{item.body}</div>
                       <div className="mt-1 flex items-center gap-2">
                         <div className="h-1.5 w-32 rounded bg-muted">
-                          <div className="h-full rounded bg-navy" style={{ width: `${pct}%` }} />
+                          <div className="h-full rounded bg-ink" style={{ width: `${pct}%` }} />
                         </div>
                         <span className="num text-[11px] text-muted-foreground">
                           {pct}% of state budget
@@ -277,7 +277,7 @@ export function StateRevenueDashboard() {
           <section className="panel p-3.5">
             <div className="flex items-center justify-between border-b border-border pb-2">
               <div className="label-xs flex items-center gap-1.5">
-                <Server className="size-3.5 text-navy" />
+                <Server className="size-3.5 text-ink" />
                 Mahabhulekh (Satbara 7/12) Record Mapping
               </div>
               <span className="inline-flex items-center gap-1 rounded bg-status-warn/10 px-1.5 py-0.5 text-[10.5px] font-semibold text-status-warn">
@@ -368,10 +368,10 @@ export function StateRevenueDashboard() {
               <div className="border-t border-border pt-2.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <Database className="size-3.5 text-navy" />
+                    <Database className="size-3.5 text-ink" />
                     <span className="font-medium text-foreground">State Land Bank (Sec 101)</span>
                   </div>
-                  <span className="num font-semibold text-navy">248.6 Ha</span>
+                  <span className="num font-semibold text-ink">248.6 Ha</span>
                 </div>
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   Unutilized acquired land held in State Reserve for social infrastructure.

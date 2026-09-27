@@ -184,7 +184,7 @@ export function AuditTrail({ proposalId }: { proposalId: string }) {
               {/* Block header & meta */}
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="num font-mono rounded-[4px] bg-navy/10 px-1.5 py-0.5 text-[11px] font-bold text-navy">
+                  <span className="num font-mono rounded-[4px] bg-ink/10 px-1.5 py-0.5 text-[11px] font-bold text-ink">
                     Block #{String(entry.blockHeight).padStart(3, "0")}
                   </span>
                   <span className="text-[13px] font-medium text-foreground">
@@ -258,7 +258,7 @@ export function AuditTrail({ proposalId }: { proposalId: string }) {
           <DialogContent className="max-w-xl">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-[16px]">
-                <Hash className="size-4 text-navy" />
+                <Hash className="size-4 text-ink" />
                 Cryptographic Block Inspection · Block #
                 {String(inspectingBlock.blockHeight).padStart(3, "0")}
               </DialogTitle>
@@ -271,7 +271,7 @@ export function AuditTrail({ proposalId }: { proposalId: string }) {
               {/* Formula explanation */}
               <div className="rounded-[4px] border border-border bg-muted/40 p-2.5">
                 <div className="font-semibold text-foreground text-[11.5px]">Hash Formula:</div>
-                <code className="mt-1 block font-mono text-[11px] text-navy break-all">
+                <code className="mt-1 block font-mono text-[11px] text-ink break-all">
                   chainHash = SHA-256(previousHash : proposalId : action : eventPayloadHash :
                   fileHash)
                 </code>

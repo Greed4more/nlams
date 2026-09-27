@@ -71,28 +71,28 @@ export function GigwUtilityBar({ className }: { className?: string }) {
 
   return (
     <div>
-      <div aria-hidden className="tricolour-rule h-[3px] w-full border-b border-navy/10" />
+      <div aria-hidden className="tricolour-rule h-[3px] w-full border-b border-ink/10" />
       <div
         className={cn(
-          "flex h-8 items-center justify-between gap-3 border-b border-white/10 bg-navy px-3 text-[11px] text-navy-muted sm:px-5",
+          "flex h-8 items-center justify-between gap-3 border-b border-white/10 bg-ink px-3 text-[11px] text-ink-muted sm:px-5",
           className,
         )}
       >
         <a
           href="#main-content"
-          className="rounded-[2px] font-medium text-navy-foreground/90 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-status-info"
+          className="rounded-[2px] font-medium text-ink-foreground/90 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-status-info"
         >
           Skip to Main Content
         </a>
 
         <div className="flex items-center gap-1.5 sm:gap-3">
           <div className="hidden items-center gap-1 sm:flex">
-            <span className="text-navy-muted">Text size</span>
+            <span className="text-ink-muted">Text size</span>
             <button
               type="button"
               aria-label="Decrease text size"
               onClick={() => changeScale(scale - 0.05)}
-              className="grid size-5 place-items-center rounded-[2px] text-navy-foreground/80 transition-colors hover:bg-white/10"
+              className="grid size-5 place-items-center rounded-[2px] text-ink-foreground/80 transition-colors hover:bg-white/10"
             >
               <Minus className="size-3" />
             </button>
@@ -100,7 +100,7 @@ export function GigwUtilityBar({ className }: { className?: string }) {
               type="button"
               aria-label="Reset text size"
               onClick={() => changeScale(1)}
-              className="num grid size-5 place-items-center rounded-[2px] text-[11px] font-semibold text-navy-foreground/80 transition-colors hover:bg-white/10"
+              className="num grid size-5 place-items-center rounded-[2px] text-[11px] font-semibold text-ink-foreground/80 transition-colors hover:bg-white/10"
             >
               A
             </button>
@@ -108,7 +108,7 @@ export function GigwUtilityBar({ className }: { className?: string }) {
               type="button"
               aria-label="Increase text size"
               onClick={() => changeScale(scale + 0.05)}
-              className="grid size-5 place-items-center rounded-[2px] text-navy-foreground/80 transition-colors hover:bg-white/10"
+              className="grid size-5 place-items-center rounded-[2px] text-ink-foreground/80 transition-colors hover:bg-white/10"
             >
               <Plus className="size-3" />
             </button>
@@ -120,7 +120,7 @@ export function GigwUtilityBar({ className }: { className?: string }) {
             onClick={toggleContrast}
             className={cn(
               "inline-flex items-center gap-1 rounded-[2px] px-1.5 py-0.5 font-medium transition-colors hover:bg-white/10",
-              highContrast ? "text-status-warn" : "text-navy-foreground/80",
+              highContrast ? "text-status-warn" : "text-ink-foreground/80",
             )}
           >
             <Contrast className="size-3" />
@@ -130,7 +130,7 @@ export function GigwUtilityBar({ className }: { className?: string }) {
           <button
             type="button"
             onClick={() => setSrOpen(true)}
-            className="inline-flex items-center gap-1 rounded-[2px] px-1.5 py-0.5 font-medium text-navy-foreground/80 transition-colors hover:bg-white/10"
+            className="inline-flex items-center gap-1 rounded-[2px] px-1.5 py-0.5 font-medium text-ink-foreground/80 transition-colors hover:bg-white/10"
           >
             <Ear className="size-3" />
             Screen Reader Access

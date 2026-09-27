@@ -102,7 +102,7 @@ export function RiskConsentPanel({ proposalId }: { proposalId: string }) {
               </span>
               <div className="h-[5px] flex-1 rounded-[2px] bg-border">
                 <div
-                  className="h-full rounded-[2px] bg-navy"
+                  className="h-full rounded-[2px] bg-ink"
                   style={{ width: `${Math.round(f.importance * 100)}%` }}
                 />
               </div>

@@ -23,12 +23,12 @@ interface PortalEntryCardProps {
 
 const TONES = {
   restricted: {
-    bar: "bg-navy",
-    iconTile: "bg-navy text-navy-foreground",
+    bar: "bg-ink",
+    iconTile: "bg-ink text-ink-foreground",
     badge: "border-status-warn/40 bg-status-warn/10 text-status-warn",
-    hover: "hover:border-navy/35 hover:shadow-[0_14px_34px_-18px_rgba(15,41,66,0.45)]",
-    cta: "bg-navy text-navy-foreground hover:bg-navy-hover",
-    capabilityIcon: "text-navy",
+    hover: "hover:border-ink/35 hover:shadow-[0_14px_34px_-18px_rgba(42,33,24,0.45)]",
+    cta: "bg-ink text-ink-foreground hover:bg-ink-hover",
+    capabilityIcon: "text-ink",
   },
   open: {
     bar: "bg-forest",
@@ -61,7 +61,7 @@ export function PortalEntryCard({
   return (
     <article
       className={cn(
-        "group relative flex h-full flex-col overflow-hidden rounded-[6px] border border-border bg-card p-6 shadow-[0_1px_2px_rgba(15,41,66,0.06)] transition-all duration-200 ease-out hover:-translate-y-0.5",
+        "group relative flex h-full flex-col overflow-hidden rounded-[6px] border border-border bg-card p-6 shadow-[0_1px_2px_rgba(42,33,24,0.06)] transition-all duration-200 ease-out hover:-translate-y-0.5",
         styles.hover,
       )}
     >
@@ -88,7 +88,7 @@ export function PortalEntryCard({
       </div>
 
       <div className="label-xs mt-5">{eyebrow}</div>
-      <h2 className="mt-1.5 text-[21px] font-semibold leading-tight tracking-tight text-navy">
+      <h2 className="mt-1.5 text-[21px] font-semibold leading-tight tracking-tight text-ink">
         {title}
       </h2>
       <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">{description}</p>

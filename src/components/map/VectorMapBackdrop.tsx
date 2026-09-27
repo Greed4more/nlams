@@ -24,23 +24,23 @@ export function VectorMapBackdrop({ className }: { className?: string }) {
       >
         <defs>
           <pattern id="bhumitra-auth-map-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#D8DCD4" strokeWidth="0.6" />
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#DCD5C4" strokeWidth="0.6" />
           </pattern>
         </defs>
 
         {/* Base terrain wash */}
-        <rect width="1440" height="900" fill="#E8EBE4" />
+        <rect width="1440" height="900" fill="#EAE4D4" />
         <rect width="1440" height="900" fill="url(#bhumitra-auth-map-grid)" opacity="0.55" />
 
         {/* Water bodies */}
         <path
           d="M 1010 -80 C 1090 20 1200 60 1300 10 C 1370 -25 1460 40 1540 -20 L 1540 -80 Z"
-          fill="#C7D8D6"
+          fill="#C2CDBB"
         />
         <path
           d="M -40 940 C 140 860 90 700 260 640 S 420 500 360 360 S 300 200 420 60"
           fill="none"
-          stroke="#BDD3D6"
+          stroke="#AEBDA9"
           strokeWidth="26"
           strokeLinecap="round"
           opacity="0.75"
@@ -48,14 +48,14 @@ export function VectorMapBackdrop({ className }: { className?: string }) {
         <path
           d="M -40 940 C 140 860 90 700 260 640 S 420 500 360 360 S 300 200 420 60"
           fill="none"
-          stroke="#A9C7CC"
+          stroke="#9FB29A"
           strokeWidth="14"
           strokeLinecap="round"
           opacity="0.8"
         />
 
         {/* Cadastral fabric */}
-        <g stroke="#CBD1C7" strokeWidth="1">
+        <g stroke="#CFC8B6" strokeWidth="1">
           {parcels.map((p) => (
             <rect
               key={p.key}
@@ -73,7 +73,7 @@ export function VectorMapBackdrop({ className }: { className?: string }) {
         <path
           d="M -60 430 C 260 400 520 470 820 430 S 1260 360 1520 420"
           fill="none"
-          stroke="#D8DCD4"
+          stroke="#DCD5C4"
           strokeWidth="17"
         />
         <path
@@ -87,7 +87,7 @@ export function VectorMapBackdrop({ className }: { className?: string }) {
         <path
           d="M 620 -40 C 660 220 600 460 660 700 S 720 900 700 960"
           fill="none"
-          stroke="#D8DCD4"
+          stroke="#DCD5C4"
           strokeWidth="10.5"
         />
         <path
@@ -114,7 +114,7 @@ export function VectorMapBackdrop({ className }: { className?: string }) {
         <path
           d="M -40 780 C 320 740 760 820 1500 760"
           fill="none"
-          stroke="#9BA1A8"
+          stroke="#A39A87"
           strokeWidth="2.4"
           strokeDasharray="14 10"
         />
@@ -164,7 +164,7 @@ export function VectorMapBackdrop({ className }: { className?: string }) {
 
         {/* Labels */}
         <g fontFamily="Inter, 'Noto Sans', sans-serif">
-          <g fill="#8B9299" fontSize="11.5" letterSpacing="0.18em">
+          <g fill="#948A76" fontSize="11.5" letterSpacing="0.18em">
             <text x="150" y="250">
               RAMPUR
             </text>
@@ -184,7 +184,7 @@ export function VectorMapBackdrop({ className }: { className?: string }) {
               NANDGAON
             </text>
           </g>
-          <g fill="#9AA1A8" fontSize="10.5">
+          <g fill="#A29A88" fontSize="10.5">
             <text x="118" y="452" transform="rotate(-3 118 452)">
               NH-66
             </text>
@@ -194,7 +194,7 @@ export function VectorMapBackdrop({ className }: { className?: string }) {
             <text x="96" y="668">
               MINOR CANAL 3
             </text>
-            <text x="760" y="300" fill="#6B7280">
+            <text x="760" y="300" fill="#78705E">
               KHASRA 214/2
             </text>
             <text x="1150" y="470">
@@ -213,7 +213,7 @@ export function VectorMapBackdrop({ className }: { className?: string }) {
   );
 }
 
-const PARCEL_FILL = ["#EDF0E8", "#E3E8DE", "#F2F4EE", "#E8ECE3"] as const;
+const PARCEL_FILL = ["#EFE9D8", "#E6DFCC", "#F3EDDD", "#EAE3D0"] as const;
 
 interface ParcelRect {
   key: string;

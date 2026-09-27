@@ -13,7 +13,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-surface">
       <GigwUtilityBar />
-      <header className="bg-navy px-5 py-4 text-navy-foreground">
+      <header className="bg-ink px-5 py-4 text-ink-foreground">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-4">
           <Link to="/public" className="flex items-center gap-2.5">
             <AshokaChakra className="size-6 shrink-0" />
@@ -21,7 +21,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
               <div className="font-serif text-[14px] font-bold leading-tight tracking-[0.1em]">
                 BHUMITRA &middot; भूमित्र
               </div>
-              <div className="text-[10.5px] leading-tight text-navy-muted">
+              <div className="text-[10.5px] leading-tight text-ink-muted">
                 Public Land Information Portal &middot; Department of Land Resources
               </div>
             </div>
@@ -29,13 +29,13 @@ export function PublicShell({ children }: { children: ReactNode }) {
           <div className="flex shrink-0 items-center gap-2">
             <Link
               to="/"
-              className="rounded-[4px] px-2.5 py-1.5 text-[11.5px] font-medium text-navy-foreground/80 transition-colors hover:bg-navy-hover hover:text-navy-foreground"
+              className="rounded-[4px] px-2.5 py-1.5 text-[11.5px] font-medium text-ink-foreground/80 transition-colors hover:bg-ink-hover hover:text-ink-foreground"
             >
               Home
             </Link>
             <Link
               to="/sign-in"
-              className="rounded-[4px] border border-white/20 px-3 py-1.5 text-[11.5px] font-medium text-navy-foreground/90 transition-colors hover:bg-navy-hover"
+              className="rounded-[4px] border border-white/20 px-3 py-1.5 text-[11.5px] font-medium text-ink-foreground/90 transition-colors hover:bg-ink-hover"
             >
               Officer Sign In
             </Link>

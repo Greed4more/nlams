@@ -39,8 +39,8 @@ export function GovIdentityLockup({
   className?: string;
   trailing?: ReactNode;
 }) {
-  const text = variant === "dark" ? "text-navy-foreground" : "text-navy";
-  const subtle = variant === "dark" ? "text-navy-muted" : "text-muted-foreground";
+  const text = variant === "dark" ? "text-ink-foreground" : "text-ink";
+  const subtle = variant === "dark" ? "text-ink-muted" : "text-muted-foreground";
   return (
     <div className={["flex items-center gap-3", className].filter(Boolean).join(" ")}>
       <AshokaChakra className={["size-10 shrink-0", text].join(" ")} />

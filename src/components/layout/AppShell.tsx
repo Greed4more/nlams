@@ -83,7 +83,7 @@ export function AppShell({ breadcrumb, children }: { breadcrumb: string[]; child
       <Sheet open={navOpen} onOpenChange={setNavOpen}>
         <SheetContent
           side="left"
-          className="w-60 gap-0 border-none bg-navy p-0 text-navy-foreground [&_svg]:text-navy-foreground"
+          className="w-60 gap-0 border-none bg-ink p-0 text-ink-foreground [&_svg]:text-ink-foreground"
         >
           <SheetTitle className="sr-only">Navigation</SheetTitle>
           <MobileNavList onNavigate={() => setNavOpen(false)} />

@@ -12,7 +12,7 @@ export function ModuleBanner() {
 
   return (
     <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-[6px] border border-border bg-card px-3 py-2">
-      <span className="rounded-[3px] border border-navy/25 bg-navy/5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-navy">
+      <span className="rounded-[3px] border border-ink/25 bg-ink/5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-ink">
         Officer Verification Module
       </span>
       <span className="flex items-center gap-1.5 text-[11.5px] text-muted-foreground">

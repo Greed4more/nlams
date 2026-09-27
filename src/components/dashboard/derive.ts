@@ -10,7 +10,7 @@ export const CHART_COLORS = {
   warn: "var(--status-warn)",
   critical: "var(--status-critical)",
   info: "var(--status-info)",
-  navy: "var(--navy)",
+  ink: "var(--ink)",
 } as const;
 
 export interface Enriched {

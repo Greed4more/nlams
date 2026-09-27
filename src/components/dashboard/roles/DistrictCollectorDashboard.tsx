@@ -44,7 +44,7 @@ export function DistrictCollectorDashboard() {
   return (
     <div className="space-y-4">
       {/* Collector Command Banner */}
-      <div className="rounded-[6px] border border-navy/20 bg-gradient-to-r from-navy via-[#163a5f] to-[#1c4b7a] p-4 text-white">
+      <div className="rounded-[6px] border border-ink/20 bg-gradient-to-r from-ink via-[#3b2f20] to-[#4c3d29] p-4 text-white">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
@@ -76,7 +76,7 @@ export function DistrictCollectorDashboard() {
       {/* District Governance KPI Cards */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div className="panel relative overflow-hidden px-4 py-3">
-          <span className="absolute inset-y-0 left-0 w-[3px] bg-navy" />
+          <span className="absolute inset-y-0 left-0 w-[3px] bg-ink" />
           <div className="label-xs">{t("district.kpi.activeProposals")}</div>
           <div className="num mt-2 text-[28px] font-semibold leading-none text-foreground">
             {totals.count}
@@ -169,10 +169,10 @@ export function DistrictCollectorDashboard() {
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-mono text-[11px] font-semibold text-navy">
+                            <span className="font-mono text-[11px] font-semibold text-ink">
                               {proposal.id}
                             </span>
-                            <span className="rounded bg-navy/10 px-1.5 py-0.5 text-[10.5px] font-medium text-navy">
+                            <span className="rounded bg-ink/10 px-1.5 py-0.5 text-[10.5px] font-medium text-ink">
                               {sla.statuteRef}
                             </span>
                             <span className="text-[11px] text-muted-foreground">
@@ -310,7 +310,7 @@ export function DistrictCollectorDashboard() {
                 <tbody className="divide-y divide-border">
                   {districtGrievances.slice(0, 4).map((g) => (
                     <tr key={g.id} className="hover:bg-muted/30">
-                      <td className="px-3 py-2 font-mono text-[11.5px] font-semibold text-navy">
+                      <td className="px-3 py-2 font-mono text-[11.5px] font-semibold text-ink">
                         {g.id}
                       </td>
                       <td className="px-3 py-2 text-foreground font-medium">{g.issueCategory}</td>
@@ -359,7 +359,7 @@ export function DistrictCollectorDashboard() {
           <section className="panel p-3.5">
             <div className="border-b border-border pb-2">
               <div className="label-xs flex items-center gap-1.5">
-                <Building className="size-3.5 text-navy" />
+                <Building className="size-3.5 text-ink" />
                 {t("district.section.funnelTitle")}
               </div>
               <div className="text-[11px] text-muted-foreground mt-0.5">

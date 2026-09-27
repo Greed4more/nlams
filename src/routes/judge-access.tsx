@@ -74,7 +74,7 @@ function JudgeAccessPage() {
     <div id="main-content" className="grid min-h-screen place-items-center bg-surface px-4">
       <div className="w-full max-w-sm">
         <div className="mb-5 flex items-center gap-2.5">
-          <span className="grid size-9 place-items-center rounded-[6px] bg-navy text-navy-foreground">
+          <span className="grid size-9 place-items-center rounded-[6px] bg-ink text-ink-foreground">
             <ShieldCheck className="size-5" />
           </span>
           <div>

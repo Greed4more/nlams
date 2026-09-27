@@ -69,7 +69,7 @@ export type ParcelStatus = "ACQUIRED" | "UNDER_AWARD" | "DISPUTED" | "NOTIFIED";
 
 export const PARCEL_STATUS_COLOR: Record<ParcelStatus, string> = {
   ACQUIRED: "#1a9c5c",
-  UNDER_AWARD: "#2563eb",
+  UNDER_AWARD: "#6d28d9",
   DISPUTED: "#dc2626",
   NOTIFIED: "#d97706",
 };
@@ -622,7 +622,7 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
         zoom={8}
         scrollWheelZoom
         className="size-full"
-        style={{ background: "#0b1220" }}
+        style={{ background: "#241c14" }}
       >
         {basemap === "osm" ? (
           <TileLayer

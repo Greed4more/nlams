@@ -25,7 +25,7 @@ export function ActivityFeed() {
             <li key={e.id} className="relative flex gap-3 pb-3 last:pb-0">
               {!last && <span className="absolute left-[11px] top-6 bottom-0 w-px bg-border" />}
               <span className="mt-0.5 grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full border border-border bg-secondary">
-                <Icon className="h-3 w-3 text-navy" />
+                <Icon className="h-3 w-3 text-ink" />
               </span>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[12px] text-foreground">{e.action}</div>

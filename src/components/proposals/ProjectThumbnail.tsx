@@ -56,7 +56,7 @@ export function ProjectThumbnail({
     <div
       className={cn(
         "relative grid shrink-0 place-items-center overflow-hidden rounded-[5px] border border-white/15",
-        "bg-gradient-to-br from-[#20486f] via-[#16344f] to-[#0d2340]",
+        "bg-gradient-to-br from-[#5c4a30] via-[#40331f] to-[#2a2118]",
         className,
       )}
       aria-hidden

@@ -164,7 +164,7 @@ export function CompensationCalculator() {
                     className={cn(
                       "flex-1 px-3 py-1.5 text-[12.5px] font-semibold transition-colors",
                       classification === c
-                        ? "bg-navy text-navy-foreground"
+                        ? "bg-ink text-ink-foreground"
                         : "bg-card text-muted-foreground hover:bg-muted",
                     )}
                   >
@@ -298,7 +298,7 @@ export function CompensationCalculator() {
                       description: `${t("calc.overrideToastDescPrefix")} ${formatINRFull(Number(overrideAmount) || 0)} ${t("calc.overrideToastDescSuffix")}`,
                     });
                   }}
-                  className="rounded-[4px] bg-navy px-3 py-1.5 text-[12.5px] font-semibold text-navy-foreground disabled:opacity-45"
+                  className="rounded-[4px] bg-ink px-3 py-1.5 text-[12.5px] font-semibold text-ink-foreground disabled:opacity-45"
                 >
                   {t("calc.saveOverride")}
                 </button>
@@ -369,14 +369,14 @@ export function CompensationCalculator() {
             })}
           </div>
 
-          <div className="bg-navy px-4 py-4 text-navy-foreground">
+          <div className="bg-ink px-4 py-4 text-ink-foreground">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className="label-xs text-navy-muted">{t("calc.finalAwardCompensation")}</div>
+                <div className="label-xs text-ink-muted">{t("calc.finalAwardCompensation")}</div>
                 <div className="num mt-1 text-[30px] font-bold leading-none tracking-tight">
                   {formatINRFull(animated)}
                 </div>
-                <div className="num mt-1.5 text-[11.5px] text-navy-muted">
+                <div className="num mt-1.5 text-[11.5px] text-ink-muted">
                   {formatCrore(result.finalAward, 2)} · {t("calc.secRefSuffix")}
                 </div>
                 <span className="num mt-3 inline-block rounded-[4px] bg-white/10 px-2 py-1 text-[11.5px] font-semibold">
@@ -412,7 +412,7 @@ export function CompensationCalculator() {
                   contentStyle={{ fontSize: 11, borderRadius: 6 }}
                 />
                 <Legend wrapperStyle={{ fontSize: 10.5 }} iconSize={8} />
-                <Bar dataKey="land" stackId="a" name={t("calc.chart.land")} fill="var(--navy)" />
+                <Bar dataKey="land" stackId="a" name={t("calc.chart.land")} fill="var(--ink)" />
                 <Bar
                   dataKey="assets"
                   stackId="a"

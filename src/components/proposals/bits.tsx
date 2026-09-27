@@ -33,10 +33,7 @@ export function StageMiniBar({ stage }: { stage: RfctlarrStage }) {
       {STAGE_ORDER.map((s, i) => (
         <span
           key={s}
-          className={cn(
-            "h-[6px] w-[9px] rounded-[1px]",
-            i <= idx ? "bg-navy" : "bg-border",
-          )}
+          className={cn("h-[6px] w-[9px] rounded-[1px]", i <= idx ? "bg-ink" : "bg-border")}
         />
       ))}
     </div>

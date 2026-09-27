@@ -60,7 +60,7 @@ export function LaoDashboard() {
   return (
     <div className="space-y-4">
       {/* LAO Executive Banner */}
-      <div className="rounded-[6px] border border-navy/20 bg-gradient-to-r from-navy via-[#1b436c] to-[#205285] p-4 text-white">
+      <div className="rounded-[6px] border border-ink/20 bg-gradient-to-r from-ink via-[#3b2f20] to-[#4c3d29] p-4 text-white">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
@@ -80,7 +80,7 @@ export function LaoDashboard() {
           <div className="flex items-center gap-2">
             <Link
               to="/calculator"
-              className="inline-flex items-center gap-1.5 rounded-[4px] bg-white px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-white/90"
+              className="inline-flex items-center gap-1.5 rounded-[4px] bg-white px-3 py-1.5 text-[12px] font-semibold text-ink transition-colors hover:bg-white/90"
             >
               <Calculator className="size-3.5" />
               New Section 26 Calculation
@@ -92,7 +92,7 @@ export function LaoDashboard() {
       {/* Operational KPI Cards */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div className="panel relative overflow-hidden px-4 py-3">
-          <span className="absolute inset-y-0 left-0 w-[3px] bg-navy" />
+          <span className="absolute inset-y-0 left-0 w-[3px] bg-ink" />
           <div className="label-xs">Active Docket Load</div>
           <div className="num mt-2 text-[28px] font-semibold leading-none text-foreground">
             {scopedProposals.length}
@@ -144,9 +144,9 @@ export function LaoDashboard() {
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
           <Link
             to="/calculator"
-            className="flex items-start gap-3 rounded-[6px] border border-border bg-muted/20 p-3 transition-colors hover:border-navy hover:bg-navy/5"
+            className="flex items-start gap-3 rounded-[6px] border border-border bg-muted/20 p-3 transition-colors hover:border-ink hover:bg-ink/5"
           >
-            <div className="rounded bg-navy/10 p-2 text-navy">
+            <div className="rounded bg-ink/10 p-2 text-ink">
               <Calculator className="size-4" />
             </div>
             <div>
@@ -159,7 +159,7 @@ export function LaoDashboard() {
 
           <Link
             to="/grievances"
-            className="flex items-start gap-3 rounded-[6px] border border-border bg-muted/20 p-3 transition-colors hover:border-navy hover:bg-navy/5"
+            className="flex items-start gap-3 rounded-[6px] border border-border bg-muted/20 p-3 transition-colors hover:border-ink hover:bg-ink/5"
           >
             <div className="rounded bg-amber-500/10 p-2 text-amber-700">
               <Scale className="size-4" />
@@ -174,7 +174,7 @@ export function LaoDashboard() {
 
           <Link
             to="/map-view"
-            className="flex items-start gap-3 rounded-[6px] border border-border bg-muted/20 p-3 transition-colors hover:border-navy hover:bg-navy/5"
+            className="flex items-start gap-3 rounded-[6px] border border-border bg-muted/20 p-3 transition-colors hover:border-ink hover:bg-ink/5"
           >
             <div className="rounded bg-emerald-500/10 p-2 text-emerald-700">
               <Layers className="size-4" />
@@ -189,9 +189,9 @@ export function LaoDashboard() {
 
           <Link
             to="/proposals"
-            className="flex items-start gap-3 rounded-[6px] border border-border bg-muted/20 p-3 transition-colors hover:border-navy hover:bg-navy/5"
+            className="flex items-start gap-3 rounded-[6px] border border-border bg-muted/20 p-3 transition-colors hover:border-ink hover:bg-ink/5"
           >
-            <div className="rounded bg-sky-500/10 p-2 text-sky-700">
+            <div className="rounded bg-ink/10 p-2 text-ink">
               <FileText className="size-4" />
             </div>
             <div>
@@ -212,9 +212,9 @@ export function LaoDashboard() {
         }
         target="_blank"
         rel="noreferrer"
-        className="panel flex items-center gap-3 p-3.5 transition-colors hover:border-navy hover:bg-navy/5"
+        className="panel flex items-center gap-3 p-3.5 transition-colors hover:border-ink hover:bg-ink/5"
       >
-        <div className="rounded bg-navy/10 p-2 text-navy">
+        <div className="rounded bg-ink/10 p-2 text-ink">
           <Smartphone className="size-4" />
         </div>
         <div className="min-w-0 flex-1">
@@ -233,7 +233,7 @@ export function LaoDashboard() {
         <Tabs defaultValue="parcels" value={activeTab} onValueChange={setActiveTab}>
           <div className="flex flex-wrap items-center justify-between border-b border-border px-4 py-2 bg-muted/30">
             <div className="label-xs flex items-center gap-1.5 font-semibold text-foreground">
-              <Sparkles className="size-3.5 text-navy" />
+              <Sparkles className="size-3.5 text-ink" />
               LAO Operational Action Queue
             </div>
             <TabsList className="bg-muted">
@@ -280,7 +280,7 @@ export function LaoDashboard() {
                   {pendingAwardParcels.slice(0, 8).map(({ parcel, proposal }) => (
                     <tr key={parcel.id} className="hover:bg-muted/30">
                       <td className="px-3 py-2.5">
-                        <div className="font-mono text-[11.5px] font-semibold text-navy">
+                        <div className="font-mono text-[11.5px] font-semibold text-ink">
                           {parcel.ulpin}
                         </div>
                         <div className="text-[11px] text-muted-foreground">
@@ -330,7 +330,7 @@ export function LaoDashboard() {
                         <Link
                           to="/calculator"
                           search={{ ulpin: parcel.ulpin }}
-                          className="inline-flex items-center gap-1 rounded bg-navy px-2.5 py-1 text-[11.5px] font-medium text-white transition-colors hover:bg-navy/90"
+                          className="inline-flex items-center gap-1 rounded bg-ink px-2.5 py-1 text-[11.5px] font-medium text-white transition-colors hover:bg-ink/90"
                         >
                           <Calculator className="size-3" />
                           Determine Award
@@ -384,14 +384,12 @@ export function LaoDashboard() {
                   {scopedProposals.map((p) => (
                     <tr key={p.id} className="hover:bg-muted/30">
                       <td className="px-3 py-2.5">
-                        <span className="font-mono text-[11px] font-semibold text-navy">
-                          {p.id}
-                        </span>
+                        <span className="font-mono text-[11px] font-semibold text-ink">{p.id}</span>
                         <div className="font-semibold text-foreground">{p.projectName}</div>
                         <div className="text-[11px] text-muted-foreground">{p.requiringBody}</div>
                       </td>
                       <td className="px-3 py-2.5">
-                        <span className="rounded bg-navy/10 px-2 py-0.5 font-medium text-navy text-[11.5px]">
+                        <span className="rounded bg-ink/10 px-2 py-0.5 font-medium text-ink text-[11.5px]">
                           {p.currentStage}
                         </span>
                         <div className="num mt-1 text-[11px] text-muted-foreground">
@@ -417,7 +415,7 @@ export function LaoDashboard() {
                       <td className="px-3 py-2.5 text-center">
                         <Link
                           to="/proposals"
-                          className="inline-flex items-center gap-1 rounded border border-navy/30 bg-navy/5 px-2.5 py-1 text-[11.5px] font-medium text-navy transition-colors hover:bg-navy hover:text-white"
+                          className="inline-flex items-center gap-1 rounded border border-ink/30 bg-ink/5 px-2.5 py-1 text-[11.5px] font-medium text-ink transition-colors hover:bg-ink hover:text-white"
                         >
                           Review &amp; Advance
                           <ArrowRight className="size-3" />
@@ -454,7 +452,7 @@ export function LaoDashboard() {
                 <tbody className="divide-y divide-border">
                   {spatialFlaggedParcels.map(({ parcel, proposal }) => (
                     <tr key={parcel.id} className="hover:bg-muted/30">
-                      <td className="px-3 py-2.5 font-mono text-[11.5px] font-semibold text-navy">
+                      <td className="px-3 py-2.5 font-mono text-[11.5px] font-semibold text-ink">
                         {parcel.ulpin}
                       </td>
                       <td className="px-3 py-2.5">
@@ -519,7 +517,7 @@ export function LaoDashboard() {
               <div key={block.id} className="flex items-center justify-between py-2 text-[12px]">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="rounded bg-navy/10 px-1.5 py-0.5 font-mono text-[10.5px] font-bold text-navy">
+                    <span className="rounded bg-ink/10 px-1.5 py-0.5 font-mono text-[10.5px] font-bold text-ink">
                       #{block.blockHeight}
                     </span>
                     <span className="font-semibold text-foreground">{block.action}</span>

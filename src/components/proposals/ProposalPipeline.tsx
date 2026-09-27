@@ -303,7 +303,7 @@ export function ProposalPipeline() {
               className={cn(
                 "rounded-[4px] border px-2.5 py-1 text-[12px] font-medium transition-colors",
                 chip === c.key
-                  ? "border-navy bg-navy text-navy-foreground"
+                  ? "border-ink bg-ink text-ink-foreground"
                   : "border-border bg-card text-muted-foreground hover:text-foreground",
               )}
             >
@@ -323,7 +323,7 @@ export function ProposalPipeline() {
       {/* Register heading + live sync status */}
       <div className="flex flex-wrap items-center justify-between gap-2 px-0.5">
         <div className="flex items-center gap-2">
-          <FileStack className="size-4 shrink-0 text-navy" />
+          <FileStack className="size-4 shrink-0 text-ink" />
           <h2 className="text-[13.5px] font-semibold text-foreground">
             {registerHeading} <span className="num text-muted-foreground">({registerCount})</span>
           </h2>

@@ -144,7 +144,7 @@ export function VerificationSummaryCards({
             onClick={() => onReviewChange(active ? "all" : bucket)}
             title={active ? "Show all proposals" : `Filter to ${label.toLowerCase()}`}
             className={cn(
-              "rounded-[6px] border border-l-4 border-border bg-card p-3.5 text-left shadow-[0_1px_2px_rgba(15,41,66,0.06)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "rounded-[6px] border border-l-4 border-border bg-card p-3.5 text-left shadow-[0_1px_2px_rgba(42,33,24,0.06)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               t.accent,
               active && t.active,
             )}
@@ -169,7 +169,7 @@ export function VerificationSummaryCards({
         onClick={() => onHighPriorityChange(!highPriority)}
         title={highPriority ? "Show all proposals" : "Filter to statutory breaches"}
         className={cn(
-          "rounded-[6px] border border-l-4 border-border bg-card p-3.5 text-left shadow-[0_1px_2px_rgba(15,41,66,0.06)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "rounded-[6px] border border-l-4 border-border bg-card p-3.5 text-left shadow-[0_1px_2px_rgba(42,33,24,0.06)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           TONES.priority!.accent,
           highPriority && TONES.priority!.active,
         )}

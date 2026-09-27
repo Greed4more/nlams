@@ -27,7 +27,7 @@ export function Masthead({ onOpenNav }: { onOpenNav?: () => void }) {
   const urgent = breachedQueue.slice(0, 4);
 
   return (
-    <header className="border-b border-border bg-card px-3 sm:px-5">
+    <header className="border-b-[3px] border-double border-foreground/40 bg-card px-3 sm:px-5">
       <div className="flex h-16 items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <button
@@ -39,12 +39,12 @@ export function Masthead({ onOpenNav }: { onOpenNav?: () => void }) {
             <Menu className="size-4" strokeWidth={1.75} />
           </button>
           <Link to="/dashboard" className="flex min-w-0 items-center gap-2.5">
-            <span className="grid size-10 shrink-0 place-items-center rounded-full border border-navy/20 bg-navy text-navy-foreground">
+            <span className="grid size-10 shrink-0 place-items-center rounded-full border border-ink/20 bg-ink text-ink-foreground">
               <AshokaChakra className="size-7" />
             </span>
             <span className="min-w-0">
               <span className="flex items-baseline gap-2 leading-tight">
-                <span className="font-serif text-[19px] font-bold tracking-[0.12em] text-navy">
+                <span className="font-serif text-[19px] font-bold tracking-[0.12em] text-ink">
                   BHUMITRA
                 </span>
                 <span className="hidden text-[12px] font-semibold text-muted-foreground sm:inline">
@@ -68,7 +68,7 @@ export function Masthead({ onOpenNav }: { onOpenNav?: () => void }) {
             >
               <SelectTrigger className="h-8 w-[230px] rounded-[4px] border-border bg-muted/30 text-[11.5px] font-medium text-foreground">
                 <div className="flex min-w-0 items-center gap-1.5">
-                  <Shield className="size-3.5 text-navy shrink-0" />
+                  <Shield className="size-3.5 text-ink shrink-0" />
                   <SelectValue placeholder="Select persona">{roleLabel}</SelectValue>
                 </div>
               </SelectTrigger>
@@ -97,7 +97,7 @@ export function Masthead({ onOpenNav }: { onOpenNav?: () => void }) {
               className="h-8 w-9 justify-center gap-0 rounded-[4px] border-border bg-muted/30 px-0 text-[11.5px] font-medium text-foreground md:w-[150px] md:justify-start md:gap-1.5 md:px-3"
             >
               <div className="flex min-w-0 items-center gap-1.5">
-                <Languages className="size-3.5 text-navy shrink-0" />
+                <Languages className="size-3.5 text-ink shrink-0" />
                 <SelectValue placeholder="Language">
                   <span className="hidden md:inline">
                     {LANGUAGES.find((l) => l.value === lang)?.label ?? "English"}
@@ -118,7 +118,7 @@ export function Masthead({ onOpenNav }: { onOpenNav?: () => void }) {
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="hidden md:inline-flex h-8 items-center gap-1.5 rounded-full border border-navy/25 bg-navy/5 px-2.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-navy transition-colors hover:bg-navy/10"
+                className="hidden md:inline-flex h-8 items-center gap-1.5 rounded-full border border-ink/25 bg-ink/5 px-2.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-ink transition-colors hover:bg-ink/10"
               >
                 <PlayCircle className="size-3.5" strokeWidth={2} />
                 Demo
@@ -186,7 +186,7 @@ export function Masthead({ onOpenNav }: { onOpenNav?: () => void }) {
                 type="button"
                 className="hidden items-center gap-2 border-l border-border pl-3 sm:flex"
               >
-                <div className="grid size-8 place-items-center rounded-full bg-navy text-[11px] font-semibold text-navy-foreground">
+                <div className="grid size-8 place-items-center rounded-full bg-ink text-[11px] font-semibold text-ink-foreground">
                   {initials}
                 </div>
                 <div className="hidden text-left leading-tight lg:block">

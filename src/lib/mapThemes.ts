@@ -16,14 +16,14 @@ export const MAP_THEME: MapTheme = {
   label: "BHUMITRA Standard",
   portalTitle: "BHUMITRA Cadastral Viewer",
   portalSubtitle: "National Land Acquisition & Management System",
-  accent: "#0f2942",
+  accent: "#2a2118",
   accentForeground: "#ffffff",
-  parcelStroke: "#0f2942",
-  labelColor: "#0f2942",
+  parcelStroke: "#2a2118",
+  labelColor: "#2a2118",
 };
 
 /** Highlight color for the currently selected parcel, independent of theme. */
-export const SELECTED_PARCEL_COLOR = "#00c2d1";
+export const SELECTED_PARCEL_COLOR = "#c2410c";
 
 /**
  * Admin-boundary hierarchy colors — fixed across all portal themes (like the
@@ -31,7 +31,7 @@ export const SELECTED_PARCEL_COLOR = "#00c2d1";
  * of the cadastral parcel theme above.
  */
 export const ADMIN_BOUNDARY_COLORS = {
-  state: "#0f2942",
+  state: "#2a2118",
   district: "#c0392b",
   block: "#ec0c8c",
 } as const;

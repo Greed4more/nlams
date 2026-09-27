@@ -115,7 +115,7 @@ export function DemoPanel() {
                   <Circle
                     className={cn(
                       "mt-0.5 size-4 shrink-0",
-                      active ? "text-navy" : "text-muted-foreground/40",
+                      active ? "text-ink" : "text-muted-foreground/40",
                     )}
                   />
                 )}

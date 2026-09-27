@@ -25,14 +25,14 @@ export function GovFooter({ className }: { className?: string }) {
       <div className="border-b border-border bg-muted/40 px-5 py-3 print:hidden">
         <div className="mx-auto flex w-full max-w-[1600px] flex-wrap items-center justify-center gap-x-6 gap-y-1.5 text-[10.5px] text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
-            <Mail className="size-3 shrink-0 text-navy" />
+            <Mail className="size-3 shrink-0 text-ink" />
             Citizen helpdesk:&nbsp;
             <span className="font-medium text-foreground">help-dolr@gov.in</span>
           </span>
           <span>
             District Land Acquisition Office &middot; Monday&ndash;Friday, 10:00&ndash;17:30 IST
           </span>
-          <span className="font-serif text-[11px] font-semibold tracking-[0.08em] text-navy">
+          <span className="font-serif text-[11px] font-semibold tracking-[0.08em] text-ink">
             भूमित्र &middot; BHUMITRA
           </span>
         </div>

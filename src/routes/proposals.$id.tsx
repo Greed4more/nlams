@@ -120,9 +120,7 @@ function ProposalDetail() {
       </Link>
 
       {/* Header banner */}
-      <header
-        className={cn("rounded-[6px] bg-navy px-5 py-4 text-navy-foreground", headerSpotlight)}
-      >
+      <header className={cn("rounded-[6px] bg-ink px-5 py-4 text-ink-foreground", headerSpotlight)}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-4">
             <ProjectThumbnail
@@ -130,7 +128,7 @@ function ProposalDetail() {
               className="hidden h-[84px] w-[112px] sm:grid"
             />
             <div className="min-w-0">
-              <div className="num font-mono text-[12px] tracking-wide text-navy-muted">
+              <div className="num font-mono text-[12px] tracking-wide text-ink-muted">
                 {proposal.id}
                 <span className="ml-2 text-white/50">·</span>
                 <span className="ml-2 text-[11px]">{fileNumberOf(proposal)}</span>
@@ -144,7 +142,7 @@ function ProposalDetail() {
                     key={label}
                     className="rounded-[4px] border border-white/15 bg-white/5 px-2 py-1 text-[11.5px]"
                   >
-                    <span className="text-navy-muted">{label}: </span>
+                    <span className="text-ink-muted">{label}: </span>
                     <span className="num font-medium">{value}</span>
                   </span>
                 ))}
@@ -154,9 +152,9 @@ function ProposalDetail() {
 
           <div className="flex shrink-0 flex-col items-end gap-2">
             <div className="text-right">
-              <div className="label-xs text-navy-muted">Statutory Status</div>
+              <div className="label-xs text-ink-muted">Statutory Status</div>
               <div className="mt-1 flex items-center gap-2">
-                <span className="text-[12px] text-navy-muted">{SLA_STATUS_LABEL[sla.status]}</span>
+                <span className="text-[12px] text-ink-muted">{SLA_STATUS_LABEL[sla.status]}</span>
                 <SlaBadge sla={sla} size="lg" />
               </div>
             </div>

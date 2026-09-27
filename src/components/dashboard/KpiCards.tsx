@@ -49,7 +49,7 @@ export function KpiCards() {
         label="Land under acquisition"
         value={`${totals.areaHa.toLocaleString("en-IN", { maximumFractionDigits: 1, minimumFractionDigits: 1 })} Ha`}
         delta={`across ${totals.states} state${totals.states === 1 ? "" : "s"}`}
-        accent="var(--navy)"
+        accent="var(--ink)"
       />
       <Card
         label="Compensation disbursed"
