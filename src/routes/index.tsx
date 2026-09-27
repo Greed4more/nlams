@@ -6,12 +6,13 @@ import {
   Gavel,
   IndianRupee,
   LineChart,
+  Mail,
   Map as MapIcon,
   ShieldCheck,
 } from "lucide-react";
 import { GigwUtilityBar } from "@/components/layout/GigwUtilityBar";
 import { GovFooter } from "@/components/layout/GovFooter";
-import { AshokaChakra, GovIdentityLockup } from "@/components/layout/GovIdentity";
+import { AshokaChakra, GovIdentityLockup, OfficialSeal } from "@/components/layout/GovIdentity";
 import { PortalEntryCard } from "@/components/landing/PortalEntryCard";
 import { useAuth, ROLE_LABEL } from "@/context/AuthContext";
 
@@ -53,13 +54,18 @@ function LandingPage() {
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex w-full max-w-[1240px] flex-wrap items-center justify-between gap-3 px-5 py-3">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-navy text-navy-foreground">
+            <span className="grid size-11 shrink-0 place-items-center rounded-full border border-navy/20 bg-navy text-navy-foreground">
               <AshokaChakra className="size-8" />
             </span>
             <div className="min-w-0 leading-tight">
-              <div className="text-[19px] font-bold tracking-[0.12em] text-navy">BHUMITRA</div>
-              <div className="truncate text-[11px] text-muted-foreground">
-                Land Acquisition Management System &middot; Government Digital Service
+              <div className="flex items-baseline gap-2">
+                <span className="font-serif text-[20px] font-bold tracking-[0.12em] text-navy">
+                  BHUMITRA
+                </span>
+                <span className="text-[12.5px] font-semibold text-muted-foreground">भूमित्र</span>
+              </div>
+              <div className="truncate text-[10.5px] text-muted-foreground">
+                Land Acquisition Management System &middot; भारत सरकार
               </div>
             </div>
           </div>
@@ -107,15 +113,19 @@ function LandingPage() {
           aria-hidden
           className="pointer-events-none absolute -right-24 -top-24 size-[420px] rounded-full bg-forest/10 blur-3xl"
         />
+        <OfficialSeal className="pointer-events-none absolute -right-4 top-6 hidden size-[300px] -rotate-[8deg] text-navy opacity-[0.06] lg:block" />
 
-        <div className="relative mx-auto w-full max-w-[1240px] px-5 py-14 lg:py-20">
+        <div className="relative mx-auto w-full max-w-[1240px] px-5 py-14 lg:py-16">
           <div className="flex items-center gap-2">
             <GovIdentityLockup variant="light" />
           </div>
 
-          <h1 className="mt-8 max-w-3xl text-[34px] font-semibold leading-[1.15] tracking-tight text-navy sm:text-[42px]">
+          <h1 className="mt-8 max-w-3xl font-serif text-[34px] font-semibold leading-[1.15] tracking-tight text-navy sm:text-[42px]">
             Land Intelligence for Transparent Infrastructure
           </h1>
+          <p className="mt-1.5 max-w-2xl font-serif text-[16px] text-navy/70">
+            राष्ट्रीय भू-अधिग्रहण एवं प्रबंधन प्रणाली — पारदर्शी अधिग्रहण, समयबद्ध मुआवज़ा
+          </p>
           <p className="mt-4 max-w-2xl text-[14.5px] leading-relaxed text-muted-foreground">
             An intelligent platform for transparent, data-driven land acquisition and infrastructure
             project monitoring — from Social Impact Assessment through to compensation,
@@ -214,6 +224,61 @@ function LandingPage() {
           />
         </div>
       </main>
+
+      {/* Citizen help strip — plain-language entry points for land owners */}
+      <section className="border-t border-border bg-muted/40">
+        <div className="mx-auto grid w-full max-w-[1240px] gap-4 px-5 py-7 sm:grid-cols-3">
+          {[
+            {
+              icon: FileSearch,
+              hi: "अपनी ज़मीन खोजें",
+              en: "Search your parcel by ULPIN, survey number or project name.",
+              to: "/public" as const,
+            },
+            {
+              icon: ClipboardList,
+              hi: "स्थिति देखें",
+              en: "Track acquisition stages, notices and compensation status.",
+              to: "/public" as const,
+            },
+            {
+              icon: Mail,
+              hi: "सहायता लें",
+              en: "help-dolr@gov.in · District Land Acquisition Office, Mon–Fri.",
+              to: null,
+            },
+          ].map(({ icon: Icon, hi, en, to }) => {
+            const body = (
+              <>
+                <span className="grid size-9 shrink-0 place-items-center rounded-[3px] border border-border bg-card text-navy">
+                  <Icon className="size-4" strokeWidth={1.9} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block font-serif text-[14.5px] font-semibold text-navy">
+                    {hi}
+                  </span>
+                  <span className="mt-0.5 block text-[11.5px] leading-snug text-muted-foreground">
+                    {en}
+                  </span>
+                </span>
+              </>
+            );
+            return to ? (
+              <Link
+                key={hi}
+                to={to}
+                className="flex items-start gap-3 rounded-[3px] border border-transparent p-2.5 transition-colors hover:border-border hover:bg-card"
+              >
+                {body}
+              </Link>
+            ) : (
+              <div key={hi} className="flex items-start gap-3 p-2.5">
+                {body}
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       <GovFooter />
     </div>

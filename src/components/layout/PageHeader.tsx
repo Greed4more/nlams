@@ -10,14 +10,21 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="mb-4 flex items-end justify-between gap-4">
-      <div>
-        <h1 className="text-[20px] font-semibold leading-tight tracking-tight text-foreground">
-          {title}
-        </h1>
-        {subtitle && <p className="mt-1 text-[12px] text-muted-foreground">{subtitle}</p>}
+    <div className="mb-4 border-b border-border pb-3">
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+        <div>
+          <h1 className="font-serif text-[23px] font-semibold leading-tight tracking-tight text-navy">
+            {title}
+          </h1>
+          {subtitle && (
+            <p className="mt-1 max-w-3xl text-[12px] leading-snug text-muted-foreground">
+              {subtitle}
+            </p>
+          )}
+        </div>
+        {actions}
       </div>
-      {actions}
+      <span aria-hidden className="tricolour-rule mt-3 block h-[3px] w-16" />
     </div>
   );
 }

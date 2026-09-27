@@ -1,4 +1,5 @@
-import { Bell, LogOut, Menu, PlayCircle, Shield, Languages, Landmark } from "lucide-react";
+import { Bell, LogOut, Menu, PlayCircle, Shield, Languages } from "lucide-react";
+import { AshokaChakra } from "./GovIdentity";
 import { Link } from "@tanstack/react-router";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -38,15 +39,21 @@ export function Masthead({ onOpenNav }: { onOpenNav?: () => void }) {
             <Menu className="size-4" strokeWidth={1.75} />
           </button>
           <Link to="/dashboard" className="flex min-w-0 items-center gap-2.5">
-            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-navy text-navy-foreground">
-              <Landmark className="size-5" strokeWidth={1.75} />
+            <span className="grid size-10 shrink-0 place-items-center rounded-full border border-navy/20 bg-navy text-navy-foreground">
+              <AshokaChakra className="size-7" />
             </span>
             <span className="min-w-0">
-              <span className="block truncate text-[18px] font-bold leading-tight tracking-[0.14em] text-navy">
-                BHUMITRA
+              <span className="flex items-baseline gap-2 leading-tight">
+                <span className="font-serif text-[19px] font-bold tracking-[0.12em] text-navy">
+                  BHUMITRA
+                </span>
+                <span className="hidden text-[12px] font-semibold text-muted-foreground sm:inline">
+                  भूमित्र
+                </span>
               </span>
               <span className="hidden truncate text-[10.5px] leading-tight text-muted-foreground lg:block">
-                Ministry of Rural Development &middot; Department of Land Resources
+                Ministry of Rural Development &middot; Department of Land Resources &middot; भारत
+                सरकार
               </span>
             </span>
           </Link>

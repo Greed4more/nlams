@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { Landmark } from "lucide-react";
 import { GigwUtilityBar } from "./GigwUtilityBar";
 import { GovFooter } from "./GovFooter";
+import { AshokaChakra } from "./GovIdentity";
 
 /**
  * Layout for the public case-transparency portal (Module 7) — deliberately
@@ -16,13 +16,13 @@ export function PublicShell({ children }: { children: ReactNode }) {
       <header className="bg-navy px-5 py-4 text-navy-foreground">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-4">
           <Link to="/public" className="flex items-center gap-2.5">
-            <Landmark className="size-5 shrink-0" strokeWidth={1.75} />
+            <AshokaChakra className="size-6 shrink-0" />
             <div>
-              <div className="text-[14px] font-bold leading-tight tracking-[0.1em]">
-                BHUMITRA PUBLIC PORTAL
+              <div className="font-serif text-[14px] font-bold leading-tight tracking-[0.1em]">
+                BHUMITRA &middot; भूमित्र
               </div>
               <div className="text-[10.5px] leading-tight text-navy-muted">
-                Department of Land Resources · Ministry of Rural Development
+                Public Land Information Portal &middot; Department of Land Resources
               </div>
             </div>
           </Link>

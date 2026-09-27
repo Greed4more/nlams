@@ -19,7 +19,7 @@ import { recordLogin } from "@/lib/lastLogin";
 import { VectorMapBackdrop } from "@/components/map/VectorMapBackdrop";
 import { GigwUtilityBar } from "@/components/layout/GigwUtilityBar";
 import { GovFooter } from "@/components/layout/GovFooter";
-import { AshokaChakra } from "@/components/layout/GovIdentity";
+import { AshokaChakra, OfficialSeal } from "@/components/layout/GovIdentity";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -118,11 +118,14 @@ function SignInPage() {
                 <AshokaChakra className="size-8" />
               </span>
               <span className="min-w-0 leading-tight">
-                <span className="block text-[18px] font-bold tracking-[0.12em] text-navy">
-                  BHUMITRA
+                <span className="flex items-baseline gap-2">
+                  <span className="font-serif text-[19px] font-bold tracking-[0.12em] text-navy">
+                    BHUMITRA
+                  </span>
+                  <span className="text-[12px] font-semibold text-muted-foreground">भूमित्र</span>
                 </span>
                 <span className="block truncate text-[10.5px] text-muted-foreground">
-                  National Land Acquisition &amp; Management System · Government of India
+                  National Land Acquisition &amp; Management System · भारत सरकार
                 </span>
               </span>
             </Link>
@@ -162,16 +165,17 @@ function SignInPage() {
 
         <div className="grid flex-1 lg:grid-cols-[1.05fr_minmax(0,560px)]">
           {/* Left overlay banner over the map canvas */}
-          <section className="relative hidden flex-col justify-center px-10 py-14 lg:flex xl:px-16">
-            <div className="max-w-xl">
+          <section className="relative hidden flex-col justify-center overflow-hidden px-10 py-14 lg:flex xl:px-16">
+            <OfficialSeal className="pointer-events-none absolute -bottom-16 -left-10 size-[300px] -rotate-[6deg] text-navy opacity-[0.07]" />
+            <div className="relative max-w-xl">
               <div className="flex items-center gap-3">
                 <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-navy">
                   Authorized Access
                 </span>
-                <span aria-hidden className="h-px w-16 bg-status-warn" />
+                <span aria-hidden className="tricolour-rule h-[3px] w-16" />
               </div>
 
-              <h1 className="mt-5 text-[40px] font-semibold leading-[1.1] tracking-tight text-navy xl:text-[46px]">
+              <h1 className="mt-5 font-serif text-[40px] font-semibold leading-[1.1] tracking-tight text-navy xl:text-[46px]">
                 Secure access to BHUMITRA
               </h1>
               <p className="mt-4 max-w-md text-[15px] leading-relaxed text-muted-foreground">

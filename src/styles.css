@@ -66,6 +66,8 @@
   --color-forest: var(--forest);
   --color-forest-foreground: var(--forest-foreground);
   --color-forest-hover: var(--forest-hover);
+  --color-saffron: var(--saffron);
+  --color-saffron-foreground: var(--saffron-foreground);
   --color-surface: var(--surface);
   --color-status-ok: var(--status-ok);
   --color-status-warn: var(--status-warn);
@@ -74,28 +76,31 @@
   --font-sans:
     "Inter", "Noto Sans", "Noto Sans Devanagari", "Noto Sans Bengali", "Noto Sans Tamil",
     "Noto Sans Gurmukhi", ui-sans-serif, system-ui, sans-serif;
+  --font-serif:
+    "Noto Serif", "Noto Sans Devanagari", "Noto Serif Bengali", Georgia, "Times New Roman", serif;
 }
 
 :root {
-  --radius: 0.375rem;
-  --background: oklch(0.977 0.002 264);
-  --foreground: oklch(0.24 0.03 250);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.24 0.03 250);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.24 0.03 250);
-  --primary: oklch(0.28 0.055 254);
-  --primary-foreground: oklch(0.985 0.002 264);
-  --secondary: oklch(0.955 0.004 258);
-  --secondary-foreground: oklch(0.28 0.055 254);
-  --muted: oklch(0.962 0.004 258);
-  --muted-foreground: oklch(0.52 0.02 258);
-  --accent: oklch(0.945 0.012 250);
-  --accent-foreground: oklch(0.28 0.055 254);
+  /* Archival Rajpatra palette — warm paper stock, ink, and official accents. */
+  --radius: 0.125rem;
+  --background: oklch(0.969 0.011 85);
+  --foreground: oklch(0.245 0.025 260);
+  --card: oklch(0.995 0.004 85);
+  --card-foreground: oklch(0.245 0.025 260);
+  --popover: oklch(0.995 0.004 85);
+  --popover-foreground: oklch(0.245 0.025 260);
+  --primary: oklch(0.27 0.05 255);
+  --primary-foreground: oklch(0.985 0.004 85);
+  --secondary: oklch(0.945 0.014 85);
+  --secondary-foreground: oklch(0.27 0.05 255);
+  --muted: oklch(0.947 0.012 85);
+  --muted-foreground: oklch(0.5 0.02 255);
+  --accent: oklch(0.93 0.02 82);
+  --accent-foreground: oklch(0.27 0.05 255);
   --destructive: oklch(0.487 0.185 27.5);
   --destructive-foreground: oklch(0.985 0.002 264);
-  --border: oklch(0.918 0.005 258);
-  --input: oklch(0.918 0.005 258);
+  --border: oklch(0.875 0.016 85);
+  --input: oklch(0.875 0.016 85);
   --ring: oklch(0.45 0.15 262);
 
   /* NLAMS institutional palette */
@@ -107,7 +112,10 @@
   --forest: oklch(0.375 0.078 158);
   --forest-foreground: oklch(0.98 0.005 158);
   --forest-hover: oklch(0.315 0.072 158);
-  --surface: oklch(0.977 0.002 264);
+  /* Saffron — the tricolour / official-notice accent. */
+  --saffron: oklch(0.7 0.16 58);
+  --saffron-foreground: oklch(0.22 0.02 260);
+  --surface: oklch(0.969 0.011 85);
   --status-ok: oklch(0.5 0.115 158);
   --status-warn: oklch(0.54 0.14 65);
   --status-critical: oklch(0.487 0.185 27.5);
@@ -174,8 +182,18 @@
     font-family: var(--font-sans);
     font-feature-settings: "cv02", "cv03", "cv04";
     -webkit-font-smoothing: antialiased;
+    /* Faint paper grain — the archive, not a SaaS dashboard. */
+    background-image: radial-gradient(oklch(0.55 0.025 85 / 0.055) 0.6px, transparent 0.6px);
+    background-size: 15px 15px;
     /* GIGW text-size control (A- / A / A+) — see GigwUtilityBar. */
     zoom: var(--user-font-scale, 1);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-serif);
+    letter-spacing: -0.01em;
   }
 }
 
@@ -200,6 +218,8 @@
   --forest: #005a2b;
   --forest-foreground: #ffffff;
   --forest-hover: #003d1d;
+  --saffron: #8a4b00;
+  --saffron-foreground: #ffffff;
   --surface: #ffffff;
   --status-ok: #005a2b;
   --status-warn: #7a3d00;
@@ -209,6 +229,20 @@
 
 .high-contrast a {
   text-decoration: underline;
+}
+
+.high-contrast body {
+  background-image: none;
+}
+
+/* The tricolour rule that heads official portal chrome. */
+@utility tricolour-rule {
+  background-image: linear-gradient(
+    90deg,
+    var(--saffron) 0 33.34%,
+    oklch(0.995 0.004 85) 33.34% 66.67%,
+    var(--forest) 66.67% 100%
+  );
 }
 
 /* Browser autofill (Chrome's pale-blue fill) clashes with the gov palette —
@@ -224,11 +258,12 @@ input:-webkit-autofill:active {
 }
 
 @utility label-xs {
-  font-size: 11px;
-  line-height: 1.2;
+  font-family: var(--font-serif);
+  font-size: 10.5px;
+  line-height: 1.25;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.09em;
   color: var(--color-muted-foreground);
 }
 
@@ -240,8 +275,8 @@ input:-webkit-autofill:active {
 @utility panel {
   background-color: var(--color-card);
   border: 1px solid var(--color-border);
-  border-radius: 6px;
-  box-shadow: 0 1px 2px oklch(0.264 0.048 251 / 0.06);
+  border-radius: 2px;
+  box-shadow: 0 1px 0 oklch(0.3 0.03 85 / 0.06);
 }
 
 @keyframes bhumitra-alert-pulse {

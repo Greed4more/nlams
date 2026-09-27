@@ -43,7 +43,7 @@ export function TopBar({ breadcrumb }: { breadcrumb: string[] }) {
       <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 text-[12.5px]">
         {breadcrumb.map((crumb, i) => (
           <span key={crumb} className="flex min-w-0 items-center gap-2">
-            {i > 0 && <span className="text-muted-foreground/50">/</span>}
+            {i > 0 && <span className="text-muted-foreground/50">›</span>}
             <span
               className={
                 i === breadcrumb.length - 1
