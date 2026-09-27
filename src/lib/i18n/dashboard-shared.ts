@@ -1,11 +1,14 @@
-import type { TranslationTable } from "./langs";
+import type { Lang } from "./langs";
 
 /**
  * Shared dashboard widgets (KPI cards, stage chart, state distribution,
  * compensation flow, R&R progress, delay queue, activity feed, MIS export)
  * plus the unauthenticated public transparency portal.
+ *
+ * NOTE: still being translated — only a subset of languages is populated, so
+ * this is a partial table and is not yet wired into translations.ts.
  */
-export const DASHBOARD_SHARED_TRANSLATIONS: TranslationTable = {
+export const DASHBOARD_SHARED_TRANSLATIONS: Partial<Record<Lang, Record<string, string>>> = {
   en: {
     "kpi.activeProposals": "Active proposals",
     "kpi.newThisQuarterSuffix": " this quarter",

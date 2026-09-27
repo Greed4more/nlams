@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { LastLoginNotice } from "@/components/layout/LastLoginNotice";
 import { useRole } from "@/context/RoleContext";
 import { KpiCards } from "@/components/dashboard/KpiCards";
 import { StageChart } from "@/components/dashboard/StageChart";
@@ -62,9 +63,11 @@ function Dashboard() {
     <AppShell breadcrumb={["Home", "Dashboard"]}>
       <PageHeader
         title={dashboardTitle || t("page.dashboard.title")}
-        subtitle={`Signed in as ${person} (${roleLabel}) · Live as of ${stamp} IST`}
+        subtitle={`Signed in as ${person} (${roleLabel}) · Statutory positions computed at page load (${stamp} IST) — seeded demo dataset`}
         actions={<MisExport />}
       />
+
+      <LastLoginNotice />
 
       {role === "DOLR_SECRETARY" && <DolrSecretaryDashboard />}
       {role === "DISTRICT_COLLECTOR" && <DistrictCollectorDashboard />}

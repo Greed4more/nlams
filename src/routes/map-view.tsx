@@ -49,7 +49,7 @@ function MapViewPage() {
     <AppShell breadcrumb={["BHUMITRA", "GIS Map View"]}>
       <PageHeader
         title={t("page.map.title")}
-        subtitle="ULPIN-linked cadastral parcels on OpenStreetMap · ISRO Bhuvan boundary overlay available"
+        subtitle="Parcel outlines (demo geometry) over OpenStreetMap · district/block boundaries · West Bengal Banglarbhumi cadastral fabric as reference capture"
       />
       {mounted ? (
         <Suspense fallback={<MapSkeleton />}>

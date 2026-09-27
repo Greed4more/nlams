@@ -262,6 +262,9 @@ model RiskScore {
   riskScore              Float
   riskTier               RiskTier
   topContributingFactors Json
+  /// Which scorer produced this row: ML_SERVICE when the FastAPI ml_service
+  /// answered, RULE_BASED when it was unreachable and the local fallback ran.
+  engine                 String   @default("RULE_BASED")
   computedAt             DateTime @default(now())
 
   @@map("risk_scores")

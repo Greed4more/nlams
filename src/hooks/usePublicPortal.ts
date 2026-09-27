@@ -20,6 +20,10 @@ export interface PublicSearchParams {
   state?: string | undefined;
   district?: string | undefined;
   name?: string | undefined;
+  /** 14-character ULPIN — matches the parcel-level public register. */
+  ulpin?: string | undefined;
+  /** Set false to hold the query until the user actually searches. */
+  enabled?: boolean | undefined;
 }
 
 /** Unauthenticated — GET /api/public/proposals/search. No PII, no auth required. */
@@ -28,12 +32,14 @@ export function usePublicProposalsSearch(params: PublicSearchParams) {
   if (params.state) qs.set("state", params.state);
   if (params.district) qs.set("district", params.district);
   if (params.name) qs.set("name", params.name);
+  if (params.ulpin) qs.set("ulpin", params.ulpin);
   const query = qs.toString();
 
   return useQuery({
     queryKey: ["public", "proposals", "search", params],
     queryFn: () =>
       api.get<PublicSearchResult>(`/api/public/proposals/search${query ? `?${query}` : ""}`),
+    enabled: params.enabled ?? true,
   });
 }
 

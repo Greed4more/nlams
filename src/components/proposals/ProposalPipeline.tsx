@@ -1,16 +1,12 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ChevronRight, ChevronUp, ChevronDown, Search, SearchX } from "lucide-react";
-import {
-  STAGE_ORDER,
-  STATES,
-  REQUIRING_BODY_LIST,
-  type Proposal,
-} from "@/data/mockData";
+import { STAGE_ORDER, STATES, REQUIRING_BODY_LIST, type Proposal } from "@/data/mockData";
 import { getSlaStatus, type SlaStatus } from "@/lib/slaRules";
 import { Route } from "@/routes/proposals.index";
 import { useRole } from "@/context/RoleContext";
 import { useSpotlight } from "@/context/DemoContext";
+import { fileNumberOf } from "@/lib/fileNumber";
 import { SlaBadge, StageMiniBar, StagePill, SHORT_STAGE } from "./bits";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,9 +18,24 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-type SortKey = "id" | "projectName" | "state" | "stage" | "area" | "families" | "sla";
+type SortKey = "id" | "projectName" | "state" | "stage" | "area" | "families" | "sla" | "activity";
 
 const ALL = "__all__";
+
+/**
+ * Human-readable current sort, surfaced next to the result count so the
+ * default ordering reads as deliberate triage rather than a wall of breaches.
+ */
+const SORT_LABEL: Record<SortKey, string> = {
+  activity: "most recent statutory activity",
+  id: "proposal ID",
+  projectName: "project name",
+  state: "state",
+  stage: "statutory stage",
+  area: "area",
+  families: "affected families",
+  sla: "SLA urgency (nearest lapse first)",
+};
 
 const CHIPS = [
   { key: "all", label: "All" },
@@ -49,7 +60,7 @@ export function ProposalPipeline() {
   const [body, setBody] = useState(ALL);
   const [stage, setStage] = useState(ALL);
   const [slaFilter, setSlaFilter] = useState(ALL);
-  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "sla", dir: 1 });
+  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "activity", dir: -1 });
 
   const chip: ChipKey =
     search.filter === "breached"
@@ -82,10 +93,7 @@ export function ProposalPipeline() {
       if (slaFilter !== ALL && sla.status !== (slaFilter as SlaStatus)) return false;
       if (chip === "breached" && sla.status !== "BREACHED") return false;
       if (chip === "at-risk" && sla.status !== "AT_RISK") return false;
-      if (
-        chip === "awaiting-award" &&
-        !(["SEC_11", "SEC_19"] as string[]).includes(p.currentStage)
-      )
+      if (chip === "awaiting-award" && !(["SEC_11", "SEC_19"] as string[]).includes(p.currentStage))
         return false;
       return true;
     });
@@ -108,6 +116,8 @@ export function ProposalPipeline() {
           return r.p.affectedFamilies;
         case "sla":
           return r.sla.daysRemaining === Infinity ? 99999 : r.sla.daysRemaining;
+        case "activity":
+          return new Date(r.p.stageEnteredAt).getTime();
       }
     };
     return [...filtered].sort((a, b) => {
@@ -121,7 +131,13 @@ export function ProposalPipeline() {
   const toggleSort = (key: SortKey) =>
     setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: 1 }));
 
-  const hasFilters = q.trim() !== "" || state !== ALL || body !== ALL || stage !== ALL || slaFilter !== ALL || chip !== "all";
+  const hasFilters =
+    q.trim() !== "" ||
+    state !== ALL ||
+    body !== ALL ||
+    stage !== ALL ||
+    slaFilter !== ALL ||
+    chip !== "all";
 
   const clearFilters = () => {
     setQ("");
@@ -202,7 +218,12 @@ export function ProposalPipeline() {
           />
         </div>
 
-        <div className={cn("mt-2.5 flex items-center gap-1.5 border-t border-border pt-2.5", spotlight)}>
+        <div
+          className={cn(
+            "mt-2.5 flex items-center gap-1.5 border-t border-border pt-2.5",
+            spotlight,
+          )}
+        >
           {CHIPS.map((c) => (
             <button
               key={c.key}
@@ -218,7 +239,11 @@ export function ProposalPipeline() {
               {c.label}
             </button>
           ))}
-          <span className="num ml-auto text-[12px] text-muted-foreground">
+          <span className="ml-auto text-[11px] text-muted-foreground">
+            Sorted by <span className="font-medium text-foreground">{SORT_LABEL[sort.key]}</span>
+            {sort.dir === -1 ? " ↓" : " ↑"}
+          </span>
+          <span className="num text-[12px] text-muted-foreground">
             {sorted.length} of {rows.length} proposals
           </span>
         </div>
@@ -241,6 +266,7 @@ export function ProposalPipeline() {
               <span className="num text-[11px] font-semibold text-status-info">{p.id}</span>
               <SlaBadge sla={sla} />
             </div>
+            <div className="num text-[10px] text-muted-foreground">{fileNumberOf(p)}</div>
             <div className="mt-1 truncate text-[13px] font-medium text-foreground">
               {p.projectName}
             </div>
@@ -288,6 +314,7 @@ export function ProposalPipeline() {
               <Th label="Progress" />
               <Th label="Area (Ha)" sortKey="area" className="text-right" />
               <Th label="Families" sortKey="families" className="text-right" />
+              <Th label="Last Movement" sortKey="activity" />
               <Th label="SLA" sortKey="sla" />
               <th className="w-8 border-b border-border" />
             </tr>
@@ -310,6 +337,9 @@ export function ProposalPipeline() {
                   >
                     {p.id}
                   </Link>
+                  <div className="num whitespace-nowrap text-[10px] text-muted-foreground">
+                    {fileNumberOf(p)}
+                  </div>
                 </td>
                 <td className="max-w-[320px] px-3 py-2">
                   <Link
@@ -338,6 +368,13 @@ export function ProposalPipeline() {
                   {p.totalAreaHa.toFixed(2)}
                 </td>
                 <td className="num px-3 py-2 text-right">{p.affectedFamilies}</td>
+                <td className="num whitespace-nowrap px-3 py-2 text-[12px] text-muted-foreground">
+                  {new Date(p.stageEnteredAt).toLocaleDateString("en-IN", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </td>
                 <td className="px-3 py-2">
                   <SlaBadge sla={sla} />
                 </td>
@@ -350,7 +387,7 @@ export function ProposalPipeline() {
             ))}
             {sorted.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-3 py-12 text-center">
+                <td colSpan={10} className="px-3 py-12 text-center">
                   <SearchX className="mx-auto size-5 text-muted-foreground/50" />
                   <p className="mt-2 text-[13px] text-muted-foreground">
                     No proposals match the current filters.

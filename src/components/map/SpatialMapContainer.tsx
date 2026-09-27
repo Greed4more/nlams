@@ -327,10 +327,7 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
   const { data: wbParcelData, isLoading: wbParcelsLoading } = useWbParcelDistrict(
     wbParcelsEnabled ? wbParcelDistrictSlug : null,
   );
-  const wbCanvasRenderer = useMemo(
-    () => canvas({ padding: 0.5, pane: WB_PARCELS_PANE }),
-    [],
-  );
+  const wbCanvasRenderer = useMemo(() => canvas({ padding: 0.5, pane: WB_PARCELS_PANE }), []);
 
   /** Fly to the newly-selected state's extent and drop any stale selection
    * from the previous state — skipped on first mount, when the initial
@@ -419,7 +416,9 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
   ) => {
     const centroid = polygonBoundsCentroid(layer);
     const district =
-      wbManifest?.find((m) => m.slug === wbParcelDistrictSlug)?.district ?? wbParcelDistrictSlug ?? "";
+      wbManifest?.find((m) => m.slug === wbParcelDistrictSlug)?.district ??
+      wbParcelDistrictSlug ??
+      "";
     setSelected({ kind: "wbParcel", properties: feature.properties, district, centroid });
   };
 
@@ -542,14 +541,12 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
 
   // No permanent tooltips here — up to ~9.5k parcels per district would be
   // unreadable noise (and slow); click a parcel for details instead.
-  const onEachWbParcel = (
-    feature: Feature<Geometry, WbParcelFeatureProperties>,
-    layer: Layer,
-  ) => {
+  const onEachWbParcel = (feature: Feature<Geometry, WbParcelFeatureProperties>, layer: Layer) => {
     layer.on("click", (() =>
-      selectWbParcel(feature as Feature<Polygon | MultiPolygon, WbParcelFeatureProperties>, layer)) as (
-      e: LeafletMouseEvent,
-    ) => void);
+      selectWbParcel(
+        feature as Feature<Polygon | MultiPolygon, WbParcelFeatureProperties>,
+        layer,
+      )) as (e: LeafletMouseEvent) => void);
   };
 
   // Force GeoJSON re-render when toggles that affect style/tooltips change.
@@ -569,8 +566,7 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
     [stateCode, adminLabelsVisible, blocksVisible, selected],
   );
   const wbParcelsKey = useMemo(
-    () =>
-      `${wbParcelDistrictSlug}-${selected?.kind === "wbParcel" ? selected.properties.id : ""}`,
+    () => `${wbParcelDistrictSlug}-${selected?.kind === "wbParcel" ? selected.properties.id : ""}`,
     [wbParcelDistrictSlug, selected],
   );
 
@@ -718,7 +714,9 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
         <div className="pointer-events-none absolute inset-0 grid place-items-center bg-background/40">
           <div className="flex items-center gap-2 rounded-[6px] bg-card px-3 py-2 text-[12.5px] shadow">
             <Loader2 className="size-4 animate-spin" />
-            {wbParcelsLoading ? "Loading WB cadastral fabric…" : "Loading cadastral parcels…"}
+            {wbParcelsLoading
+              ? "Loading West Bengal cadastral fabric (Banglarbhumi demo capture)…"
+              : "Fetching parcel records from the National Land Records Repository…"}
           </div>
         </div>
       )}
@@ -730,10 +728,15 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
             <div className="label-xs">Layers and Tools</div>
             <div className="mt-2 space-y-2">
               <LayerRow
-                label="Cadastral Polygons"
+                label="Cadastral Parcels (ULPIN-linked)"
                 checked={showCadastral}
                 onChange={setShowCadastral}
               />
+              <p className="text-[10px] leading-snug text-muted-foreground">
+                Seeded parcel outlines are approximate demo geometry around district headquarters —
+                not surveyed ULPIN boundaries. Select West Bengal below for the Banglarbhumi
+                cadastral-fabric reference capture.
+              </p>
               <LayerRow
                 label="Survey Number Labels"
                 checked={showLabels}
@@ -811,8 +814,8 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
             <div className="mt-3 border-t border-border pt-3">
               <div className="label-xs">WB Cadastral Fabric (28-district demo)</div>
               <p className="mt-1 text-[10.5px] text-muted-foreground">
-                Block-constrained demo parcels covering West Bengal's 23 current + 5 proposed
-                target districts. Mostly synthetic — not an authoritative land record.
+                Block-constrained demo parcels covering West Bengal's 23 current + 5 proposed target
+                districts. Mostly synthetic — not an authoritative land record.
               </p>
               <div className="mt-2">
                 <LayerRow
@@ -893,7 +896,7 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
             className="size-2.5 rounded-[2px]"
             style={{ backgroundColor: theme.parcelStroke }}
           />
-          <span className="text-[11px] text-muted-foreground">Cadastral outline</span>
+          <span className="text-[11px] text-muted-foreground">Parcel outline (demo geometry)</span>
         </div>
         <div className="mt-1 flex items-center gap-2">
           <span

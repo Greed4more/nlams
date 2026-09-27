@@ -10,7 +10,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "seed": "tsx prisma/seed.ts",
-    "seed:supabase-users": "tsx scripts/seed-supabase-users.ts"
+    "seed:supabase-users": "tsx scripts/seed-supabase-users.ts",
+    "cleanup:grievances": "tsx scripts/remove-placeholder-grievances.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.2.1",

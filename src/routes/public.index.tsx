@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search } from "lucide-react";
+import { MapPin, Search } from "lucide-react";
 import { PublicShell } from "@/components/layout/PublicShell";
 import { usePublicProposalsSearch } from "@/hooks/usePublicPortal";
 import { STAGE_LABELS, STATES } from "@/data/mockData";
@@ -31,9 +31,11 @@ const ALL_STATES = "__all__";
 
 function PublicSearchPage() {
   const [name, setName] = useState("");
+  const [ulpin, setUlpin] = useState("");
   const [state, setState] = useState(ALL_STATES);
   const { data, isLoading, isError } = usePublicProposalsSearch({
     name: name.trim() || undefined,
+    ulpin: ulpin.trim() ? ulpin.trim().toUpperCase() : undefined,
     state: state === ALL_STATES ? undefined : state,
   });
 
@@ -44,10 +46,19 @@ function PublicSearchPage() {
       </h1>
       <p className="mt-1 text-[12px] text-muted-foreground">
         Public, non-identifying register of acquisition proceedings under the RFCTLARR Act, 2013.
-        Search by project name or state — no personal or beneficiary data is disclosed here.
+        Search by ULPIN, project name or state — no personal or beneficiary data is disclosed here.
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">
+        <div className="relative min-w-[200px] flex-[1_1_240px]">
+          <MapPin className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="ULPIN (e.g. GA03B2K9X7M401)"
+            value={ulpin}
+            onChange={(e) => setUlpin(e.target.value)}
+            className="num pl-8 uppercase tracking-wider"
+          />
+        </div>
         <div className="relative flex-1 min-w-[220px]">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -72,6 +83,12 @@ function PublicSearchPage() {
         </Select>
       </div>
 
+      {isLoading && (
+        <p className="mt-3 text-[12px] text-muted-foreground">
+          Searching the public land acquisition register…
+        </p>
+      )}
+
       <section className="panel mt-4 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-[13px]">
@@ -88,14 +105,6 @@ function PublicSearchPage() {
               </tr>
             </thead>
             <tbody>
-              {isLoading &&
-                Array.from({ length: 4 }).map((_, i) => (
-                  <tr key={i}>
-                    <td colSpan={4} className="px-3 py-2">
-                      <div className="shimmer h-5 w-full" />
-                    </td>
-                  </tr>
-                ))}
               {isError && !isLoading && (
                 <tr>
                   <td

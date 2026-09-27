@@ -8,7 +8,7 @@ import {
   Tooltip as RechartsTooltip,
   Legend,
 } from "recharts";
-import { ChevronDown, ChevronRight, ShieldCheck, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Info, ShieldCheck, X } from "lucide-react";
 import { toast } from "sonner";
 import { computeCompensation } from "@/lib/compensation";
 import { formatINRFull, formatCrore } from "@/data/mockData";
@@ -334,6 +334,25 @@ export function CompensationCalculator() {
                       )}
                     >
                       {t(row.label)}
+                      {isFactor && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              aria-label={t("calc.factorExplainer")}
+                              className="ml-1 inline-flex align-middle text-muted-foreground transition-colors hover:text-foreground"
+                            >
+                              <Info className="size-3.5" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side="left"
+                            className="max-w-[320px] text-[11.5px] leading-snug"
+                          >
+                            {t("calc.factorExplainer")}
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                     </div>
                     <div className="text-[10.5px] text-muted-foreground">{row.statute}</div>
                   </div>
@@ -351,16 +370,30 @@ export function CompensationCalculator() {
           </div>
 
           <div className="bg-navy px-4 py-4 text-navy-foreground">
-            <div className="label-xs text-navy-muted">{t("calc.finalAwardCompensation")}</div>
-            <div className="num mt-1 text-[30px] font-bold leading-none tracking-tight">
-              {formatINRFull(animated)}
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="label-xs text-navy-muted">{t("calc.finalAwardCompensation")}</div>
+                <div className="num mt-1 text-[30px] font-bold leading-none tracking-tight">
+                  {formatINRFull(animated)}
+                </div>
+                <div className="num mt-1.5 text-[11.5px] text-navy-muted">
+                  {formatCrore(result.finalAward, 2)} · {t("calc.secRefSuffix")}
+                </div>
+                <span className="num mt-3 inline-block rounded-[4px] bg-white/10 px-2 py-1 text-[11.5px] font-semibold">
+                  {result.effectiveMultiple.toFixed(2)}× {t("calc.baseMarketValueSuffix")}
+                </span>
+              </div>
+              <span
+                className="relative mt-0.5 grid size-14 shrink-0 -rotate-6 place-items-center rounded-full border-2 border-status-ok/50 text-status-ok/90"
+                title="Statutory computation under Sec. 26–30, RFCTLARR Act 2013"
+              >
+                <span className="absolute inset-[3px] rounded-full border border-status-ok/30" />
+                <ShieldCheck className="size-4" />
+                <span className="mt-0.5 text-[7px] font-bold uppercase tracking-[0.12em]">
+                  Certified
+                </span>
+              </span>
             </div>
-            <div className="num mt-1.5 text-[11.5px] text-navy-muted">
-              {formatCrore(result.finalAward, 2)} · {t("calc.secRefSuffix")}
-            </div>
-            <span className="num mt-3 inline-block rounded-[4px] bg-white/10 px-2 py-1 text-[11.5px] font-semibold">
-              {result.effectiveMultiple.toFixed(2)}× {t("calc.baseMarketValueSuffix")}
-            </span>
           </div>
 
           <div className="px-4 py-3">

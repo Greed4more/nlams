@@ -902,14 +902,22 @@ const ulpin = (state: string) => {
   return (code + String(intBetween(1, 24)).padStart(2, "0") + body).slice(0, 14);
 };
 
-/**
- * Stage-elapsed buckets: 6 breached, 8 at-risk, rest healthy.
- * Index-driven so the distribution is exact.
- */
-const BREACHED_COUNT = 6;
-const AT_RISK_COUNT = 8;
-
 const SLA_STAGES: RfctlarrStage[] = ["SIA", "SIA_APPRAISAL", "SEC_11", "SEC_19"];
+
+/**
+ * The five states this deployment carries live acquisition records for (see
+ * README). Counts and statutory-breach buckets are deliberately uneven — real
+ * state-wise registers vary widely in case volume and compliance, and uniform
+ * "1 breached / 50%" rows read as template data. Totals: 45 proposals,
+ * 8 breached, 8 at risk.
+ */
+const STATE_MIX: { state: string; count: number; breached: number; atRisk: number }[] = [
+  { state: "Maharashtra", count: 10, breached: 3, atRisk: 2 },
+  { state: "Tamil Nadu", count: 9, breached: 1, atRisk: 2 },
+  { state: "Assam", count: 8, breached: 2, atRisk: 1 },
+  { state: "Goa", count: 9, breached: 0, atRisk: 2 },
+  { state: "Punjab", count: 9, breached: 2, atRisk: 1 },
+];
 const STAGE_LIMIT_DAYS: Partial<Record<RfctlarrStage, number>> = {
   SIA: 180,
   SIA_APPRAISAL: 365,
@@ -918,18 +926,22 @@ const STAGE_LIMIT_DAYS: Partial<Record<RfctlarrStage, number>> = {
 };
 
 function buildParcels(state: string, count: number, totalCompensation: number): Parcel[] {
-  const glossary = GLOSSARY[state] ?? (() => {
-    if (process.env['NODE_ENV'] === 'development') {
-      console.warn(`[mockData] No glossary entry for state: "${state}", falling back to Goa`);
-    }
-    return GLOSSARY["Goa"]!;
-  })();
-  const owners = OWNER_NAMES[state] ?? (() => {
-    if (process.env['NODE_ENV'] === 'development') {
-      console.warn(`[mockData] No owner names for state: "${state}", falling back to Goa`);
-    }
-    return OWNER_NAMES["Goa"]!;
-  })();
+  const glossary =
+    GLOSSARY[state] ??
+    (() => {
+      if (process.env["NODE_ENV"] === "development") {
+        console.warn(`[mockData] No glossary entry for state: "${state}", falling back to Goa`);
+      }
+      return GLOSSARY["Goa"]!;
+    })();
+  const owners =
+    OWNER_NAMES[state] ??
+    (() => {
+      if (process.env["NODE_ENV"] === "development") {
+        console.warn(`[mockData] No owner names for state: "${state}", falling back to Goa`);
+      }
+      return OWNER_NAMES["Goa"]!;
+    })();
   const weights = Array.from({ length: count }, () => between(0.5, 1.5));
   const weightSum = weights.reduce((a, b) => a + b, 0);
 
@@ -982,60 +994,68 @@ function buildDocuments(stage: RfctlarrStage, proposalId: string): DocumentRef[]
  * same realistic dataset shape; see server/prisma/seed.ts for the caller.
  */
 export function buildProposals(): Proposal[] {
-  const states = Object.keys(STATE_CODE);
+  const proposals: Proposal[] = [];
+  let i = 0;
 
-  return Array.from({ length: 45 }, (_, i) => {
-    const id = `PROP-${String(101 + i).padStart(4, "0")}`;
-    const state = states[i % states.length]!;
-    const district = pick(DISTRICTS[state]!);
-    const stateProjects = PROJECT_NAMES_BY_STATE[state] ?? PROJECT_NAMES_BY_STATE["Maharashtra"]!;
-    const projectName = pick(stateProjects);
+  for (const mix of STATE_MIX) {
+    for (let j = 0; j < mix.count; j++) {
+      const id = `PROP-${String(101 + i).padStart(4, "0")}`;
+      const state = mix.state;
+      const district = pick(DISTRICTS[state]!);
+      const stateProjects = PROJECT_NAMES_BY_STATE[state] ?? PROJECT_NAMES_BY_STATE["Maharashtra"]!;
+      const projectName = pick(stateProjects);
 
-    // Every proposal that carries an SLA sits on one of the four timed stages.
-    const stage: RfctlarrStage =
-      i < BREACHED_COUNT + AT_RISK_COUNT ? SLA_STAGES[i % SLA_STAGES.length]! : pick(STAGE_ORDER);
+      // First `breached` proposals in each state are past their statutory
+      // clock, the next `atRisk` are inside the 60-day warning window, and
+      // the rest sit on healthy stages.
+      let stage: RfctlarrStage;
+      let elapsed: number;
+      if (j < mix.breached) {
+        stage = SLA_STAGES[j % SLA_STAGES.length]!;
+        elapsed = STAGE_LIMIT_DAYS[stage]! + intBetween(12, 190);
+      } else if (j < mix.breached + mix.atRisk) {
+        stage = SLA_STAGES[j % SLA_STAGES.length]!;
+        elapsed = STAGE_LIMIT_DAYS[stage]! - intBetween(5, 58);
+      } else {
+        stage = pick(STAGE_ORDER);
+        const limit = STAGE_LIMIT_DAYS[stage];
+        elapsed = limit == null ? intBetween(20, 240) : intBetween(15, Math.max(20, limit - 90));
+      }
 
-    const limit = STAGE_LIMIT_DAYS[stage];
-    let elapsed: number;
-    if (limit == null) {
-      elapsed = intBetween(20, 240);
-    } else if (i < BREACHED_COUNT) {
-      elapsed = limit + intBetween(12, 190);
-    } else if (i < BREACHED_COUNT + AT_RISK_COUNT) {
-      elapsed = limit - intBetween(5, 58);
-    } else {
-      elapsed = intBetween(15, Math.max(20, limit - 90));
+      const stageEnteredAt = daysAgoIso(elapsed);
+      const initiatedAt = daysAgoIso(elapsed + intBetween(40, 700));
+
+      const assessed = Math.round(between(40_00_000, 90_00_00_000));
+      const parcelCount = intBetween(3, 12);
+      const parcels = buildParcels(state, parcelCount, assessed);
+      const parcelAssessed = parcels.reduce((s, p) => s + p.compensationAssessed, 0);
+      const disbursed = parcels.reduce((s, p) => s + p.compensationDisbursed, 0);
+
+      proposals.push({
+        id,
+        projectName,
+        requiringBody: pick(REQUIRING_BODIES),
+        state,
+        district,
+        currentStage: stage,
+        stageEnteredAt,
+        initiatedAt,
+        totalAreaHa: Number(parcels.reduce((s, p) => s + p.areaHa, 0).toFixed(2)),
+        affectedFamilies: intBetween(4, 320),
+        parcels,
+        documents: buildDocuments(stage, id),
+        compensation: {
+          assessed: parcelAssessed,
+          disbursed,
+          pending: parcelAssessed - disbursed,
+        },
+      } satisfies Proposal);
+
+      i += 1;
     }
+  }
 
-    const stageEnteredAt = daysAgoIso(elapsed);
-    const initiatedAt = daysAgoIso(elapsed + intBetween(40, 700));
-
-    const assessed = Math.round(between(40_00_000, 90_00_00_000));
-    const parcelCount = intBetween(3, 12);
-    const parcels = buildParcels(state, parcelCount, assessed);
-    const parcelAssessed = parcels.reduce((s, p) => s + p.compensationAssessed, 0);
-    const disbursed = parcels.reduce((s, p) => s + p.compensationDisbursed, 0);
-
-    return {
-      id,
-      projectName,
-      requiringBody: pick(REQUIRING_BODIES),
-      state,
-      district,
-      currentStage: stage,
-      stageEnteredAt,
-      initiatedAt,
-      totalAreaHa: Number(parcels.reduce((s, p) => s + p.areaHa, 0).toFixed(2)),
-      affectedFamilies: intBetween(4, 320),
-      parcels,
-      documents: buildDocuments(stage, id),
-      compensation: {
-        assessed: parcelAssessed,
-        disbursed,
-        pending: parcelAssessed - disbursed,
-      },
-    } satisfies Proposal;
-  });
+  return proposals;
 }
 
 export const STATES = Object.keys(STATE_CODE);

@@ -5,7 +5,7 @@ import type { Proposal } from "@/data/mockData";
 import { useAuth, ROLE_LABEL, ROLE_CAN_ACT, type Role } from "@/context/AuthContext";
 import { useProposalsQuery } from "@/hooks/useProposals";
 import { api, ApiError } from "@/lib/api";
-import { getBypassSession, DEMO_BYPASS_PASSWORD, type BypassSession } from "@/lib/bypassAuth";
+import { getBypassSession, type BypassSession } from "@/lib/bypassAuth";
 
 export const NO_CREDENTIALS_HINT = "Requires LAO credentials";
 
@@ -67,8 +67,8 @@ interface RoleContextValue {
   inScope: (p: Proposal) => boolean;
   /**
    * Actually re-authenticates as the chosen demo persona (via the bypass
-   * login endpoint), replacing the whole session — not just a client-side
-   * display override. Only works from an existing Quick Demo Access
+   * token's server-side persona switch), replacing the whole session — not
+   * just a client-side display override. Only works from an existing demo
    * session; on a real Supabase login it's a no-op with a toast, since a
    * client can't silently escalate its own privileges.
    */
@@ -117,15 +117,16 @@ export function RoleProvider({ children }: { children: ReactNode }) {
       switchingPersona,
       switchPersona: async (nextRole: Role) => {
         if (!getBypassSession()) {
-          toast.error("Persona switching only works for Quick Demo Access sign-ins.", {
-            description: 'Sign out and use "Quick Demo Access" on the sign-in page first.',
+          toast.error("Persona switching is only available in demo sessions.", {
+            description: "Sign out and start a demo session from the judge-access screen first.",
           });
           return;
         }
         setSwitchingPersona(true);
         try {
-          const res = await api.post<BypassSession>("/api/public/auth/bypass", {
-            password: DEMO_BYPASS_PASSWORD,
+          // Server-side switch, authorised by the current bypass token — the
+          // bypass password never lives in the client bundle.
+          const res = await api.post<BypassSession>("/api/public/auth/switch-persona", {
             role: nextRole,
           });
           signInWithBypass(res);

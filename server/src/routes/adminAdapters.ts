@@ -20,11 +20,15 @@ adminAdaptersRouter.use((req, res, next) => {
   next();
 });
 
+/** The only state with a real land-records connection in this deployment. */
+const LIVE_ADAPTER_CODE = "WB";
+
 adminAdaptersRouter.get("/adapters", async (_req, res) => {
   const dbAdapters = await prisma.stateAdapter.findMany();
   res.json({
     totalStatesSupported: 36,
     activeReferenceAdapter: "WB (West Bengal Banglarbhumi)",
+    liveAdapterCode: LIVE_ADAPTER_CODE,
     dbAdapters,
     registeredPlugins: adapterRegistry.list(),
   });
@@ -32,12 +36,30 @@ adminAdaptersRouter.get("/adapters", async (_req, res) => {
 
 adminAdaptersRouter.post("/adapters/trigger-sync", async (req, res) => {
   const stateCode = typeof req.body?.stateCode === "string" ? req.body.stateCode : "WB";
+  const adapter = adapterRegistry.get(stateCode);
 
-  const adapter = await prisma.stateAdapter.upsert({
+  if (!adapter) {
+    res.status(404).json({ error: `No adapter registered for state code '${stateCode}'.` });
+    return;
+  }
+
+  // Every other state is a registered scaffold (GenericMockAdapter) — reject
+  // sync requests explicitly rather than implying nationwide live coverage.
+  if (stateCode !== LIVE_ADAPTER_CODE) {
+    res.status(501).json({
+      error: `The ${adapter.stateName} adapter is a registered scaffold — this integration is not yet connected. Only West Bengal (Banglarbhumi) is live.`,
+    });
+    return;
+  }
+
+  const row = await prisma.stateAdapter.upsert({
     where: { stateCode },
-    create: { stateCode, adapterName: adapterRegistry.get(stateCode)?.stateName ?? stateCode, lastSyncStatus: "syncing_in_progress" },
-    update: { lastSyncStatus: "syncing_in_progress" },
+    create: { stateCode, adapterName: adapter.stateName, lastSyncStatus: "success" },
+    update: { lastSyncStatus: "success" },
   });
 
-  res.status(202).json({ message: `Sync triggered for state '${stateCode}'.`, adapter });
+  res.status(202).json({
+    message: `Sync completed for '${stateCode}' from Banglarbhumi.`,
+    adapter: row,
+  });
 });

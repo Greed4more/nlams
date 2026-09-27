@@ -14,6 +14,7 @@ export interface StateAdapterRow {
 export interface AdaptersOverview {
   totalStatesSupported: number;
   activeReferenceAdapter: string;
+  liveAdapterCode: string;
   dbAdapters: StateAdapterRow[];
   registeredPlugins: { stateCode: string; stateName: string; isRegistered: boolean }[];
 }

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Inbox, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useGrievancesQuery } from "@/hooks/useGrievances";
@@ -73,11 +74,19 @@ function GrievancesPage() {
                 ))}
               {!isLoading && data?.length === 0 && (
                 <tr>
-                  <td
-                    colSpan={7}
-                    className="px-3 py-8 text-center text-[12px] text-muted-foreground"
-                  >
-                    No grievance tickets in scope.
+                  <td colSpan={7} className="px-3 py-12">
+                    <div className="mx-auto flex max-w-xs flex-col items-center text-center">
+                      <span className="grid size-12 place-items-center rounded-full border border-border bg-muted/40">
+                        <Inbox className="size-5 text-muted-foreground/70" strokeWidth={1.6} />
+                      </span>
+                      <p className="mt-3 text-[13px] font-semibold text-foreground">
+                        No grievances raised
+                      </p>
+                      <p className="mt-1 text-[11.5px] leading-snug text-muted-foreground">
+                        Title-correction or boundary objections filed against acquisition proposals
+                        will appear here within the 15-day statutory SLA.
+                      </p>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -110,6 +119,12 @@ function GrievancesPage() {
                       >
                         {ticket.status.replace("_", " ")}
                       </span>
+                      {ticket.escalated && (
+                        <span className="ml-1 inline-flex items-center gap-0.5 rounded-[4px] border border-status-critical/30 bg-status-critical/10 px-1.5 py-0.5 text-[10px] font-semibold text-status-critical">
+                          <ShieldCheck className="size-3" />
+                          Escalated
+                        </span>
+                      )}
                     </td>
                     <td
                       className={cn(

@@ -3,19 +3,12 @@
  * server/src/lib/bypassAuth.ts). Stores the bypass token in localStorage in
  * a shape AuthContext can fold into a normal-looking Supabase Session, so
  * every other consumer of useAuth()/api.ts keeps working unmodified.
+ *
+ * The bypass password itself never reaches the browser: persona switching is
+ * performed server-side by POST /api/public/auth/switch-persona, authorised
+ * by the existing bypass token.
  */
 const STORAGE_KEY = "nlams-bypass-session";
-
-/**
- * Matches server/src/lib/bypassAuth.ts's BYPASS_PASSWORD default. Public/
- * demo-only by design (see that file's doc comment) — already shown in the
- * clear on the sign-in page. Used so the TopBar persona switcher can
- * instantly re-authenticate as another demo persona without re-prompting
- * for a password every time, but only ever from an existing bypass session
- * (see RoleContext.switchPersona) — a real Supabase session is never
- * silently swapped.
- */
-export const DEMO_BYPASS_PASSWORD = "nlams-demo-2026";
 
 export interface BypassSession {
   token: string;

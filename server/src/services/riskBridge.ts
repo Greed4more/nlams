@@ -56,6 +56,7 @@ export async function triggerRiskEvaluation(proposalId: string) {
   };
 
   let prediction: RiskPrediction;
+  let engine: "ML_SERVICE" | "RULE_BASED";
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 3000);
@@ -77,6 +78,7 @@ export async function triggerRiskEvaluation(proposalId: string) {
       riskTier: data.risk_tier.toUpperCase() as RiskTier,
       topContributingFactors: data.top_contributing_factors,
     };
+    engine = "ML_SERVICE";
   } catch (error) {
     console.warn("[risk-bridge] ml_service unreachable, using local fallback:", (error as Error).message);
     let score = 25.0;
@@ -92,6 +94,7 @@ export async function triggerRiskEvaluation(proposalId: string) {
         { feature: "consent_percentage_collected", importance: consentPercentageCollected < 70 ? 0.35 : 0.1 },
       ],
     };
+    engine = "RULE_BASED";
   }
 
   return prisma.riskScore.create({
@@ -100,6 +103,7 @@ export async function triggerRiskEvaluation(proposalId: string) {
       riskScore: prediction.riskScore,
       riskTier: prediction.riskTier,
       topContributingFactors: prediction.topContributingFactors as unknown as Prisma.InputJsonValue,
+      engine,
     },
   });
 }

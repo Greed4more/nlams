@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { Landmark } from "lucide-react";
+import { GigwUtilityBar } from "./GigwUtilityBar";
+import { GovFooter } from "./GovFooter";
 
 /**
  * Layout for the public case-transparency portal (Module 7) — deliberately
@@ -10,6 +12,7 @@ import { Landmark } from "lucide-react";
 export function PublicShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-surface">
+      <GigwUtilityBar />
       <header className="bg-navy px-5 py-4 text-navy-foreground">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-4">
           <Link to="/public" className="flex items-center gap-2.5">
@@ -32,12 +35,15 @@ export function PublicShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-4xl flex-1 px-5 py-6">{children}</main>
+      <main id="main-content" className="mx-auto w-full max-w-4xl flex-1 px-5 py-6">
+        {children}
+      </main>
 
-      <footer className="border-t border-border px-5 py-4 text-center text-[10.5px] leading-relaxed text-muted-foreground">
+      <div className="border-t border-border px-5 pt-3 text-center text-[10.5px] leading-relaxed text-muted-foreground">
         Public disclosure under Section 4 &amp; Section 11, RFCTLARR Act, 2013. Personal
         identifiable information excluded per the Digital Personal Data Protection Act, 2023.
-      </footer>
+      </div>
+      <GovFooter />
     </div>
   );
 }

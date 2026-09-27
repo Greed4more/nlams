@@ -52,17 +52,38 @@ export function RiskConsentPanel({ proposalId }: { proposalId: string }) {
     <section className="panel px-4 py-3">
       <div className="flex items-center justify-between">
         <div className="label-xs">Litigation &amp; Delay Risk</div>
-        {risk && (
-          <span
-            className={cn(
-              "num inline-flex items-center gap-1 rounded-[4px] border px-2 py-0.5 text-[12px] font-semibold",
-              TIER_TONE[risk.riskTier],
-            )}
-          >
-            {risk.riskTier === "HIGH" && <AlertOctagon className="size-3.5" />}
-            {risk.riskScore.toFixed(0)}% · {risk.riskTier}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {risk && (
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 rounded-[4px] border px-1.5 py-0.5 text-[10px] font-medium",
+                risk.engine === "ML_SERVICE"
+                  ? "border-status-ok/30 bg-status-ok/10 text-status-ok"
+                  : "border-status-warn/30 bg-status-warn/10 text-status-warn",
+              )}
+              title={
+                risk.engine === "ML_SERVICE"
+                  ? "Score produced by the FastAPI ml_service risk model"
+                  : "ml_service was unreachable — this score came from the local rule-based fallback"
+              }
+            >
+              {risk.engine === "ML_SERVICE"
+                ? "ML model · ml_service active"
+                : "Rule-based fallback · ml_service offline"}
+            </span>
+          )}
+          {risk && (
+            <span
+              className={cn(
+                "num inline-flex items-center gap-1 rounded-[4px] border px-2 py-0.5 text-[12px] font-semibold",
+                TIER_TONE[risk.riskTier],
+              )}
+            >
+              {risk.riskTier === "HIGH" && <AlertOctagon className="size-3.5" />}
+              {risk.riskScore.toFixed(0)}% · {risk.riskTier}
+            </span>
+          )}
+        </div>
       </div>
 
       {isLoading && <div className="shimmer mt-2 h-4 w-2/3" />}

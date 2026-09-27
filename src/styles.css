@@ -68,7 +68,8 @@
   --color-status-warn: var(--status-warn);
   --color-status-critical: var(--status-critical);
   --color-status-info: var(--status-info);
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", "Noto Sans", "Noto Sans Devanagari", "Noto Sans Bengali",
+    "Noto Sans Tamil", "Noto Sans Gurmukhi", ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
@@ -166,7 +167,50 @@
     font-family: var(--font-sans);
     font-feature-settings: "cv02", "cv03", "cv04";
     -webkit-font-smoothing: antialiased;
+    /* GIGW text-size control (A- / A / A+) — see GigwUtilityBar. */
+    zoom: var(--user-font-scale, 1);
   }
+}
+
+/* GIGW high-contrast mode — stronger foreground/background separation and
+   underlined links, toggled from the utility strip. */
+.high-contrast {
+  --background: #ffffff;
+  --foreground: #000000;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  --muted: #f0f0f0;
+  --muted-foreground: #1a1a1a;
+  --border: #000000;
+  --input: #000000;
+  --ring: #000000;
+  --navy: #000000;
+  --navy-foreground: #ffffff;
+  --navy-muted: #e6e6e6;
+  --navy-hover: #222222;
+  --surface: #ffffff;
+  --status-ok: #005a2b;
+  --status-warn: #7a3d00;
+  --status-critical: #8a0000;
+  --status-info: #00308f;
+}
+
+.high-contrast a {
+  text-decoration: underline;
+}
+
+/* Browser autofill (Chrome's pale-blue fill) clashes with the gov palette —
+   force the card background and foreground colours instead. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--card) inset !important;
+  -webkit-text-fill-color: var(--foreground) !important;
+  caret-color: var(--foreground);
+  transition: background-color 9999s ease-out 0s;
 }
 
 @utility label-xs {

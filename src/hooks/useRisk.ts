@@ -8,6 +8,8 @@ export interface RiskScore {
   riskScore: number;
   riskTier: "LOW" | "MEDIUM" | "HIGH";
   topContributingFactors: { feature: string; importance: number }[];
+  /** Which scorer produced this row — ML_SERVICE or RULE_BASED fallback. */
+  engine: "ML_SERVICE" | "RULE_BASED";
   computedAt: string;
 }
 

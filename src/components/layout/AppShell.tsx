@@ -3,12 +3,17 @@ import { useLocation, useNavigate } from "@tanstack/react-router";
 import { Masthead } from "./Masthead";
 import { TopNav, MobileNavList } from "./TopNav";
 import { TopBar } from "./TopBar";
+import { GigwUtilityBar } from "./GigwUtilityBar";
+import { GovFooter } from "./GovFooter";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/context/AuthContext";
 
 function RouteSkeleton() {
   return (
     <div className="space-y-3">
+      <p className="text-[12px] text-muted-foreground">
+        Retrieving records from the National Land Records Repository…
+      </p>
       <div className="shimmer h-9 w-64" />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
@@ -69,6 +74,7 @@ export function AppShell({ breadcrumb, children }: { breadcrumb: string[]; child
   return (
     <div className="flex min-h-screen flex-col bg-surface">
       <div className="print:hidden">
+        <GigwUtilityBar />
         <Masthead onOpenNav={() => setNavOpen(true)} />
         <TopNav />
       </div>
@@ -88,13 +94,10 @@ export function AppShell({ breadcrumb, children }: { breadcrumb: string[]; child
         <div className="print:hidden">
           <TopBar breadcrumb={breadcrumb} />
         </div>
-        <main className="flex-1 px-5 py-5 print:px-0 print:py-0">
+        <main id="main-content" className="flex-1 px-5 py-5 print:px-0 print:py-0">
           {loading ? <RouteSkeleton /> : children}
         </main>
-        <footer className="border-t border-border px-5 py-2 text-center text-[10px] text-muted-foreground print:hidden">
-          BHUMITRA v0.9 · National Land Acquisition &amp; Management System · Department of Land
-          Resources
-        </footer>
+        <GovFooter className="print:hidden" />
       </div>
     </div>
   );

@@ -13,7 +13,6 @@ import {
 import { formatCrore, formatINRFull } from "@/data/mockData";
 import { useDerived } from "../derive";
 import { useVerifyAuditChainMutation } from "@/hooks/useAudit";
-import { useStateAdaptersQuery } from "@/hooks/useAdminAdapters";
 import { useI18n } from "@/context/I18nContext";
 import { StageChart } from "../StageChart";
 import { DelayQueue } from "../DelayQueue";
@@ -22,30 +21,33 @@ import { cn } from "@/lib/utils";
 export function DolrSecretaryDashboard() {
   const { totals, disbursalPct, enriched } = useDerived();
   const verifyChain = useVerifyAuditChainMutation();
-  const { data: adaptersData } = useStateAdaptersQuery();
   const { t } = useI18n();
 
   // Aggregate by state
-  const stateStats = Array.from(new Set(enriched.map((e) => e.proposal.state))).map((state) => {
-    const inState = enriched.filter((e) => e.proposal.state === state);
-    const count = inState.length;
-    const area = inState.reduce((s, e) => s + e.proposal.totalAreaHa, 0);
-    const assessed = inState.reduce((s, e) => s + e.proposal.compensation.assessed, 0);
-    const disbursed = inState.reduce((s, e) => s + e.proposal.compensation.disbursed, 0);
-    const breached = inState.filter((e) => e.sla.status === "BREACHED").length;
-    const atRisk = inState.filter((e) => e.sla.status === "AT_RISK").length;
-    const complianceRate = count > 0 ? Math.round(((count - breached) / count) * 100) : 100;
-    return { state, count, area, assessed, disbursed, breached, atRisk, complianceRate };
-  }).sort((a, b) => b.count - a.count);
+  const stateStats = Array.from(new Set(enriched.map((e) => e.proposal.state)))
+    .map((state) => {
+      const inState = enriched.filter((e) => e.proposal.state === state);
+      const count = inState.length;
+      const area = inState.reduce((s, e) => s + e.proposal.totalAreaHa, 0);
+      const assessed = inState.reduce((s, e) => s + e.proposal.compensation.assessed, 0);
+      const disbursed = inState.reduce((s, e) => s + e.proposal.compensation.disbursed, 0);
+      const breached = inState.filter((e) => e.sla.status === "BREACHED").length;
+      const atRisk = inState.filter((e) => e.sla.status === "AT_RISK").length;
+      const complianceRate = count > 0 ? Math.round(((count - breached) / count) * 100) : 100;
+      return { state, count, area, assessed, disbursed, breached, atRisk, complianceRate };
+    })
+    .sort((a, b) => b.count - a.count);
 
   // Aggregate by requiring body
-  const requiringBodyStats = Array.from(new Set(enriched.map((e) => e.proposal.requiringBody))).map((body) => {
-    const inBody = enriched.filter((e) => e.proposal.requiringBody === body);
-    const count = inBody.length;
-    const assessed = inBody.reduce((s, e) => s + e.proposal.compensation.assessed, 0);
-    const disbursed = inBody.reduce((s, e) => s + e.proposal.compensation.disbursed, 0);
-    return { body, count, assessed, disbursed };
-  }).sort((a, b) => b.assessed - a.assessed);
+  const requiringBodyStats = Array.from(new Set(enriched.map((e) => e.proposal.requiringBody)))
+    .map((body) => {
+      const inBody = enriched.filter((e) => e.proposal.requiringBody === body);
+      const count = inBody.length;
+      const assessed = inBody.reduce((s, e) => s + e.proposal.compensation.assessed, 0);
+      const disbursed = inBody.reduce((s, e) => s + e.proposal.compensation.disbursed, 0);
+      return { body, count, assessed, disbursed };
+    })
+    .sort((a, b) => b.assessed - a.assessed);
 
   return (
     <div className="space-y-4">
@@ -173,8 +175,13 @@ export function DolrSecretaryDashboard() {
                       <td className="num px-3 py-2 text-right">{row.count}</td>
                       <td className="num px-3 py-2 text-right">{row.area.toFixed(1)}</td>
                       <td className="num px-3 py-2 text-right text-[11.5px]">
-                        <span className="font-semibold text-status-ok">{formatCrore(row.disbursed, 1)}</span>
-                        <span className="text-muted-foreground"> / {formatCrore(row.assessed, 1)}</span>
+                        <span className="font-semibold text-status-ok">
+                          {formatCrore(row.disbursed, 1)}
+                        </span>
+                        <span className="text-muted-foreground">
+                          {" "}
+                          / {formatCrore(row.assessed, 1)}
+                        </span>
                       </td>
                       <td className="px-3 py-2 text-center">
                         {row.breached > 0 ? (
@@ -188,7 +195,11 @@ export function DolrSecretaryDashboard() {
                         )}
                       </td>
                       <td className="num px-3 py-2 text-right font-medium">
-                        <span className={row.complianceRate >= 80 ? "text-status-ok" : "text-status-warn"}>
+                        <span
+                          className={
+                            row.complianceRate >= 80 ? "text-status-ok" : "text-status-warn"
+                          }
+                        >
                           {row.complianceRate}%
                         </span>
                       </td>
@@ -209,9 +220,13 @@ export function DolrSecretaryDashboard() {
             </div>
             <div className="divide-y divide-border">
               {requiringBodyStats.map((item) => {
-                const pct = totals.assessed > 0 ? Math.round((item.assessed / totals.assessed) * 100) : 0;
+                const pct =
+                  totals.assessed > 0 ? Math.round((item.assessed / totals.assessed) * 100) : 0;
                 return (
-                  <div key={item.body} className="flex items-center justify-between gap-3 px-4 py-2.5 text-[12.5px]">
+                  <div
+                    key={item.body}
+                    className="flex items-center justify-between gap-3 px-4 py-2.5 text-[12.5px]"
+                  >
                     <div className="min-w-0 flex-1">
                       <div className="font-medium text-foreground">{item.body}</div>
                       <div className="mt-1 flex items-center gap-2">
@@ -224,7 +239,9 @@ export function DolrSecretaryDashboard() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="num font-semibold text-foreground">{formatCrore(item.assessed)}</div>
+                      <div className="num font-semibold text-foreground">
+                        {formatCrore(item.assessed)}
+                      </div>
                       <div className="num text-[11px] text-muted-foreground">
                         {item.count} {t("common.proposals")}
                       </div>
@@ -252,14 +269,21 @@ export function DolrSecretaryDashboard() {
                   <Server className="size-3.5 text-navy" />
                   {t("dolr.module9.title")}
                 </div>
-                <Link to="/admin/adapters" className="text-[11px] font-medium text-status-info hover:underline">
+                <Link
+                  to="/admin/adapters"
+                  className="text-[11px] font-medium text-status-info hover:underline"
+                >
                   {t("dolr.module9.manage")}
                 </Link>
               </div>
               <div className="mt-2.5 space-y-2 text-[12px]">
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">{t("dolr.module9.referenceAdapter")}</span>
-                  <span className="font-medium text-foreground">{t("dolr.module9.wbBanglarbhumi")}</span>
+                  <span className="text-muted-foreground">
+                    {t("dolr.module9.referenceAdapter")}
+                  </span>
+                  <span className="font-medium text-foreground">
+                    {t("dolr.module9.wbBanglarbhumi")}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">{t("dolr.module9.syncStatus")}</span>
@@ -268,9 +292,11 @@ export function DolrSecretaryDashboard() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">{t("dolr.module9.registeredStates")}</span>
+                  <span className="text-muted-foreground">
+                    {t("dolr.module9.registeredStates")}
+                  </span>
                   <span className="num font-semibold text-foreground">
-                    {adaptersData?.totalStatesSupported ?? 6} {t("dolr.module9.statesUts")}
+                    {t("dolr.module9.frameworkValue")}
                   </span>
                 </div>
               </div>

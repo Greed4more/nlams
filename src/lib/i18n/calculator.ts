@@ -9,7 +9,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.awardParameters": "Award Parameters",
     "calc.landArea": "Land Area (hectares)",
     "calc.baseMarketValue": "Base Market Value per Hectare (₹)",
-    "calc.baseMarketValueHelper": "Higher of circle rate or avg. of top 50% of recent sale deeds — Sec. 26(1)",
+    "calc.baseMarketValueHelper":
+      "Higher of circle rate or avg. of top 50% of recent sale deeds — Sec. 26(1)",
     "calc.landClassification": "Land Classification",
     "calc.rural": "Rural",
     "calc.urban": "Urban",
@@ -28,7 +29,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.officerOverride": "Officer Override",
     "calc.overrideAmount": "Override Award Amount (₹)",
     "calc.justification": "Justification (mandatory)",
-    "calc.justificationPlaceholder": "Record the statutory basis and evidence relied upon for the override…",
+    "calc.justificationPlaceholder":
+      "Record the statutory basis and evidence relied upon for the override…",
     "calc.overrideToastTitle": "Override recorded against the officer credential for audit",
     "calc.overrideToastDescPrefix": "Revised award",
     "calc.overrideToastDescSuffix": "logged for the officer's review.",
@@ -46,6 +48,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.computationLoggedFooter": "Computation logged against the officer credential for audit.",
     "calc.row.base": "Base Land Value (area × market value)",
     "calc.row.factor": "Multiplication Factor",
+    "calc.factorExplainer":
+      "First Schedule multiplier under the RFCTLARR Act, 2013. Rural land within 30 km of an urban area is valued at 1.00×–2.00× the base market value, rising linearly with distance (0 km = 1.00×, 30 km = 2.00×). Urban land takes a flat 1.00×. The effective multiple at the bottom of this panel additionally includes 100% solatium (Sec. 30(1)) and 12% p.a. interest (Sec. 30(3)).",
     "calc.row.multiplied": "Multiplied Land Value",
     "calc.row.assets": "Value of Attached Assets",
     "calc.row.subtotal": "Subtotal",
@@ -59,7 +63,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.awardParameters": "अधिनिर्णय पैरामीटर",
     "calc.landArea": "भूमि क्षेत्रफल (हेक्टेयर)",
     "calc.baseMarketValue": "आधार बाजार मूल्य प्रति हेक्टेयर (₹)",
-    "calc.baseMarketValueHelper": "सर्किल रेट या हाल की शीर्ष 50% विक्रय विलेखों के औसत में से अधिक — धारा 26(1)",
+    "calc.baseMarketValueHelper":
+      "सर्किल रेट या हाल की शीर्ष 50% विक्रय विलेखों के औसत में से अधिक — धारा 26(1)",
     "calc.landClassification": "भूमि वर्गीकरण",
     "calc.rural": "ग्रामीण",
     "calc.urban": "शहरी",
@@ -79,7 +84,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.overrideAmount": "अधिभावी अधिनिर्णय राशि (₹)",
     "calc.justification": "औचित्य (अनिवार्य)",
     "calc.justificationPlaceholder": "अधिभावी परिवर्तन हेतु सांविधिक आधार एवं साक्ष्य दर्ज करें…",
-    "calc.overrideToastTitle": "अधिभावी परिवर्तन लेखापरीक्षा हेतु अधिकारी क्रेडेंशियल के विरुद्ध दर्ज",
+    "calc.overrideToastTitle":
+      "अधिभावी परिवर्तन लेखापरीक्षा हेतु अधिकारी क्रेडेंशियल के विरुद्ध दर्ज",
     "calc.overrideToastDescPrefix": "संशोधित अधिनिर्णय",
     "calc.overrideToastDescSuffix": "अधिकारी की समीक्षा हेतु दर्ज किया गया।",
     "calc.saveOverride": "अधिभावी परिवर्तन सहेजें",
@@ -93,9 +99,12 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.chart.solatium": "अनुतोष",
     "calc.chart.interest": "ब्याज",
     "calc.chart.awardSeriesName": "अधिनिर्णय",
-    "calc.computationLoggedFooter": "गणना लेखापरीक्षा हेतु अधिकारी क्रेडेंशियल के विरुद्ध दर्ज की गई।",
+    "calc.computationLoggedFooter":
+      "गणना लेखापरीक्षा हेतु अधिकारी क्रेडेंशियल के विरुद्ध दर्ज की गई।",
     "calc.row.base": "आधार भूमि मूल्य (क्षेत्रफल × बाज़ार मूल्य)",
     "calc.row.factor": "गुणन कारक",
+    "calc.factorExplainer":
+      "आरएफसीटीएलएआरआर अधिनियम, 2013 की प्रथम अनुसूची का गुणक। शहरी क्षेत्र से 30 किमी के भीतर ग्रामीण भूमि का मूल्य आधार बाजार मूल्य का 1.00×–2.00× होता है, जो दूरी के साथ रैखिक रूप से बढ़ता है (0 किमी = 1.00×, 30 किमी = 2.00×)। शहरी भूमि पर सपाट 1.00× लागू होता है। इस पैनल के नीचे दिखाया गया प्रभावी गुणक इसमें 100% सांत्वना राशि (धारा 30(1)) और 12% वार्षिक ब्याज (धारा 30(3)) भी जोड़ता है।",
     "calc.row.multiplied": "गुणित भूमि मूल्य",
     "calc.row.assets": "संलग्न परिसंपत्तियों का मूल्य",
     "calc.row.subtotal": "उप-योग",
@@ -109,7 +118,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.awardParameters": "নির্ধারণ প্যারামিটার",
     "calc.landArea": "জমির পরিমাণ (হেক্টর)",
     "calc.baseMarketValue": "প্রতি হেক্টর ভিত্তি বাজার মূল্য (₹)",
-    "calc.baseMarketValueHelper": "সার্কেল রেট বা সাম্প্রতিক শীর্ষ ৫০% বিক্রয় দলিলের গড়ের মধ্যে যেটি বেশি — ধারা ২৬(১)",
+    "calc.baseMarketValueHelper":
+      "সার্কেল রেট বা সাম্প্রতিক শীর্ষ ৫০% বিক্রয় দলিলের গড়ের মধ্যে যেটি বেশি — ধারা ২৬(১)",
     "calc.landClassification": "জমির শ্রেণীবিভাগ",
     "calc.rural": "গ্রামীণ",
     "calc.urban": "শহুরে",
@@ -143,7 +153,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.chart.solatium": "স্বান্ত্বনা",
     "calc.chart.interest": "সুদ",
     "calc.chart.awardSeriesName": "নির্ধারণ",
-    "calc.computationLoggedFooter": "নিরীক্ষার জন্য কর্মকর্তার পরিচয়ের বিরুদ্ধে গণনা লিপিবদ্ধ করা হয়েছে।",
+    "calc.computationLoggedFooter":
+      "নিরীক্ষার জন্য কর্মকর্তার পরিচয়ের বিরুদ্ধে গণনা লিপিবদ্ধ করা হয়েছে।",
     "calc.row.base": "মূল ভূমি মূল্য (আয়তন × বাজার মূল্য)",
     "calc.row.factor": "গুণন গুণক",
     "calc.row.multiplied": "গুণিত ভূমি মূল্য",
@@ -159,7 +170,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.awardParameters": "అవార్డు పారామీటర్లు",
     "calc.landArea": "భూమి విస్తీర్ణం (హెక్టార్లు)",
     "calc.baseMarketValue": "హెక్టారుకు ఆధార మార్కెట్ విలువ (₹)",
-    "calc.baseMarketValueHelper": "సర్కిల్ రేటు లేదా ఇటీవలి టాప్ 50% విక్రయ దస్తావేజుల సగటులో ఎక్కువది — సెక్షన్ 26(1)",
+    "calc.baseMarketValueHelper":
+      "సర్కిల్ రేటు లేదా ఇటీవలి టాప్ 50% విక్రయ దస్తావేజుల సగటులో ఎక్కువది — సెక్షన్ 26(1)",
     "calc.landClassification": "భూమి వర్గీకరణ",
     "calc.rural": "గ్రామీణ",
     "calc.urban": "పట్టణ",
@@ -178,7 +190,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.officerOverride": "అధికారి ఓవర్‌రైడ్",
     "calc.overrideAmount": "ఓవర్‌రైడ్ అవార్డు మొత్తం (₹)",
     "calc.justification": "సమర్థన (తప్పనిసరి)",
-    "calc.justificationPlaceholder": "ఓవర్‌రైడ్ కోసం చట్టబద్ధమైన ఆధారం మరియు ఆధారాలను నమోదు చేయండి…",
+    "calc.justificationPlaceholder":
+      "ఓవర్‌రైడ్ కోసం చట్టబద్ధమైన ఆధారం మరియు ఆధారాలను నమోదు చేయండి…",
     "calc.overrideToastTitle": "ఆడిట్ కోసం అధికారి క్రెడెన్షియల్‌పై ఓవర్‌రైడ్ నమోదు చేయబడింది",
     "calc.overrideToastDescPrefix": "సవరించిన అవార్డు",
     "calc.overrideToastDescSuffix": "అధికారి సమీక్ష కోసం నమోదు చేయబడింది.",
@@ -209,7 +222,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.awardParameters": "निवाडा मापदंड",
     "calc.landArea": "जमीन क्षेत्रफळ (हेक्टर)",
     "calc.baseMarketValue": "प्रति हेक्टर आधार बाजारमूल्य (₹)",
-    "calc.baseMarketValueHelper": "सर्कल रेट किंवा अलीकडील शीर्ष ५०% विक्री दस्तऐवजांच्या सरासरीपैकी जास्त — कलम २६(१)",
+    "calc.baseMarketValueHelper":
+      "सर्कल रेट किंवा अलीकडील शीर्ष ५०% विक्री दस्तऐवजांच्या सरासरीपैकी जास्त — कलम २६(१)",
     "calc.landClassification": "जमीन वर्गीकरण",
     "calc.rural": "ग्रामीण",
     "calc.urban": "शहरी",
@@ -243,7 +257,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.chart.solatium": "सांत्वन भत्ता",
     "calc.chart.interest": "व्याज",
     "calc.chart.awardSeriesName": "निवाडा",
-    "calc.computationLoggedFooter": "लेखापरीक्षणासाठी अधिकारी क्रेडेन्शियलविरुद्ध गणना नोंदवली गेली.",
+    "calc.computationLoggedFooter":
+      "लेखापरीक्षणासाठी अधिकारी क्रेडेन्शियलविरुद्ध गणना नोंदवली गेली.",
     "calc.row.base": "मूळ जमीन मूल्य (क्षेत्रफळ × बाजारमूल्य)",
     "calc.row.factor": "गुणाकार घटक",
     "calc.row.multiplied": "गुणित जमीन मूल्य",
@@ -259,12 +274,14 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.awardParameters": "தீர்ப்பு அளவுருக்கள்",
     "calc.landArea": "நில பரப்பளவு (ஹெக்டேர்)",
     "calc.baseMarketValue": "ஹெக்டேருக்கு அடிப்படை சந்தை மதிப்பு (₹)",
-    "calc.baseMarketValueHelper": "சர்க்கிள் விகிதம் அல்லது சமீபத்திய மேல் 50% விற்பனை பத்திரங்களின் சராசரியில் அதிகமானது — பிரிவு 26(1)",
+    "calc.baseMarketValueHelper":
+      "சர்க்கிள் விகிதம் அல்லது சமீபத்திய மேல் 50% விற்பனை பத்திரங்களின் சராசரியில் அதிகமானது — பிரிவு 26(1)",
     "calc.landClassification": "நில வகைப்பாடு",
     "calc.rural": "கிராமப்புற",
     "calc.urban": "நகர்ப்புற",
     "calc.distanceLabelPrefix": "நகர மையத்திலிருந்து தூரம்",
-    "calc.distanceHelperUrban": "நகர்ப்புற நிலத்திற்கு பொருந்தாது; காரணி 1.00 இல் நிர்ணயிக்கப்பட்டது",
+    "calc.distanceHelperUrban":
+      "நகர்ப்புற நிலத்திற்கு பொருந்தாது; காரணி 1.00 இல் நிர்ணயிக்கப்பட்டது",
     "calc.derivedFactorPrefix": "பெறப்பட்ட காரணி",
     "calc.derivedFactorSuffix": "(முதல் அட்டவணை)",
     "calc.attachedAssets": "இணைக்கப்பட்ட சொத்துக்கள் — பிரிவு 29",
@@ -278,8 +295,10 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.officerOverride": "அதிகாரி மேலாணை",
     "calc.overrideAmount": "மேலாணை தீர்ப்பு தொகை (₹)",
     "calc.justification": "நியாயப்படுத்தல் (கட்டாயம்)",
-    "calc.justificationPlaceholder": "மேலாணைக்கான சட்டபூர்வ அடிப்படை மற்றும் ஆதாரங்களை பதிவு செய்யவும்…",
-    "calc.overrideToastTitle": "தணிக்கைக்காக அதிகாரி நற்சான்றிதழுக்கு எதிராக மேலாணை பதிவு செய்யப்பட்டது",
+    "calc.justificationPlaceholder":
+      "மேலாணைக்கான சட்டபூர்வ அடிப்படை மற்றும் ஆதாரங்களை பதிவு செய்யவும்…",
+    "calc.overrideToastTitle":
+      "தணிக்கைக்காக அதிகாரி நற்சான்றிதழுக்கு எதிராக மேலாணை பதிவு செய்யப்பட்டது",
     "calc.overrideToastDescPrefix": "திருத்தப்பட்ட தீர்ப்பு",
     "calc.overrideToastDescSuffix": "அதிகாரியின் மறுஆய்விற்காக பதிவு செய்யப்பட்டது.",
     "calc.saveOverride": "மேலாணையை சேமிக்கவும்",
@@ -293,7 +312,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.chart.solatium": "ஆறுதல் தொகை",
     "calc.chart.interest": "வட்டி",
     "calc.chart.awardSeriesName": "தீர்ப்பு",
-    "calc.computationLoggedFooter": "தணிக்கைக்காக அதிகாரி நற்சான்றிதழுக்கு எதிராக கணக்கீடு பதிவு செய்யப்பட்டது.",
+    "calc.computationLoggedFooter":
+      "தணிக்கைக்காக அதிகாரி நற்சான்றிதழுக்கு எதிராக கணக்கீடு பதிவு செய்யப்பட்டது.",
     "calc.row.base": "அடிப்படை நில மதிப்பு (பரப்பளவு × சந்தை மதிப்பு)",
     "calc.row.factor": "பெருக்கல் காரணி",
     "calc.row.multiplied": "பெருக்கப்பட்ட நில மதிப்பு",
@@ -309,7 +329,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.awardParameters": "ایوارڈ پیرامیٹرز",
     "calc.landArea": "زمین کا رقبہ (ہیکٹر)",
     "calc.baseMarketValue": "فی ہیکٹر بنیادی مارکیٹ ویلیو (₹)",
-    "calc.baseMarketValueHelper": "سرکل ریٹ یا حالیہ ٹاپ 50% فروخت دستاویزات کی اوسط میں سے زیادہ — دفعہ 26(1)",
+    "calc.baseMarketValueHelper":
+      "سرکل ریٹ یا حالیہ ٹاپ 50% فروخت دستاویزات کی اوسط میں سے زیادہ — دفعہ 26(1)",
     "calc.landClassification": "زمین کی درجہ بندی",
     "calc.rural": "دیہی",
     "calc.urban": "شہری",
@@ -359,7 +380,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.awardParameters": "એવોર્ડ પેરામીટર",
     "calc.landArea": "જમીન વિસ્તાર (હેક્ટર)",
     "calc.baseMarketValue": "પ્રતિ હેક્ટર આધાર બજાર મૂલ્ય (₹)",
-    "calc.baseMarketValueHelper": "સર્કલ રેટ અથવા તાજેતરના ટોચના 50% વેચાણ દસ્તાવેજોની સરેરાશમાંથી વધુ — કલમ 26(1)",
+    "calc.baseMarketValueHelper":
+      "સર્કલ રેટ અથવા તાજેતરના ટોચના 50% વેચાણ દસ્તાવેજોની સરેરાશમાંથી વધુ — કલમ 26(1)",
     "calc.landClassification": "જમીન વર્ગીકરણ",
     "calc.rural": "ગ્રામીણ",
     "calc.urban": "શહેરી",
@@ -409,7 +431,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.awardParameters": "ಪ್ರಶಸ್ತಿ ನಿಯತಾಂಕಗಳು",
     "calc.landArea": "ಭೂಮಿ ವಿಸ್ತೀರ್ಣ (ಹೆಕ್ಟೇರ್)",
     "calc.baseMarketValue": "ಪ್ರತಿ ಹೆಕ್ಟೇರ್ ಆಧಾರ ಮಾರುಕಟ್ಟೆ ಮೌಲ್ಯ (₹)",
-    "calc.baseMarketValueHelper": "ಸರ್ಕಲ್ ದರ ಅಥವಾ ಇತ್ತೀಚಿನ ಟಾಪ್ 50% ಮಾರಾಟ ಪತ್ರಗಳ ಸರಾಸರಿಯಲ್ಲಿ ಹೆಚ್ಚಿನದು — ವಿಭಾಗ 26(1)",
+    "calc.baseMarketValueHelper":
+      "ಸರ್ಕಲ್ ದರ ಅಥವಾ ಇತ್ತೀಚಿನ ಟಾಪ್ 50% ಮಾರಾಟ ಪತ್ರಗಳ ಸರಾಸರಿಯಲ್ಲಿ ಹೆಚ್ಚಿನದು — ವಿಭಾಗ 26(1)",
     "calc.landClassification": "ಭೂಮಿ ವರ್ಗೀಕರಣ",
     "calc.rural": "ಗ್ರಾಮೀಣ",
     "calc.urban": "ನಗರ",
@@ -443,7 +466,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.chart.solatium": "ಸಾಂತ್ವನ ಮೊತ್ತ",
     "calc.chart.interest": "ಬಡ್ಡಿ",
     "calc.chart.awardSeriesName": "ಪ್ರಶಸ್ತಿ",
-    "calc.computationLoggedFooter": "ಲೆಕ್ಕಪರಿಶೋಧನೆಗಾಗಿ ಅಧಿಕಾರಿ ರುಜುವಾತಿನ ವಿರುದ್ಧ ಲೆಕ್ಕಾಚಾರ ದಾಖಲಿಸಲಾಗಿದೆ.",
+    "calc.computationLoggedFooter":
+      "ಲೆಕ್ಕಪರಿಶೋಧನೆಗಾಗಿ ಅಧಿಕಾರಿ ರುಜುವಾತಿನ ವಿರುದ್ಧ ಲೆಕ್ಕಾಚಾರ ದಾಖಲಿಸಲಾಗಿದೆ.",
     "calc.row.base": "ಮೂಲ ಭೂಮಿ ಮೌಲ್ಯ (ವಿಸ್ತೀರ್ಣ × ಮಾರುಕಟ್ಟೆ ಮೌಲ್ಯ)",
     "calc.row.factor": "ಗುಣಾಕಾರ ಅಂಶ",
     "calc.row.multiplied": "ಗುಣಿಸಿದ ಭೂಮಿ ಮೌಲ್ಯ",
@@ -459,7 +483,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.awardParameters": "ପୁରସ୍କାର ପାରାମିଟର",
     "calc.landArea": "ଜମି କ୍ଷେତ୍ରଫଳ (ହେକ୍ଟର)",
     "calc.baseMarketValue": "ପ୍ରତି ହେକ୍ଟର ଆଧାର ବଜାର ମୂଲ୍ୟ (₹)",
-    "calc.baseMarketValueHelper": "ସର୍କଲ ରେଟ୍ କିମ୍ବା ସାମ୍ପ୍ରତିକ ଶୀର୍ଷ 50% ବିକ୍ରୟ ଦଲିଲର ହାରାହାରିରୁ ଅଧିକ — ଧାରା 26(1)",
+    "calc.baseMarketValueHelper":
+      "ସର୍କଲ ରେଟ୍ କିମ୍ବା ସାମ୍ପ୍ରତିକ ଶୀର୍ଷ 50% ବିକ୍ରୟ ଦଲିଲର ହାରାହାରିରୁ ଅଧିକ — ଧାରା 26(1)",
     "calc.landClassification": "ଜମି ବର୍ଗୀକରଣ",
     "calc.rural": "ଗ୍ରାମୀଣ",
     "calc.urban": "ସହରାଞ୍ଚଳ",
@@ -509,7 +534,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.awardParameters": "അവാർഡ് പാരാമീറ്ററുകൾ",
     "calc.landArea": "ഭൂമിയുടെ വിസ്തീർണ്ണം (ഹെക്ടർ)",
     "calc.baseMarketValue": "ഹെക്ടറിന് അടിസ്ഥാന വിപണി മൂല്യം (₹)",
-    "calc.baseMarketValueHelper": "സർക്കിൾ നിരക്ക് അല്ലെങ്കിൽ സമീപകാല ടോപ്പ് 50% വിൽപ്പന രേഖകളുടെ ശരാശരിയിൽ കൂടുതലുള്ളത് — വകുപ്പ് 26(1)",
+    "calc.baseMarketValueHelper":
+      "സർക്കിൾ നിരക്ക് അല്ലെങ്കിൽ സമീപകാല ടോപ്പ് 50% വിൽപ്പന രേഖകളുടെ ശരാശരിയിൽ കൂടുതലുള്ളത് — വകുപ്പ് 26(1)",
     "calc.landClassification": "ഭൂമി വർഗ്ഗീകരണം",
     "calc.rural": "ഗ്രാമീണം",
     "calc.urban": "നഗരം",
@@ -543,7 +569,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.chart.solatium": "സാന്ത്വന തുക",
     "calc.chart.interest": "പലിശ",
     "calc.chart.awardSeriesName": "അവാർഡ്",
-    "calc.computationLoggedFooter": "ഓഡിറ്റിനായി ഓഫീസർ ക്രെഡൻഷ്യലിനെതിരെ കണക്കുകൂട്ടൽ രേഖപ്പെടുത്തി.",
+    "calc.computationLoggedFooter":
+      "ഓഡിറ്റിനായി ഓഫീസർ ക്രെഡൻഷ്യലിനെതിരെ കണക്കുകൂട്ടൽ രേഖപ്പെടുത്തി.",
     "calc.row.base": "അടിസ്ഥാന ഭൂമി മൂല്യം (വിസ്തീർണ്ണം × വിപണി മൂല്യം)",
     "calc.row.factor": "ഗുണന ഘടകം",
     "calc.row.multiplied": "ഗുണിച്ച ഭൂമി മൂല്യം",
@@ -559,7 +586,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.awardParameters": "ਅਵਾਰਡ ਪੈਰਾਮੀਟਰ",
     "calc.landArea": "ਜ਼ਮੀਨ ਦਾ ਖੇਤਰਫਲ (ਹੈਕਟੇਅਰ)",
     "calc.baseMarketValue": "ਪ੍ਰਤੀ ਹੈਕਟੇਅਰ ਆਧਾਰ ਬਾਜ਼ਾਰ ਮੁੱਲ (₹)",
-    "calc.baseMarketValueHelper": "ਸਰਕਲ ਰੇਟ ਜਾਂ ਹਾਲੀਆ ਚੋਟੀ ਦੇ 50% ਵਿਕਰੀ ਦਸਤਾਵੇਜ਼ਾਂ ਦੀ ਔਸਤ ਵਿੱਚੋਂ ਵੱਧ — ਧਾਰਾ 26(1)",
+    "calc.baseMarketValueHelper":
+      "ਸਰਕਲ ਰੇਟ ਜਾਂ ਹਾਲੀਆ ਚੋਟੀ ਦੇ 50% ਵਿਕਰੀ ਦਸਤਾਵੇਜ਼ਾਂ ਦੀ ਔਸਤ ਵਿੱਚੋਂ ਵੱਧ — ਧਾਰਾ 26(1)",
     "calc.landClassification": "ਜ਼ਮੀਨ ਵਰਗੀਕਰਨ",
     "calc.rural": "ਪੇਂਡੂ",
     "calc.urban": "ਸ਼ਹਿਰੀ",
@@ -609,7 +637,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.awardParameters": "পুৰস্কাৰ পেৰামিটাৰ",
     "calc.landArea": "ভূমিৰ পৰিমাণ (হেক্টৰ)",
     "calc.baseMarketValue": "প্ৰতি হেক্টৰ আধাৰ বজাৰ মূল্য (₹)",
-    "calc.baseMarketValueHelper": "চাৰ্কল ৰেট বা শেহতীয়া শীৰ্ষ ৫০% বিক্ৰী দলিলৰ গড়তকৈ বেছি — ধাৰা ২৬(১)",
+    "calc.baseMarketValueHelper":
+      "চাৰ্কল ৰেট বা শেহতীয়া শীৰ্ষ ৫০% বিক্ৰী দলিলৰ গড়তকৈ বেছি — ধাৰা ২৬(১)",
     "calc.landClassification": "ভূমি শ্ৰেণীবিভাজন",
     "calc.rural": "গ্ৰাম্য",
     "calc.urban": "চহৰীয়া",
@@ -643,7 +672,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.chart.solatium": "শান্ত্বনা ৰাশি",
     "calc.chart.interest": "সুত",
     "calc.chart.awardSeriesName": "পুৰস্কাৰ",
-    "calc.computationLoggedFooter": "অডিটৰ বাবে বিষয়াৰ প্ৰমাণপত্ৰৰ বিৰুদ্ধে গণনা লিপিবদ্ধ কৰা হ'ল।",
+    "calc.computationLoggedFooter":
+      "অডিটৰ বাবে বিষয়াৰ প্ৰমাণপত্ৰৰ বিৰুদ্ধে গণনা লিপিবদ্ধ কৰা হ'ল।",
     "calc.row.base": "মূল ভূমি মূল্য (আয়তন × বজাৰ মূল্য)",
     "calc.row.factor": "গুণন কাৰক",
     "calc.row.multiplied": "গুণিত ভূমি মূল্য",
@@ -659,7 +689,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.awardParameters": "निर्णय पैरामीटर",
     "calc.landArea": "भूमि क्षेत्रफल (हेक्टेयर)",
     "calc.baseMarketValue": "आधार बाजार मूल्य प्रति हेक्टेयर (₹)",
-    "calc.baseMarketValueHelper": "सर्किल रेट अथवा हालक शीर्ष 50% विक्रय विलेखक औसतमे सँ बेसी — धारा 26(1)",
+    "calc.baseMarketValueHelper":
+      "सर्किल रेट अथवा हालक शीर्ष 50% विक्रय विलेखक औसतमे सँ बेसी — धारा 26(1)",
     "calc.landClassification": "भूमि वर्गीकरण",
     "calc.rural": "ग्रामीण",
     "calc.urban": "शहरी",
@@ -693,7 +724,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.chart.solatium": "अनुतोष",
     "calc.chart.interest": "ब्याज",
     "calc.chart.awardSeriesName": "निर्णय",
-    "calc.computationLoggedFooter": "लेखापरीक्षण लेल अधिकारी क्रेडेंशियलक विरुद्ध गणना दर्ज कएल गेल।",
+    "calc.computationLoggedFooter":
+      "लेखापरीक्षण लेल अधिकारी क्रेडेंशियलक विरुद्ध गणना दर्ज कएल गेल।",
     "calc.row.base": "आधार भूमि मूल्य (क्षेत्रफल × बाजार मूल्य)",
     "calc.row.factor": "गुणन कारक",
     "calc.row.multiplied": "गुणित भूमि मूल्य",
@@ -709,7 +741,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.awardParameters": "ᱮᱣᱟᱨᱰ ᱯᱟᱨᱟᱢᱤᱴᱟᱨ",
     "calc.landArea": "ᱞᱮᱸᱰ ᱨᱟᱠᱟᱵ (ᱦᱮᱠᱴᱮᱭᱟᱨ)",
     "calc.baseMarketValue": "ᱦᱮᱠᱴᱮᱭᱟᱨ ᱯᱚᱛᱚᱵ ᱵᱮᱥ ᱵᱟᱡᱟᱨ ᱚᱞᱚᱠ (₹)",
-    "calc.baseMarketValueHelper": "ᱥᱟᱨᱠᱚᱞ ᱨᱮᱴ ᱟᱨ ᱥᱟᱦᱤᱡ ᱴᱚᱯ ᱮᱢᱟᱠᱤᱡ ᱮᱛᱚᱦᱚᱵ ᱠᱟᱜᱚᱡ ᱨᱮ ᱥᱟᱶᱴᱮ — ᱥᱮᱠᱥᱚᱱ 26(1)",
+    "calc.baseMarketValueHelper":
+      "ᱥᱟᱨᱠᱚᱞ ᱨᱮᱴ ᱟᱨ ᱥᱟᱦᱤᱡ ᱴᱚᱯ ᱮᱢᱟᱠᱤᱡ ᱮᱛᱚᱦᱚᱵ ᱠᱟᱜᱚᱡ ᱨᱮ ᱥᱟᱶᱴᱮ — ᱥᱮᱠᱥᱚᱱ 26(1)",
     "calc.landClassification": "ᱞᱮᱸᱰ ᱵᱟᱭᱳ",
     "calc.rural": "ᱦᱟᱴᱤᱭᱟᱨ",
     "calc.urban": "ᱥᱚᱦᱚᱨ",
@@ -759,7 +792,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.awardParameters": "ایوارڈ پیرامیٹر",
     "calc.landArea": "زمین رقبہ (ہیکٹر)",
     "calc.baseMarketValue": "ہر ہیکٹرس منٛز بنیادی مارکیٹ قیمت (₹)",
-    "calc.baseMarketValueHelper": "سرکل ریٹ یا نزدیک ٹاپ 50% فروخت دستاویزن ہِنٛز اوسط، جو زیادٕ چھُ — دفعہ 26(1)",
+    "calc.baseMarketValueHelper":
+      "سرکل ریٹ یا نزدیک ٹاپ 50% فروخت دستاویزن ہِنٛز اوسط، جو زیادٕ چھُ — دفعہ 26(1)",
     "calc.landClassification": "زمین درجہ بندی",
     "calc.rural": "دیہاتی",
     "calc.urban": "شہری",
@@ -809,7 +843,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.awardParameters": "पुरस्कार परिमिति",
     "calc.landArea": "जग्गाको क्षेत्रफल (हेक्टर)",
     "calc.baseMarketValue": "प्रति हेक्टर आधार बजार मूल्य (₹)",
-    "calc.baseMarketValueHelper": "सर्कल रेट वा हालैका शीर्ष ५०% बिक्री कागजातको औसतमा जुन बढी छ — धारा २६(१)",
+    "calc.baseMarketValueHelper":
+      "सर्कल रेट वा हालैका शीर्ष ५०% बिक्री कागजातको औसतमा जुन बढी छ — धारा २६(१)",
     "calc.landClassification": "जग्गा वर्गीकरण",
     "calc.rural": "ग्रामीण",
     "calc.urban": "शहरी",
@@ -843,7 +878,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.chart.solatium": "सान्त्वना रकम",
     "calc.chart.interest": "ब्याज",
     "calc.chart.awardSeriesName": "पुरस्कार",
-    "calc.computationLoggedFooter": "लेखापरीक्षणको लागि अधिकृत प्रमाणपत्र विरुद्ध गणना दर्ता गरियो।",
+    "calc.computationLoggedFooter":
+      "लेखापरीक्षणको लागि अधिकृत प्रमाणपत्र विरुद्ध गणना दर्ता गरियो।",
     "calc.row.base": "आधार जग्गा मूल्य (क्षेत्रफल × बजार मूल्य)",
     "calc.row.factor": "गुणन कारक",
     "calc.row.multiplied": "गुणित जग्गा मूल्य",
@@ -859,7 +895,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.awardParameters": "निवाडो मापदंड",
     "calc.landArea": "जमीन क्षेत्रफळ (हेक्टर)",
     "calc.baseMarketValue": "प्रति हेक्टर आदार बाजारमोल (₹)",
-    "calc.baseMarketValueHelper": "सर्कल रेट वा अलीकडल्या वयल्या ५०% विक्री दस्तावेजांच्या सरासरींतल्यान चड — कलम २६(१)",
+    "calc.baseMarketValueHelper":
+      "सर्कल रेट वा अलीकडल्या वयल्या ५०% विक्री दस्तावेजांच्या सरासरींतल्यान चड — कलम २६(१)",
     "calc.landClassification": "जमीन वर्गीकरण",
     "calc.rural": "ग्रामीण",
     "calc.urban": "शहरी",
@@ -909,7 +946,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.awardParameters": "इनाम पैरामीटर",
     "calc.landArea": "जमीन खेतर (हेक्टेयर)",
     "calc.baseMarketValue": "हर हेक्टेयर बेस मार्केट वेल्यु (₹)",
-    "calc.baseMarketValueHelper": "सर्कल रेट या हालिन जे टॉप 50% विक्री दस्तावेजन जी सरासरी मां जो वधीक हुजे — धारा 26(1)",
+    "calc.baseMarketValueHelper":
+      "सर्कल रेट या हालिन जे टॉप 50% विक्री दस्तावेजन जी सरासरी मां जो वधीक हुजे — धारा 26(1)",
     "calc.landClassification": "जमीन जी दर्जाबंदी",
     "calc.rural": "देहाती",
     "calc.urban": "शहरी",
@@ -959,7 +997,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.awardParameters": "इनाम पैरामीटर",
     "calc.landArea": "भूमि रकबा (हेक्टेयर)",
     "calc.baseMarketValue": "हर हेक्टेयर आधार बाज़ार भाऽ (₹)",
-    "calc.baseMarketValueHelper": "सर्कल रेट या हाल्ली दे टॉप 50% बिक्री दस्तावेज़ां दी औसत च जो जादा होऐ — धारा 26(1)",
+    "calc.baseMarketValueHelper":
+      "सर्कल रेट या हाल्ली दे टॉप 50% बिक्री दस्तावेज़ां दी औसत च जो जादा होऐ — धारा 26(1)",
     "calc.landClassification": "भूमि वर्गीकरण",
     "calc.rural": "देहाती",
     "calc.urban": "शैह्री",
@@ -1009,7 +1048,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.awardParameters": "এৱার্দ পারামিতর",
     "calc.landArea": "লৈফমগী রাকাব (হেক্তার)",
     "calc.baseMarketValue": "হেক্তার খুদিংমক্কী বেইস মার্কেত ৱেল্যু (₹)",
-    "calc.baseMarketValueHelper": "সর্কল রেত নত্রগা নৌবগী টপ ৫০% য়োনবগী দোকুমেন্তশিংগী এভারেজদা য়াম্না হেনগৎলবা — সেকসন ২৬(১)",
+    "calc.baseMarketValueHelper":
+      "সর্কল রেত নত্রগা নৌবগী টপ ৫০% য়োনবগী দোকুমেন্তশিংগী এভারেজদা য়াম্না হেনগৎলবা — সেকসন ২৬(১)",
     "calc.landClassification": "লৈফমগী ক্লাসিফিকেসন",
     "calc.rural": "খুন্নাইগী",
     "calc.urban": "সহর",
@@ -1028,7 +1068,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.officerOverride": "লাম্বী ওভাররাইদ",
     "calc.overrideAmount": "ওভাররাইদ এৱার্দ সেল (₹)",
     "calc.justification": "জাস্তিফিকেসন (থৌদাংনা)",
-    "calc.justificationPlaceholder": "ওভাররাইদগীদমক য়াথাংগী ফোন্দোকপা অমসুং সাক্ষী রেকোর্দ তৌবীয়ু…",
+    "calc.justificationPlaceholder":
+      "ওভাররাইদগীদমক য়াথাংগী ফোন্দোকপা অমসুং সাক্ষী রেকোর্দ তৌবীয়ু…",
     "calc.overrideToastTitle": "অদিতকীদমক লাম্বীগী খুদম মায়োক্তা ওভাররাইদ রেকোর্দ তৌখ্রে",
     "calc.overrideToastDescPrefix": "শেম্লবা এৱার্দ",
     "calc.overrideToastDescSuffix": "লাম্বীগী রিভিউগীদমক রেকোর্দ তৌখ্রে।",
@@ -1059,7 +1100,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.awardParameters": "पुरस्कार पैरामिटार",
     "calc.landArea": "फुथुरनि गोरोन्थि (हेक्टार)",
     "calc.baseMarketValue": "गासैबो हेक्टारा आधार बाजार दाम (₹)",
-    "calc.baseMarketValueHelper": "सर्कल रेट अबा गोदान टप 50% बिखिनि दस्तावेजनि गड़ अवगदखौ बांसिन — दाहा 26(1)",
+    "calc.baseMarketValueHelper":
+      "सर्कल रेट अबा गोदान टप 50% बिखिनि दस्तावेजनि गड़ अवगदखौ बांसिन — दाहा 26(1)",
     "calc.landClassification": "फुथुरनि क्लासिफिकेसन",
     "calc.rural": "गामारि",
     "calc.urban": "नगर",
@@ -1109,7 +1151,8 @@ export const CALCULATOR_TRANSLATIONS: TranslationTable = {
     "calc.awardParameters": "पुरस्कार-प्राचलानि",
     "calc.landArea": "भूमि-क्षेत्रफलम् (हेक्टेयर)",
     "calc.baseMarketValue": "प्रति-हेक्टेयर आधार-विपणि-मूल्यम् (₹)",
-    "calc.baseMarketValueHelper": "वृत्त-दरः अथवा नवीनतम-शीर्ष-५०%-विक्रय-पत्राणां सरासरी, यत् अधिकम् — धारा 26(1)",
+    "calc.baseMarketValueHelper":
+      "वृत्त-दरः अथवा नवीनतम-शीर्ष-५०%-विक्रय-पत्राणां सरासरी, यत् अधिकम् — धारा 26(1)",
     "calc.landClassification": "भूमि-वर्गीकरणम्",
     "calc.rural": "ग्रामीणम्",
     "calc.urban": "नागरम्",

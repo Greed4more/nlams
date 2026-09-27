@@ -24,31 +24,35 @@ export function StateRevenueDashboard() {
   const { totals, disbursalPct, enriched } = useDerived();
 
   // Aggregate by district within Maharashtra
-  const districtStats = Array.from(new Set(scopedProposals.map((p) => p.district))).map((district) => {
-    const inDist = scopedProposals.filter((p) => p.district === district);
-    const enrichedInDist = enriched.filter((e) => e.proposal.district === district);
-    const count = inDist.length;
-    const area = inDist.reduce((s, p) => s + p.totalAreaHa, 0);
-    const assessed = inDist.reduce((s, p) => s + p.compensation.assessed, 0);
-    const disbursed = inDist.reduce((s, p) => s + p.compensation.disbursed, 0);
-    const breached = enrichedInDist.filter((e) => e.sla.status === "BREACHED").length;
-    const atRisk = enrichedInDist.filter((e) => e.sla.status === "AT_RISK").length;
-    const complianceRate = count > 0 ? Math.round(((count - breached) / count) * 100) : 100;
-    return { district, count, area, assessed, disbursed, breached, atRisk, complianceRate };
-  }).sort((a, b) => b.count - a.count);
+  const districtStats = Array.from(new Set(scopedProposals.map((p) => p.district)))
+    .map((district) => {
+      const inDist = scopedProposals.filter((p) => p.district === district);
+      const enrichedInDist = enriched.filter((e) => e.proposal.district === district);
+      const count = inDist.length;
+      const area = inDist.reduce((s, p) => s + p.totalAreaHa, 0);
+      const assessed = inDist.reduce((s, p) => s + p.compensation.assessed, 0);
+      const disbursed = inDist.reduce((s, p) => s + p.compensation.disbursed, 0);
+      const breached = enrichedInDist.filter((e) => e.sla.status === "BREACHED").length;
+      const atRisk = enrichedInDist.filter((e) => e.sla.status === "AT_RISK").length;
+      const complianceRate = count > 0 ? Math.round(((count - breached) / count) * 100) : 100;
+      return { district, count, area, assessed, disbursed, breached, atRisk, complianceRate };
+    })
+    .sort((a, b) => b.count - a.count);
 
   // Aggregate by requiring body in Maharashtra
-  const requiringBodyStats = Array.from(new Set(scopedProposals.map((p) => p.requiringBody))).map((body) => {
-    const inBody = scopedProposals.filter((p) => p.requiringBody === body);
-    const count = inBody.length;
-    const assessed = inBody.reduce((s, p) => s + p.compensation.assessed, 0);
-    const disbursed = inBody.reduce((s, p) => s + p.compensation.disbursed, 0);
-    return { body, count, assessed, disbursed };
-  }).sort((a, b) => b.assessed - a.assessed);
+  const requiringBodyStats = Array.from(new Set(scopedProposals.map((p) => p.requiringBody)))
+    .map((body) => {
+      const inBody = scopedProposals.filter((p) => p.requiringBody === body);
+      const count = inBody.length;
+      const assessed = inBody.reduce((s, p) => s + p.compensation.assessed, 0);
+      const disbursed = inBody.reduce((s, p) => s + p.compensation.disbursed, 0);
+      return { body, count, assessed, disbursed };
+    })
+    .sort((a, b) => b.assessed - a.assessed);
 
   // Section 10 agricultural multi-crop analysis
   const multiCropParcels = scopedProposals.flatMap((p) =>
-    p.parcels.filter((par) => par.restrictionFlags.includes("MULTI_CROP_IRRIGATED"))
+    p.parcels.filter((par) => par.restrictionFlags.includes("MULTI_CROP_IRRIGATED")),
   );
   const multiCropAreaHa = multiCropParcels.reduce((s, p) => s + p.areaHa, 0);
   const multiCropCapHa = 1500; // Statutory illustrative cap for district/state
@@ -64,13 +68,16 @@ export function StateRevenueDashboard() {
               <span className="rounded bg-sky-400/20 px-2 py-0.5 font-mono text-[11px] font-semibold tracking-wider text-sky-200">
                 STATE COORDINATION DESK
               </span>
-              <span className="text-[12px] text-white/80">Revenue &amp; Forest Department · Mantralaya, Maharashtra</span>
+              <span className="text-[12px] text-white/80">
+                Revenue &amp; Forest Department · Mantralaya, Maharashtra
+              </span>
             </div>
             <h2 className="mt-1.5 text-[20px] font-semibold tracking-tight">
               Statewide Inter-District Land Acquisition &amp; Budget Allocation Monitor
             </h2>
             <p className="mt-0.5 text-[12.5px] text-white/80">
-              Coordinated by {person}. Oversight of inter-district performance, requiring body capital demands, Section 10 agricultural ceiling compliance, and state land bank.
+              Coordinated by {person}. Oversight of inter-district performance, requiring body
+              capital demands, Section 10 agricultural ceiling compliance, and state land bank.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -157,12 +164,22 @@ export function StateRevenueDashboard() {
               <table className="w-full border-collapse text-[12.5px]">
                 <thead className="bg-muted/40">
                   <tr>
-                    <th className="label-xs border-b border-border px-3 py-2 text-left">District</th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-left">
+                      District
+                    </th>
                     <th className="label-xs border-b border-border px-3 py-2 text-right">Cases</th>
-                    <th className="label-xs border-b border-border px-3 py-2 text-right">Area (Ha)</th>
-                    <th className="label-xs border-b border-border px-3 py-2 text-right">Disbursed / Assessed</th>
-                    <th className="label-xs border-b border-border px-3 py-2 text-center">Lapses</th>
-                    <th className="label-xs border-b border-border px-3 py-2 text-right">Compliance</th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-right">
+                      Area (Ha)
+                    </th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-right">
+                      Disbursed / Assessed
+                    </th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-center">
+                      Lapses
+                    </th>
+                    <th className="label-xs border-b border-border px-3 py-2 text-right">
+                      Compliance
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -172,8 +189,13 @@ export function StateRevenueDashboard() {
                       <td className="num px-3 py-2 text-right">{row.count}</td>
                       <td className="num px-3 py-2 text-right">{row.area.toFixed(1)}</td>
                       <td className="num px-3 py-2 text-right text-[11.5px]">
-                        <span className="font-semibold text-status-ok">{formatCrore(row.disbursed, 1)}</span>
-                        <span className="text-muted-foreground"> / {formatCrore(row.assessed, 1)}</span>
+                        <span className="font-semibold text-status-ok">
+                          {formatCrore(row.disbursed, 1)}
+                        </span>
+                        <span className="text-muted-foreground">
+                          {" "}
+                          / {formatCrore(row.assessed, 1)}
+                        </span>
                       </td>
                       <td className="px-3 py-2 text-center">
                         {row.breached > 0 ? (
@@ -187,7 +209,11 @@ export function StateRevenueDashboard() {
                         )}
                       </td>
                       <td className="num px-3 py-2 text-right font-medium">
-                        <span className={row.complianceRate >= 80 ? "text-status-ok" : "text-status-warn"}>
+                        <span
+                          className={
+                            row.complianceRate >= 80 ? "text-status-ok" : "text-status-warn"
+                          }
+                        >
                           {row.complianceRate}%
                         </span>
                       </td>
@@ -215,21 +241,31 @@ export function StateRevenueDashboard() {
             </div>
             <div className="divide-y divide-border">
               {requiringBodyStats.map((item) => {
-                const pct = totals.assessed > 0 ? Math.round((item.assessed / totals.assessed) * 100) : 0;
+                const pct =
+                  totals.assessed > 0 ? Math.round((item.assessed / totals.assessed) * 100) : 0;
                 return (
-                  <div key={item.body} className="flex items-center justify-between gap-3 px-4 py-2.5 text-[12.5px]">
+                  <div
+                    key={item.body}
+                    className="flex items-center justify-between gap-3 px-4 py-2.5 text-[12.5px]"
+                  >
                     <div className="min-w-0 flex-1">
                       <div className="font-medium text-foreground">{item.body}</div>
                       <div className="mt-1 flex items-center gap-2">
                         <div className="h-1.5 w-32 rounded bg-muted">
                           <div className="h-full rounded bg-navy" style={{ width: `${pct}%` }} />
                         </div>
-                        <span className="num text-[11px] text-muted-foreground">{pct}% of state budget</span>
+                        <span className="num text-[11px] text-muted-foreground">
+                          {pct}% of state budget
+                        </span>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="num font-semibold text-foreground">{formatCrore(item.assessed)}</div>
-                      <div className="num text-[11px] text-muted-foreground">{item.count} projects</div>
+                      <div className="num font-semibold text-foreground">
+                        {formatCrore(item.assessed)}
+                      </div>
+                      <div className="num text-[11px] text-muted-foreground">
+                        {item.count} projects
+                      </div>
                     </div>
                   </div>
                 );
@@ -242,10 +278,10 @@ export function StateRevenueDashboard() {
             <div className="flex items-center justify-between border-b border-border pb-2">
               <div className="label-xs flex items-center gap-1.5">
                 <Server className="size-3.5 text-navy" />
-                Mahabhulekh (Satbara 7/12) Digital Integration
+                Mahabhulekh (Satbara 7/12) Record Mapping
               </div>
-              <span className="inline-flex items-center gap-1 rounded bg-status-ok/10 px-1.5 py-0.5 text-[10.5px] font-semibold text-status-ok">
-                Live Sync Active
+              <span className="inline-flex items-center gap-1 rounded bg-status-warn/10 px-1.5 py-0.5 text-[10.5px] font-semibold text-status-warn">
+                Integration planned
               </span>
             </div>
             <div className="mt-2.5 grid grid-cols-1 gap-2 sm:grid-cols-3 text-[12px]">
@@ -258,10 +294,16 @@ export function StateRevenueDashboard() {
                 <div className="mt-1 font-semibold text-foreground">Gat / Khasra (गट / खसरा)</div>
               </div>
               <div className="rounded border border-border bg-muted/20 p-2">
-                <div className="text-[11px] text-muted-foreground">Digital Mutation Status</div>
-                <div className="mt-1 font-semibold text-status-ok">e-Ferfar Integrated</div>
+                <div className="text-[11px] text-muted-foreground">Integration Status</div>
+                <div className="mt-1 font-semibold text-status-warn">
+                  Record format mapped — adapter not yet connected
+                </div>
               </div>
             </div>
+            <p className="mt-2.5 text-[10.5px] leading-snug text-muted-foreground">
+              Maharashtra is registered in the adapter framework; the Banglarbhumi (West Bengal)
+              integration is the operational reference implementation today.
+            </p>
           </section>
         </div>
 
@@ -289,7 +331,9 @@ export function StateRevenueDashboard() {
               <div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Cumulative Multi-Crop Area:</span>
-                  <span className="font-semibold text-foreground">{multiCropAreaHa.toFixed(1)} Ha</span>
+                  <span className="font-semibold text-foreground">
+                    {multiCropAreaHa.toFixed(1)} Ha
+                  </span>
                 </div>
                 <div className="mt-1 flex items-center justify-between">
                   <span className="text-muted-foreground">Statutory State Ceiling:</span>
@@ -299,7 +343,11 @@ export function StateRevenueDashboard() {
                   <div
                     className={cn(
                       "h-full rounded transition-all",
-                      multiCropPct > 80 ? "bg-status-critical" : multiCropPct > 50 ? "bg-status-warn" : "bg-status-ok"
+                      multiCropPct > 80
+                        ? "bg-status-critical"
+                        : multiCropPct > 50
+                          ? "bg-status-warn"
+                          : "bg-status-ok",
                     )}
                     style={{ width: `${multiCropPct}%` }}
                   />
@@ -310,7 +358,10 @@ export function StateRevenueDashboard() {
               </div>
 
               <div className="rounded bg-muted/40 p-2.5 text-[11.5px] text-muted-foreground">
-                <strong className="text-foreground">Section 10 Mandate:</strong> Irrigated multi-cropped land shall not be acquired except under exceptional circumstances, and equal area of culturable wasteland must be developed for agricultural purposes or deposited in the State Land Bank.
+                <strong className="text-foreground">Section 10 Mandate:</strong> Irrigated
+                multi-cropped land shall not be acquired except under exceptional circumstances, and
+                equal area of culturable wasteland must be developed for agricultural purposes or
+                deposited in the State Land Bank.
               </div>
 
               {/* State Land Bank under Sec 101 */}

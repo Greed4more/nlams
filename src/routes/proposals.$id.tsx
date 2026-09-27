@@ -3,6 +3,8 @@ import { ArrowRight, ChevronLeft, Loader2 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { formatINRFull } from "@/data/mockData";
 import { getSlaStatus, SLA_STATUS_LABEL } from "@/lib/slaRules";
+import { fileNumberOf } from "@/lib/fileNumber";
+import { ProjectThumbnail } from "@/components/proposals/ProjectThumbnail";
 import { SlaBadge } from "@/components/proposals/bits";
 import { WorkflowStepper } from "@/components/proposals/WorkflowStepper";
 import { ParcelsTable } from "@/components/proposals/ParcelsTable";
@@ -61,6 +63,9 @@ function ProposalDetail() {
   if (isLoading) {
     return (
       <AppShell breadcrumb={["Home", "Proposals", id]}>
+        <p className="mb-3 text-[12px] text-muted-foreground">
+          Fetching record {id} from the National Land Records Repository…
+        </p>
         <div className="space-y-3">
           <div className="shimmer h-24 w-full" />
           <div className="shimmer h-64 w-full" />
@@ -119,21 +124,31 @@ function ProposalDetail() {
         className={cn("rounded-[6px] bg-navy px-5 py-4 text-navy-foreground", headerSpotlight)}
       >
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="num font-mono text-[12px] tracking-wide text-navy-muted">
-              {proposal.id}
-            </div>
-            <h1 className="mt-1 text-[22px] font-semibold leading-tight">{proposal.projectName}</h1>
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {pills.map(([label, value]) => (
-                <span
-                  key={label}
-                  className="rounded-[4px] border border-white/15 bg-white/5 px-2 py-1 text-[11.5px]"
-                >
-                  <span className="text-navy-muted">{label}: </span>
-                  <span className="num font-medium">{value}</span>
-                </span>
-              ))}
+          <div className="flex min-w-0 items-start gap-4">
+            <ProjectThumbnail
+              projectName={proposal.projectName}
+              className="hidden h-[84px] w-[112px] sm:grid"
+            />
+            <div className="min-w-0">
+              <div className="num font-mono text-[12px] tracking-wide text-navy-muted">
+                {proposal.id}
+                <span className="ml-2 text-white/50">·</span>
+                <span className="ml-2 text-[11px]">{fileNumberOf(proposal)}</span>
+              </div>
+              <h1 className="mt-1 text-[22px] font-semibold leading-tight">
+                {proposal.projectName}
+              </h1>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {pills.map(([label, value]) => (
+                  <span
+                    key={label}
+                    className="rounded-[4px] border border-white/15 bg-white/5 px-2 py-1 text-[11.5px]"
+                  >
+                    <span className="text-navy-muted">{label}: </span>
+                    <span className="num font-medium">{value}</span>
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
 
