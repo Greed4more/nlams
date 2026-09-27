@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { useI18n } from "@/context/I18nContext";
 
 // Leaflet touches `window` at module load time, which crashes SSR — load it
 // only after mount, client-side only.
@@ -14,17 +16,17 @@ export const Route = createFileRoute("/map-view")({
   }),
   head: () => ({
     meta: [
-      { title: "GIS & Land Parcels — BHUMITRA" },
+      { title: "Cadastral GIS Viewer — BHUMITRA" },
       {
         name: "description",
         content:
-          "Full-canvas cadastral viewer with cascading revenue filters, ULPIN parcel outlines and a cadastral record & land title inspector.",
+          "Spatial view of ULPIN cadastral parcels over OpenStreetMap, with ISRO Bhuvan administrative boundary overlays.",
       },
-      { property: "og:title", content: "GIS & Land Parcels — BHUMITRA" },
+      { property: "og:title", content: "Cadastral GIS Viewer — BHUMITRA" },
       {
         property: "og:description",
         content:
-          "ULPIN parcel polygons, cadastral record inspection and acquisition status over satellite imagery.",
+          "ULPIN parcel polygons, layer toggles and parcel status legend for land acquisition.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -34,25 +36,28 @@ export const Route = createFileRoute("/map-view")({
 });
 
 function MapSkeleton() {
-  return <div className="shimmer min-h-[480px] w-full flex-1 rounded-none" />;
+  return <div className="shimmer h-[calc(100vh-190px)] min-h-[520px] w-full rounded-[6px]" />;
 }
 
 function MapViewPage() {
   const { ulpin } = Route.useSearch();
+  const { t } = useI18n();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
   return (
-    <AppShell breadcrumb={["BHUMITRA", "GIS & Land Parcels"]} fullBleed>
-      <div className="flex min-h-0 flex-1 flex-col">
-        {mounted ? (
-          <Suspense fallback={<MapSkeleton />}>
-            <SpatialMapContainer highlightedUlpin={ulpin} />
-          </Suspense>
-        ) : (
-          <MapSkeleton />
-        )}
-      </div>
+    <AppShell breadcrumb={["BHUMITRA", "GIS Map View"]}>
+      <PageHeader
+        title={t("page.map.title")}
+        subtitle="Parcel outlines (demo geometry) over OpenStreetMap · district/block boundaries · West Bengal Banglarbhumi cadastral fabric as reference capture"
+      />
+      {mounted ? (
+        <Suspense fallback={<MapSkeleton />}>
+          <SpatialMapContainer highlightedUlpin={ulpin} />
+        </Suspense>
+      ) : (
+        <MapSkeleton />
+      )}
     </AppShell>
   );
 }

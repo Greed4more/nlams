@@ -1,37 +1,37 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
-  GeoJSON,
   MapContainer,
   TileLayer,
   WMSTileLayer,
-  ZoomControl,
+  GeoJSON,
   useMap,
   useMapEvents,
 } from "react-leaflet";
 import { canvas } from "leaflet";
 import type { Layer, LeafletMouseEvent, Polygon as LeafletPolygon } from "leaflet";
 import type { Feature, FeatureCollection, Geometry, MultiPolygon, Polygon } from "geojson";
+import { Link } from "@tanstack/react-router";
 import {
-  Check,
+  X,
   Loader2,
-  Map as MapIcon,
-  PanelLeftClose,
-  PanelLeftOpen,
-  RefreshCcw,
-  Satellite,
-  Search,
-  SlidersHorizontal,
+  Landmark,
+  Calculator,
+  FileText,
+  PanelRightClose,
+  PanelRightOpen,
+  Locate,
 } from "lucide-react";
 import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
 import { point as turfPoint } from "@turf/helpers";
 import "leaflet/dist/leaflet.css";
-import { STATE_LIST } from "@/data/mockData";
+import { formatINRFull, STATE_LIST } from "@/data/mockData";
 import { useParcelsGeoJson, type ParcelFeatureProperties } from "@/hooks/useParcels";
 import {
   useStateBoundary,
   useDistricts,
   useBlocks,
+  type StateFeatureProperties,
   type DistrictFeature,
   type DistrictFeatureProperties,
   type BlockFeature,
@@ -44,24 +44,16 @@ import {
 } from "@/hooks/useWbParcels";
 import { useRole } from "@/context/RoleContext";
 import {
+  MAP_THEME,
   SELECTED_PARCEL_COLOR,
   ADMIN_BOUNDARY_COLORS,
   WB_PARCEL_FABRIC_COLORS,
   lulcLayerFor,
 } from "@/lib/mapThemes";
 import { districtDisplayName } from "@/lib/westBengalDistrictNames";
-import { CadastralInspector } from "./CadastralInspector";
-import { PARCEL_STATUS_LABEL, statusFor, splitKhasra, type Selection } from "./cadastral";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 /** Blocks are only rendered once zoomed in this far — 349 of them at once
@@ -72,34 +64,58 @@ const BLOCK_VISIBLE_ZOOM = 9;
 /** Below this zoom, district/block name labels are skipped — otherwise 23
  * district labels (or 349 block labels) overlap into noise. */
 const ADMIN_LABEL_ZOOM = 7;
-/** Survey numbers are only pinned onto the map at this zoom; below it the
- * canvas stays clean and hovering a plot reveals its details instead. */
-const PARCEL_LABEL_ZOOM = 15;
-/** Block/taluk names only help while looking at sub-district scale — beyond
- * this zoom the parcel survey numbers take over, or the canvas drowns in
- * overlapping labels. */
-const BLOCK_LABEL_MAX_ZOOM = 12;
-/** Hover tooltips on the (potentially thousands of) WB fabric parcels are
- * only bound once the officer is zoomed in far enough to target one. */
-const WB_PARCEL_TOOLTIP_ZOOM = 14;
 
-/** Bright cadastral blue reads clearly over satellite imagery. */
-const CADASTRAL_PARCEL_COLOR = "#3b82f6";
+export type ParcelStatus = "ACQUIRED" | "UNDER_AWARD" | "DISPUTED" | "NOTIFIED";
 
-const ALL = "__all__";
+export const PARCEL_STATUS_COLOR: Record<ParcelStatus, string> = {
+  ACQUIRED: "#1a9c5c",
+  UNDER_AWARD: "#2563eb",
+  DISPUTED: "#dc2626",
+  NOTIFIED: "#d97706",
+};
 
-type Basemap = "satellite" | "osm";
+const STATUS_LABEL: Record<ParcelStatus, string> = {
+  ACQUIRED: "Acquired",
+  UNDER_AWARD: "Under Award",
+  DISPUTED: "Disputed",
+  NOTIFIED: "Notified",
+};
 
-const BASEMAPS: { value: Basemap; label: string }[] = [
-  { value: "satellite", label: "Satellite Imagery" },
-  { value: "osm", label: "OpenStreetMap" },
-];
-
-/** ISRO Bhuvan public WMS (bhuvan-vec1.nrsc.gov.in) — no API key required.
+/**
+ * ISRO Bhuvan public WMS (bhuvan-vec1.nrsc.gov.in) — no API key required.
  * Verified layers: basemap:INDIA_STATE, basemap:INDIA_DIST, and the
- * per-state *_LULC (land use / land cover) layers used below. */
+ * per-state *_LULC (land use / land cover) layers used below.
+ */
 const BHUVAN_WMS_URL = "https://bhuvan-vec1.nrsc.gov.in/bhuvan/wms";
 const BHUVAN_ADMIN_LAYERS = "basemap:INDIA_STATE,basemap:INDIA_DIST";
+
+const BASEMAPS = [
+  { value: "satellite", label: "Satellite (Esri)" },
+  { value: "osm", label: "OpenStreetMap" },
+] as const;
+
+export interface SpatialMapContainerProps {
+  onParcelClick?: (parcel: ParcelFeatureProperties) => void;
+  highlightedUlpin?: string | undefined;
+}
+
+type Selection =
+  | {
+      kind: "parcel";
+      properties: ParcelFeatureProperties;
+      /** [lat, lng] — averaged from the polygon ring, not a surveyed centroid. */
+      centroid: [number, number];
+    }
+  | { kind: "district"; properties: DistrictFeatureProperties; centroid: [number, number] }
+  | { kind: "block"; properties: BlockFeatureProperties; centroid: [number, number] }
+  | {
+      kind: "wbParcel";
+      properties: WbParcelFeatureProperties;
+      district: string;
+      /** [lat, lng] — from the Leaflet layer's bounds center (geometry can be
+       * Polygon or MultiPolygon), not a surveyed centroid. */
+      centroid: [number, number];
+    };
 
 /** Human-readable labels for the wb_parcels manifest's `status` field. */
 const WB_DISTRICT_STATUS_LABEL: Record<string, string> = {
@@ -109,32 +125,22 @@ const WB_DISTRICT_STATUS_LABEL: Record<string, string> = {
   PROPOSED_REVENUE_DISTRICT_VIEW: "proposed revenue-district view",
 };
 
-/** Cascading cadastral filter state — every field except `query` uses the
- * `ALL` sentinel for "not filtered". */
-interface CadastralFilters {
-  query: string;
-  proposalId: string;
-  district: string;
-  taluk: string;
-  village: string;
-  classification: string;
-  status: string;
-}
-
-const EMPTY_FILTERS: CadastralFilters = {
-  query: "",
-  proposalId: ALL,
-  district: ALL,
-  taluk: ALL,
-  village: ALL,
-  classification: ALL,
-  status: ALL,
-};
-
 /** Bumped on every "zoom to" request so repeated clicks on the same feature still refocus. */
 interface FocusRequest {
   bounds: [[number, number], [number, number]];
   nonce: number;
+}
+
+const statusFor = (ulpin: string): ParcelStatus => {
+  const codes: ParcelStatus[] = ["ACQUIRED", "UNDER_AWARD", "DISPUTED", "NOTIFIED"];
+  const sum = [...ulpin].reduce((s, c) => s + c.charCodeAt(0), 0);
+  return codes[sum % codes.length]!;
+};
+
+/** khasraNo is generated as "<survey>/<sub-division>" — split it back apart. */
+function splitKhasra(khasraNo: string): { survey: string; subDivision: string | null } {
+  const [survey, sub] = khasraNo.split("/");
+  return { survey: survey ?? khasraNo, subDivision: sub ?? null };
 }
 
 function polygonCentroid(ring: number[][]): [number, number] {
@@ -198,34 +204,22 @@ function defaultCluster(features: ParcelFeature[]): ParcelFeature[] {
   return [...byProposal.values()].sort((a, b) => b.length - a.length)[0] ?? features;
 }
 
-/** Recenters the map when geojson first loads, the state view changes or the
- * highlighted parcel changes. */
+/** Recenters the map once, when geojson first loads or the highlighted parcel changes. */
 function FitToData({
   data,
-  focusState,
   highlightedUlpin,
   fitAllSignal,
-  onZoom,
 }: {
   data: FeatureCollection<Polygon, ParcelFeatureProperties> | undefined;
-  focusState: string;
   highlightedUlpin?: string | undefined;
   fitAllSignal: number;
-  onZoom: (zoom: number) => void;
 }) {
   const map = useMap();
 
   useEffect(() => {
     if (!data || data.features.length === 0) return;
-    const candidates = data.features.filter((f) => f.properties.state === focusState);
-    if (candidates.length === 0) return;
-    // Programmatic fits can land before the map has finished opening, when
-    // Leaflet coalesces the zoom/move events — read the zoom back directly.
-    const syncZoom = () => onZoom(map.getZoom());
     if (fitAllSignal > 0) {
-      map.fitBounds(boundsOf(candidates), { padding: [24, 24] });
-      map.once("moveend", syncZoom);
-      syncZoom();
+      map.fitBounds(boundsOf(data.features), { padding: [24, 24] });
       return;
     }
     if (highlightedUlpin) {
@@ -237,8 +231,6 @@ function FitToData({
       if (target) {
         const [lng, lat] = target.geometry.coordinates[0]![0]!;
         map.setView([lat!, lng!], 16);
-        map.once("moveend", syncZoom);
-        syncZoom();
       } else {
         toast.error(`Parcel ${highlightedUlpin} not found on this map`);
       }
@@ -249,13 +241,11 @@ function FitToData({
     // still zoom out too far to see any single one. Center on one parcel
     // in the densest cluster at a fixed close zoom instead; "Fit all
     // parcels" is available for the zoomed-out view.
-    const cluster = defaultCluster(candidates);
+    const cluster = defaultCluster(data.features);
     const [lng, lat] = cluster[0]!.geometry.coordinates[0]![0]!;
     map.setView([lat!, lng!], 16);
-    map.once("moveend", syncZoom);
-    syncZoom();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, focusState, highlightedUlpin, fitAllSignal, onZoom]);
+  }, [data, highlightedUlpin, fitAllSignal]);
   return null;
 }
 
@@ -279,14 +269,9 @@ function WbParcelsPaneSetup() {
 }
 
 /** Reports the current zoom level up so district/block layers can hide
- * detail that isn't legible at the current scale. Listens for `moveend` as
- * well as `zoomend` — the initial programmatic fit fires `moveend` reliably
- * even when the opening zoom animation coalesces the zoom events. */
+ * detail that isn't legible at the current scale. */
 function ZoomWatcher({ onZoom }: { onZoom: (zoom: number) => void }) {
-  const map = useMapEvents({
-    zoomend: () => onZoom(map.getZoom()),
-    moveend: () => onZoom(map.getZoom()),
-  });
+  const map = useMapEvents({ zoomend: () => onZoom(map.getZoom()) });
   useEffect(() => onZoom(map.getZoom()), [map, onZoom]);
   return null;
 }
@@ -294,47 +279,25 @@ function ZoomWatcher({ onZoom }: { onZoom: (zoom: number) => void }) {
 /** Flies to `request.bounds` whenever its `nonce` changes — driven by
  * clicking a district/block feature or a "zoom to" button, both of which
  * only have Leaflet layer bounds (not a live map instance) to work with. */
-function FocusOnRequest({
-  request,
-  onZoom,
-}: {
-  request: FocusRequest | null;
-  onZoom: (zoom: number) => void;
-}) {
+function FocusOnRequest({ request }: { request: FocusRequest | null }) {
   const map = useMap();
   useEffect(() => {
     if (!request) return;
     map.fitBounds(request.bounds, { padding: [24, 24] });
-    const syncZoom = () => onZoom(map.getZoom());
-    map.once("moveend", syncZoom);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [request?.nonce]);
   return null;
 }
 
-export interface SpatialMapContainerProps {
-  onParcelClick?: (parcel: ParcelFeatureProperties) => void;
-  highlightedUlpin?: string | undefined;
-}
-
 export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: SpatialMapContainerProps) {
   const { data, isLoading } = useParcelsGeoJson();
-  const { activeState, setActiveState, stateOptions } = useRole();
-  /** Falls back to the last concrete state when the header region view is
-   * "all states" — the canvas always needs one state's boundaries loaded. */
-  const [localStateCode, setLocalStateCode] = useState("WB");
-  const activeStateCode = useMemo(
-    () => (activeState ? (STATE_LIST.find((s) => s.name === activeState)?.code ?? null) : null),
-    [activeState],
-  );
-  const stateCode = activeStateCode ?? localStateCode;
+  const [stateCode, setStateCode] = useState("WB");
   const stateName = STATE_LIST.find((s) => s.code === stateCode)?.name ?? stateCode;
   const { data: stateBoundaryData } = useStateBoundary(stateCode);
   const { data: districtsData } = useDistricts(stateCode);
   const { data: blocksData } = useBlocks(stateCode);
-
-  const [filtersOpen, setFiltersOpen] = useState(true);
-  const [filters, setFilters] = useState<CadastralFilters>(EMPTY_FILTERS);
+  const { person } = useRole();
+  const [panelOpen, setPanelOpen] = useState(true);
   const [showCadastral, setShowCadastral] = useState(true);
   const [showLabels, setShowLabels] = useState(true);
   const [showStateBoundary, setShowStateBoundary] = useState(true);
@@ -342,7 +305,7 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
   const [showBlocks, setShowBlocks] = useState(true);
   const [showBhuvanAdmin, setShowBhuvanAdmin] = useState(false);
   const [showLulc, setShowLulc] = useState(false);
-  const [basemap, setBasemap] = useState<Basemap>("satellite");
+  const [basemap, setBasemap] = useState<(typeof BASEMAPS)[number]["value"]>("satellite");
   const [selected, setSelected] = useState<Selection | null>(null);
   const [fitAllSignal, setFitAllSignal] = useState(0);
   const [focusRequest, setFocusRequest] = useState<FocusRequest | null>(null);
@@ -350,13 +313,11 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
   const [showWbParcels, setShowWbParcels] = useState(false);
   const [wbParcelDistrictSlug, setWbParcelDistrictSlug] = useState<string | null>(null);
 
+  const theme = MAP_THEME;
   const geojson = data as FeatureCollection<Polygon, ParcelFeatureProperties> | undefined;
   const lulcLayer = selected?.kind === "parcel" ? lulcLayerFor(selected.properties.state) : null;
   const blocksVisible = showBlocks && zoom >= BLOCK_VISIBLE_ZOOM;
   const adminLabelsVisible = zoom >= ADMIN_LABEL_ZOOM;
-  const blockLabelsVisible = adminLabelsVisible && zoom <= BLOCK_LABEL_MAX_ZOOM;
-  const parcelLabelsPermanent = showLabels && zoom >= PARCEL_LABEL_ZOOM;
-  const wbTooltipsVisible = zoom >= WB_PARCEL_TOOLTIP_ZOOM;
 
   /** BHUMITRA West Bengal 28-district target-state parcel demo — see
    * public/geo/wb_parcels. Opt-in and WB-only: 28 districts x up to ~9.5k
@@ -368,28 +329,24 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
   );
   const wbCanvasRenderer = useMemo(() => canvas({ padding: 0.5, pane: WB_PARCELS_PANE }), []);
 
-  /** Default the state view to the first parcel's state once records load —
-   * a scoped officer opens straight onto their own state instead of WB. */
-  const autoStateDone = useRef(false);
+  /** Fly to the newly-selected state's extent and drop any stale selection
+   * from the previous state — skipped on first mount, when the initial
+   * [22.54, 88.21] zoom-8 view already frames the seeded West Bengal
+   * demo districts (Kolkata/Haora/Hugli/24 Parganas/Paschim Medinipur). */
+  const mountedStateCode = useRef(stateCode);
   useEffect(() => {
-    if (autoStateDone.current || !geojson?.features.length) return;
-    autoStateDone.current = true;
-    const first = geojson.features[0]!.properties.state;
-    const code = STATE_LIST.find((s) => s.name === first)?.code;
-    if (code && !activeState) setLocalStateCode((cur) => (cur === "WB" ? code : cur));
-  }, [geojson, activeState]);
-
-  /** Any region change — from the header switcher or the sidebar State
-   * filter — invalidates the district/taluk/village cascade. */
-  const prevStateCode = useRef(stateCode);
-  useEffect(() => {
-    if (prevStateCode.current === stateCode) return;
-    prevStateCode.current = stateCode;
+    if (stateCode === mountedStateCode.current) return;
     setSelected(null);
-    setFilters(EMPTY_FILTERS);
-    setWbParcelDistrictSlug(null);
-    setShowWbParcels(false);
-  }, [stateCode]);
+    const source = districtsData?.features.length
+      ? districtsData.features
+      : stateBoundaryData?.features;
+    if (!source || source.length === 0) return;
+    setFocusRequest({
+      bounds: boundsOfGeometries(source.map((f) => f.geometry)),
+      nonce: Date.now(),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stateCode, districtsData, stateBoundaryData]);
 
   useEffect(() => {
     if (!highlightedUlpin || !geojson) return;
@@ -414,135 +371,8 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
       bounds: boundsOfGeometries(wbParcelData.features.map((f) => f.geometry)),
       nonce: Date.now(),
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wbParcelDistrictSlug, wbParcelData]);
-
-  /** Which CD block contains each seeded parcel — computed once per state so
-   * the Taluk filter and roll-ups can work off real boundaries. */
-  const parcelBlockByUlpin = useMemo(() => {
-    const map = new Map<string, string>();
-    if (!geojson || !blocksData?.features.length) return map;
-    const blocks = blocksData.features;
-    for (const f of geojson.features) {
-      const p = f.properties;
-      if (p.state !== stateName) continue;
-      const [lng, lat] = polygonCentroidLngLat(f.geometry.coordinates[0]!);
-      const pt = turfPoint([lng, lat]);
-      const block = blocks.find((b) => booleanPointInPolygon(pt, b.geometry));
-      if (block) map.set(p.ulpin, block.properties.blockName);
-    }
-    return map;
-  }, [geojson, blocksData, stateName]);
-
-  const seedDistricts = useMemo(() => {
-    const set = new Set<string>();
-    for (const f of geojson?.features ?? []) {
-      if (f.properties.state === stateName) set.add(f.properties.district);
-    }
-    return [...set].sort((a, b) => a.localeCompare(b));
-  }, [geojson, stateName]);
-
-  const proposalOptions = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const f of geojson?.features ?? []) {
-      if (f.properties.state === stateName)
-        map.set(f.properties.proposalId, f.properties.projectName);
-    }
-    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  }, [geojson, stateName]);
-
-  const districtOptions = useMemo(() => {
-    const seedNames = new Set(seedDistricts);
-    const seed = seedDistricts.map((d) => ({ value: d, label: d }));
-    const fabric =
-      stateCode === "WB"
-        ? (wbManifest ?? [])
-            .filter((m) => !seedNames.has(m.district))
-            .map((m) => ({ value: `wb:${m.slug}`, label: `${m.district} · cadastral fabric` }))
-        : [];
-    return [{ value: ALL, label: "All districts" }, ...seed, ...fabric];
-  }, [seedDistricts, stateCode, wbManifest]);
-
-  const talukOptions = useMemo(() => {
-    const values = new Set<string>();
-    if (wbParcelData) {
-      for (const f of wbParcelData.features) {
-        if (f.properties.block) values.add(f.properties.block);
-      }
-    } else {
-      for (const f of geojson?.features ?? []) {
-        const p = f.properties;
-        if (p.state !== stateName) continue;
-        if (filters.district !== ALL && p.district !== filters.district) continue;
-        const block = parcelBlockByUlpin.get(p.ulpin);
-        if (block) values.add(block);
-      }
-    }
-    return [
-      { value: ALL, label: "All taluks" },
-      ...[...values].sort((a, b) => a.localeCompare(b)).map((v) => ({ value: v, label: v })),
-    ];
-  }, [wbParcelData, geojson, stateName, filters.district, parcelBlockByUlpin]);
-
-  const villageOptions = useMemo(() => {
-    const values = new Set<string>();
-    for (const f of wbParcelData?.features ?? []) {
-      const p = f.properties;
-      if (filters.taluk !== ALL && p.block !== filters.taluk) continue;
-      if (p.mouza) values.add(p.mouza);
-    }
-    return [
-      { value: ALL, label: "All revenue villages" },
-      ...[...values].sort((a, b) => a.localeCompare(b)).map((v) => ({ value: v, label: v })),
-    ];
-  }, [wbParcelData, filters.taluk]);
-
-  /** Seeded ULPIN parcels matching the cascading filters. */
-  const filteredGeojson = useMemo(() => {
-    if (!geojson) return undefined;
-    const needle = filters.query.trim().toLowerCase();
-    const features = geojson.features.filter((f) => {
-      const p = f.properties;
-      if (p.state !== stateName) return false;
-      if (needle) {
-        const hit = [p.ulpin, p.khasraNo, p.projectName, p.ownerName].some((v) =>
-          v.toLowerCase().includes(needle),
-        );
-        if (!hit) return false;
-      }
-      if (filters.proposalId !== ALL && p.proposalId !== filters.proposalId) return false;
-      if (filters.district !== ALL && p.district !== filters.district) return false;
-      if (filters.taluk !== ALL && parcelBlockByUlpin.get(p.ulpin) !== filters.taluk) return false;
-      if (filters.village !== ALL) return false;
-      if (filters.classification !== ALL && p.classification !== filters.classification)
-        return false;
-      if (filters.status !== ALL && statusFor(p.ulpin) !== filters.status) return false;
-      return true;
-    });
-    return { ...geojson, features };
-  }, [geojson, stateName, filters, parcelBlockByUlpin]);
-
-  /** Banglarbhumi fabric matching the village/taluk/search filters. */
-  const filteredWbParcelData = useMemo(() => {
-    if (!wbParcelData) return undefined;
-    const needle = filters.query.trim().toLowerCase();
-    const features = wbParcelData.features.filter((f) => {
-      const p = f.properties;
-      if (needle) {
-        const hit = [p.id, p.plot, p.khatianNo, p.mouza, p.block].some((v) =>
-          v.toLowerCase().includes(needle),
-        );
-        if (!hit) return false;
-      }
-      if (filters.taluk !== ALL && p.block !== filters.taluk) return false;
-      if (filters.village !== ALL && p.mouza !== filters.village) return false;
-      return true;
-    });
-    return { ...wbParcelData, features };
-  }, [wbParcelData, filters.query, filters.taluk, filters.village]);
-
-  const seedParcelCount = filteredGeojson?.features.length ?? 0;
-  const wbParcelCount = filteredWbParcelData?.features.length ?? 0;
-  const filterSignature = `${filters.query}|${filters.proposalId}|${filters.district}|${filters.taluk}|${filters.village}|${filters.classification}|${filters.status}`;
 
   const selectParcel = (feature: Feature<Geometry, ParcelFeatureProperties>) => {
     if (feature.geometry.type !== "Polygon") return;
@@ -613,10 +443,10 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
       ((selected?.kind === "parcel" && selected.properties.ulpin === p.ulpin) ||
         highlightedUlpin === p.ulpin);
     return {
-      color: active ? SELECTED_PARCEL_COLOR : CADASTRAL_PARCEL_COLOR,
+      color: active ? SELECTED_PARCEL_COLOR : theme.parcelStroke,
       weight: active ? 3.5 : 1.5,
-      fillColor: active ? SELECTED_PARCEL_COLOR : CADASTRAL_PARCEL_COLOR,
-      fillOpacity: active ? 0.35 : 0.1,
+      fillColor: active ? SELECTED_PARCEL_COLOR : theme.parcelStroke,
+      fillOpacity: active ? 0.35 : 0.08,
     };
   };
 
@@ -650,33 +480,17 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
     };
   };
 
-  const hoverTipClass =
-    "!rounded-[6px] !border !border-border !bg-card !px-2.5 !py-1.5 !text-foreground !shadow-lg";
-
   const onEachFeature = (feature: Feature<Geometry, ParcelFeatureProperties>, layer: Layer) => {
     layer.on("click", (() => selectParcel(feature)) as (e: LeafletMouseEvent) => void);
-    const p = feature.properties;
-    const { survey, subDivision } = splitKhasra(p.khasraNo);
-    if (parcelLabelsPermanent) {
-      // Zoomed in far enough that a sparse pinned survey number helps rather
-      // than clutters — hover details remain available on click.
+    if (showLabels) {
+      const { survey } = splitKhasra(feature.properties.khasraNo);
       layer.bindTooltip(
-        `<span style="color:#ffffff;font-weight:600;font-size:10px;text-shadow:0 1px 3px rgba(0,0,0,0.9)">${survey}${subDivision ? `/${subDivision}` : ""}</span>`,
+        `<span style="color:${theme.labelColor};font-weight:700">${survey}</span>`,
         {
           permanent: true,
           direction: "center",
-          className: "map-plain-label",
+          className: "num border-none bg-transparent shadow-none !p-0",
         },
-      );
-    } else {
-      layer.bindTooltip(
-        `<div style="font-family:Inter,sans-serif;font-size:11px;line-height:1.4;color:#0f2942;min-width:150px">
-          <div style="font-weight:700">Survey No. ${survey}${subDivision ? `/${subDivision}` : ""}</div>
-          <div style="color:#475569">ULPIN ${p.ulpin}</div>
-          <div style="color:#475569">${p.areaHa.toFixed(2)} Ha · ${p.classification === "URBAN" ? "Urban" : "Rural"}</div>
-          <div style="color:#475569">Owner: ${p.ownerName}${p.coOwners > 0 ? ` +${p.coOwners}` : ""}</div>
-        </div>`,
-        { sticky: true, direction: "top", opacity: 1, className: hoverTipClass },
       );
     }
   };
@@ -691,7 +505,7 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
         {
           permanent: true,
           direction: "center",
-          className: "map-plain-label",
+          className: "border-none bg-transparent shadow-none !p-0",
         },
       );
     }
@@ -701,13 +515,13 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
     layer.on("click", (() => selectBlock(feature as BlockFeature, layer, true)) as (
       e: LeafletMouseEvent,
     ) => void);
-    if (blockLabelsVisible) {
+    if (adminLabelsVisible) {
       layer.bindTooltip(
         `<span style="color:${ADMIN_BOUNDARY_COLORS.block};font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,0.6)">${feature.properties.blockName}</span>`,
         {
           permanent: true,
           direction: "center",
-          className: "map-plain-label",
+          className: "border-none bg-transparent shadow-none !p-0",
         },
       );
     }
@@ -725,36 +539,21 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
     };
   };
 
-  /** Fabric parcels run into the thousands per district — hover details are
-   * bound only once zoomed past WB_PARCEL_TOOLTIP_ZOOM. */
+  // No permanent tooltips here — up to ~9.5k parcels per district would be
+  // unreadable noise (and slow); click a parcel for details instead.
   const onEachWbParcel = (feature: Feature<Geometry, WbParcelFeatureProperties>, layer: Layer) => {
     layer.on("click", (() =>
       selectWbParcel(
         feature as Feature<Polygon | MultiPolygon, WbParcelFeatureProperties>,
         layer,
       )) as (e: LeafletMouseEvent) => void);
-    if (wbTooltipsVisible) {
-      const p = feature.properties;
-      layer.bindTooltip(
-        `<div style="font-family:Inter,sans-serif;font-size:11px;line-height:1.4;color:#0f2942;min-width:140px">
-          <div style="font-weight:700">Plot ${p.plot}</div>
-          <div style="color:#475569">Mouza ${p.mouza || "—"} · Block ${p.block || "—"}</div>
-          <div style="color:#475569">${
-            p.areaSqm > 0 ? `${p.areaSqm.toLocaleString()} m²` : "Area not recorded"
-          } · Kathian ${p.khatianNo || "—"}</div>
-        </div>`,
-        { sticky: true, direction: "top", opacity: 1, className: hoverTipClass },
-      );
-    }
   };
 
-  // Force GeoJSON to remount whenever the rendered feature set changes —
-  // react-leaflet v5's GeoJSON only reacts to `style` prop updates, never to
-  // a changed `data` prop, so the data identity must live in the key.
+  // Force GeoJSON re-render when toggles that affect style/tooltips change.
   const geojsonKey = useMemo(
     () =>
-      `${stateName}-${filterSignature}-${parcelLabelsPermanent}-${selected?.kind === "parcel" ? selected.properties.ulpin : ""}-${highlightedUlpin}`,
-    [stateName, filterSignature, parcelLabelsPermanent, selected, highlightedUlpin],
+      `${showLabels}-${selected?.kind}-${selected?.kind === "parcel" ? selected.properties.ulpin : ""}-${highlightedUlpin}`,
+    [showLabels, selected, highlightedUlpin],
   );
   const districtsKey = useMemo(
     () =>
@@ -763,84 +562,66 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
   );
   const blocksKey = useMemo(
     () =>
-      `${stateCode}-${blockLabelsVisible}-${blocksVisible}-${selected?.kind === "block" ? selected.properties.blockName : ""}`,
-    [stateCode, blockLabelsVisible, blocksVisible, selected],
+      `${stateCode}-${adminLabelsVisible}-${blocksVisible}-${selected?.kind === "block" ? selected.properties.blockName : ""}`,
+    [stateCode, adminLabelsVisible, blocksVisible, selected],
   );
   const wbParcelsKey = useMemo(
-    () =>
-      `${wbParcelDistrictSlug}-${wbTooltipsVisible}-${selected?.kind === "wbParcel" ? selected.properties.id : ""}-${filters.query}|${filters.taluk}|${filters.village}`,
-    [
-      wbParcelDistrictSlug,
-      wbTooltipsVisible,
-      selected,
-      filters.query,
-      filters.taluk,
-      filters.village,
-    ],
+    () => `${wbParcelDistrictSlug}-${selected?.kind === "wbParcel" ? selected.properties.id : ""}`,
+    [wbParcelDistrictSlug, selected],
   );
 
-  const changeState = useCallback(
-    (code: string) => {
-      setLocalStateCode(code);
-      setActiveState(STATE_LIST.find((s) => s.code === code)?.name ?? null);
-    },
-    [setActiveState],
-  );
-
-  const changeDistrict = (value: string) => {
-    if (value === ALL) {
-      setFilters((f) => ({ ...f, district: ALL, taluk: ALL, village: ALL }));
-      setWbParcelDistrictSlug(null);
-      setShowWbParcels(false);
-      return;
-    }
-    if (value.startsWith("wb:")) {
-      const slug = value.slice(3);
-      const name = wbManifest?.find((m) => m.slug === slug)?.district ?? slug;
-      setWbParcelDistrictSlug(slug);
-      setShowWbParcels(true);
-      setFilters((f) => ({ ...f, district: name, taluk: ALL, village: ALL }));
-      return;
-    }
-    setWbParcelDistrictSlug(null);
-    setShowWbParcels(false);
-    setFilters((f) => ({ ...f, district: value, taluk: ALL, village: ALL }));
-  };
-
-  const resetFilters = () => {
-    setFilters(EMPTY_FILTERS);
-    setWbParcelDistrictSlug(null);
-    setShowWbParcels(false);
-  };
-
-  const fitToState = () => {
-    const source = districtsData?.features.length
-      ? districtsData.features
-      : stateBoundaryData?.features;
-    if (!source || source.length === 0) return;
-    setFocusRequest({
-      bounds: boundsOfGeometries(source.map((f) => f.geometry)),
-      nonce: Date.now(),
+  /** WB parcels whose centroid falls inside the given block — computed lazily
+   * (only for the currently-open block panel), not precomputed for all 349
+   * blocks up front. */
+  const parcelsInBlock = (block: BlockFeature): ParcelFeature[] => {
+    if (!geojson) return [];
+    return geojson.features.filter((f) => {
+      if (f.properties.district !== block.properties.districtName) return false;
+      const [lng, lat] = polygonCentroidLngLat(f.geometry.coordinates[0]!);
+      return booleanPointInPolygon(turfPoint([lng, lat]), block.geometry);
     });
   };
 
-  const activeFilterCount =
-    (filters.query ? 1 : 0) +
-    (filters.proposalId !== ALL ? 1 : 0) +
-    (filters.district !== ALL ? 1 : 0) +
-    (filters.taluk !== ALL ? 1 : 0) +
-    (filters.village !== ALL ? 1 : 0) +
-    (filters.classification !== ALL ? 1 : 0) +
-    (filters.status !== ALL ? 1 : 0);
-
   return (
-    <div className="relative flex min-h-0 flex-1 overflow-hidden bg-[#0b1220]">
+    <div className="panel relative h-[calc(100vh-190px)] min-h-[560px] overflow-hidden">
+      {/* Portal-style header strip */}
+      <div
+        className="absolute inset-x-0 top-0 z-[1001] flex items-center justify-between gap-3 px-4 py-2.5 shadow-sm"
+        style={{ background: theme.accent, color: theme.accentForeground }}
+      >
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div className="grid size-8 shrink-0 place-items-center rounded-[6px] bg-white/15">
+            <Landmark className="size-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="truncate text-[13.5px] font-semibold leading-tight">
+              {theme.portalTitle}
+            </div>
+            <div className="truncate text-[10px] opacity-80">{theme.portalSubtitle}</div>
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-3">
+          <span className="hidden text-[11.5px] opacity-90 sm:inline">{person}</span>
+          <button
+            type="button"
+            aria-label="Toggle layers panel"
+            onClick={() => setPanelOpen((o) => !o)}
+            className="grid size-7 place-items-center rounded-[4px] bg-white/10 transition-colors hover:bg-white/20"
+          >
+            {panelOpen ? (
+              <PanelRightClose className="size-4" />
+            ) : (
+              <PanelRightOpen className="size-4" />
+            )}
+          </button>
+        </div>
+      </div>
+
       <MapContainer
         center={[22.54, 88.21]}
         zoom={8}
         scrollWheelZoom
-        zoomControl={false}
-        className="min-h-0 min-w-0 flex-1"
+        className="size-full"
         style={{ background: "#0b1220" }}
       >
         {basemap === "osm" ? (
@@ -903,21 +684,16 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
           />
         )}
 
-        {showCadastral && filteredGeojson && (
-          <GeoJSON
-            key={`parcels-${geojsonKey}`}
-            data={filteredGeojson}
-            style={styleFor}
-            onEachFeature={onEachFeature}
-          />
+        {showCadastral && geojson && (
+          <GeoJSON key={geojsonKey} data={geojson} style={styleFor} onEachFeature={onEachFeature} />
         )}
 
-        {wbParcelsEnabled && filteredWbParcelData && (
+        {wbParcelsEnabled && wbParcelData && (
           <>
             <WbParcelsPaneSetup />
             <GeoJSON
               key={wbParcelsKey}
-              data={filteredWbParcelData}
+              data={wbParcelData}
               style={wbParcelStyleFor as (feature?: Feature<Geometry>) => object}
               onEachFeature={onEachWbParcel as (feature: Feature<Geometry>, layer: Layer) => void}
               pane={WB_PARCELS_PANE}
@@ -929,20 +705,13 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
           </>
         )}
 
-        <FitToData
-          data={geojson}
-          focusState={stateName}
-          highlightedUlpin={highlightedUlpin}
-          fitAllSignal={fitAllSignal}
-          onZoom={setZoom}
-        />
-        <FocusOnRequest request={focusRequest} onZoom={setZoom} />
+        <FitToData data={geojson} highlightedUlpin={highlightedUlpin} fitAllSignal={fitAllSignal} />
+        <FocusOnRequest request={focusRequest} />
         <ZoomWatcher onZoom={setZoom} />
-        <ZoomControl position="bottomright" />
       </MapContainer>
 
       {(isLoading || wbParcelsLoading) && (
-        <div className="pointer-events-none absolute inset-0 z-[1100] grid place-items-center bg-background/40">
+        <div className="pointer-events-none absolute inset-0 grid place-items-center bg-background/40">
           <div className="flex items-center gap-2 rounded-[6px] bg-card px-3 py-2 text-[12.5px] shadow">
             <Loader2 className="size-4 animate-spin" />
             {wbParcelsLoading
@@ -952,170 +721,29 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
         </div>
       )}
 
-      {/* Left — cascading cadastral filters */}
-      <aside
-        className={cn(
-          "absolute inset-y-0 left-0 z-[1000] flex w-[292px] flex-col border-r border-border bg-card/95 backdrop-blur transition-transform duration-200",
-          filtersOpen ? "translate-x-0" : "-translate-x-full",
-        )}
-      >
-        <div className="flex shrink-0 items-center justify-between gap-1 border-b border-border px-3 py-2.5">
-          <div className="flex items-center gap-2">
-            <SlidersHorizontal className="size-3.5 text-navy" />
-            <span className="text-[12.5px] font-semibold text-foreground">Cadastral Filters</span>
-            {activeFilterCount > 0 && (
-              <span className="num rounded-full bg-navy px-1.5 text-[10px] font-semibold text-navy-foreground">
-                {activeFilterCount}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-0.5">
-            <button
-              type="button"
-              onClick={resetFilters}
-              title="Reset filters"
-              className="inline-flex items-center gap-1 rounded-[4px] px-1.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <RefreshCcw className="size-3" />
-              Reset
-            </button>
-            <button
-              type="button"
-              onClick={() => setFiltersOpen(false)}
-              aria-label="Collapse filters"
-              className="grid size-7 place-items-center rounded-[4px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <PanelLeftClose className="size-4" />
-            </button>
-          </div>
-        </div>
-
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
-          <SelectField
-            label="Infrastructure Project"
-            value={filters.proposalId}
-            onChange={(v) => setFilters((f) => ({ ...f, proposalId: v }))}
-            options={[
-              { value: ALL, label: "All projects" },
-              ...proposalOptions.map(([id, name]) => ({
-                value: id,
-                label: `${id} — ${name}`,
-              })),
-            ]}
-          />
-
+      {/* Layers and Tools panel */}
+      {panelOpen && (
+        <div className="panel absolute left-3 top-14 z-[1000] w-[252px] p-3">
           <div>
-            <Label className="label-xs" htmlFor="cadastral-search">
-              Search Survey / Hissa / Owner / ULPIN
-            </Label>
-            <div className="relative mt-1">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="cadastral-search"
-                value={filters.query}
-                onChange={(e) => setFilters((f) => ({ ...f, query: e.target.value }))}
-                placeholder="e.g. 307, 153/2, ULPIN…"
-                className="h-8 rounded-[4px] pl-8 text-[12px]"
-              />
-            </div>
-          </div>
-
-          <SelectField
-            label="State"
-            value={stateCode}
-            onChange={changeState}
-            options={stateOptions.map((name) => ({
-              value: STATE_LIST.find((s) => s.name === name)?.code ?? name,
-              label: name,
-            }))}
-          />
-
-          <SelectField
-            label="District"
-            value={wbParcelDistrictSlug ? `wb:${wbParcelDistrictSlug}` : filters.district}
-            onChange={changeDistrict}
-            options={districtOptions}
-          />
-
-          <SelectField
-            label="Taluk / CD Block"
-            value={filters.taluk}
-            onChange={(v) => setFilters((f) => ({ ...f, taluk: v, village: ALL }))}
-            options={talukOptions}
-            disabled={talukOptions.length <= 1}
-          />
-
-          <SelectField
-            label="Revenue Village"
-            value={filters.village}
-            onChange={(v) => setFilters((f) => ({ ...f, village: v }))}
-            options={villageOptions}
-            disabled={villageOptions.length <= 1}
-          />
-
-          <SelectField
-            label="Land Type / Classification"
-            value={filters.classification}
-            onChange={(v) => setFilters((f) => ({ ...f, classification: v }))}
-            options={[
-              { value: ALL, label: "All classifications" },
-              { value: "RURAL", label: "Rural" },
-              { value: "URBAN", label: "Urban" },
-            ]}
-          />
-
-          <SelectField
-            label="Acquisition Status"
-            value={filters.status}
-            onChange={(v) => setFilters((f) => ({ ...f, status: v }))}
-            options={[
-              { value: ALL, label: "All statuses" },
-              ...(Object.entries(PARCEL_STATUS_LABEL) as [string, string][]).map(([v, label]) => ({
-                value: v,
-                label,
-              })),
-            ]}
-          />
-
-          {(talukOptions.length <= 1 || villageOptions.length <= 1) && (
-            <p className="text-[10px] leading-snug text-muted-foreground">
-              Taluk/revenue-village cascades populate from CD-block boundaries and, for West Bengal,
-              from the Banglarbhumi cadastral fabric once a fabric district is selected above.
-            </p>
-          )}
-
-          <div className="border-t border-border pt-3">
-            <div className="label-xs">Layers</div>
+            <div className="label-xs">Layers and Tools</div>
             <div className="mt-2 space-y-2">
               <LayerRow
-                label="ULPIN-linked parcels"
+                label="Cadastral Parcels (ULPIN-linked)"
                 checked={showCadastral}
                 onChange={setShowCadastral}
               />
+              <p className="text-[10px] leading-snug text-muted-foreground">
+                Seeded parcel outlines are approximate demo geometry around district headquarters —
+                not surveyed ULPIN boundaries. Select West Bengal below for the Banglarbhumi
+                cadastral-fabric reference capture.
+              </p>
               <LayerRow
-                label={`Survey labels (zoom ≥ ${PARCEL_LABEL_ZOOM})`}
+                label="Survey Number Labels"
                 checked={showLabels}
                 onChange={setShowLabels}
               />
               <LayerRow
-                label="State boundary"
-                checked={showStateBoundary}
-                onChange={setShowStateBoundary}
-              />
-              <LayerRow
-                label="District boundaries"
-                checked={showDistricts}
-                onChange={setShowDistricts}
-              />
-              <LayerRow
-                label={
-                  blocksVisible || !showBlocks ? "Block boundaries" : "Block boundaries — zoom in"
-                }
-                checked={showBlocks}
-                onChange={setShowBlocks}
-              />
-              <LayerRow
-                label="Bhuvan admin boundaries"
+                label="Admin Boundaries (Bhuvan)"
                 checked={showBhuvanAdmin}
                 onChange={setShowBhuvanAdmin}
               />
@@ -1130,210 +758,465 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
             </div>
           </div>
 
+          <div className="mt-3 border-t border-border pt-3">
+            <div className="label-xs">State — District &amp; Block</div>
+            <select
+              value={stateCode}
+              onChange={(e) => setStateCode(e.target.value)}
+              className="mt-2 w-full rounded-[4px] border border-border bg-card px-2 py-1.5 text-[11.5px] font-medium text-foreground"
+            >
+              {STATE_LIST.map((s) => (
+                <option key={s.code} value={s.code}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+            <div className="mt-2 space-y-2">
+              <LayerRow
+                label="State Boundary"
+                checked={showStateBoundary}
+                onChange={setShowStateBoundary}
+              />
+              <LayerRow
+                label="District Boundaries"
+                checked={showDistricts}
+                onChange={setShowDistricts}
+              />
+              <LayerRow
+                label={
+                  blocksVisible || !showBlocks ? "Block Boundaries" : "Block Boundaries — zoom in"
+                }
+                checked={showBlocks}
+                onChange={setShowBlocks}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const source = districtsData?.features.length
+                  ? districtsData.features
+                  : stateBoundaryData?.features;
+                if (!source || source.length === 0) return;
+                setFocusRequest({
+                  bounds: boundsOfGeometries(source.map((f) => f.geometry)),
+                  nonce: Date.now(),
+                });
+              }}
+              disabled={!districtsData && !stateBoundaryData}
+              className="mt-2.5 inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-card px-2.5 py-1.5 text-[11.5px] font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+            >
+              <Locate className="size-3.5" />
+              Zoom to {stateName}
+            </button>
+          </div>
+
           {stateCode === "WB" && (
-            <div className="border-t border-border pt-3">
-              <div className="label-xs">WB cadastral fabric</div>
+            <div className="mt-3 border-t border-border pt-3">
+              <div className="label-xs">WB Cadastral Fabric (28-district demo)</div>
+              <p className="mt-1 text-[10.5px] text-muted-foreground">
+                Block-constrained demo parcels covering West Bengal's 23 current + 5 proposed target
+                districts. Mostly synthetic — not an authoritative land record.
+              </p>
               <div className="mt-2">
                 <LayerRow
-                  label="Show Banglarbhumi fabric"
+                  label="Show cadastral fabric"
                   checked={showWbParcels}
                   onChange={setShowWbParcels}
                 />
               </div>
-              {showWbParcels && !wbParcelDistrictSlug && (
-                <p className="mt-1.5 text-[10.5px] leading-snug text-muted-foreground">
-                  Select a district marked “cadastral fabric” above to load its plot fabric.
-                </p>
-              )}
-              {filteredWbParcelData?.disclaimer && (
-                <p className="mt-1.5 text-[10px] leading-snug text-muted-foreground">
-                  {filteredWbParcelData.disclaimer}
+              <select
+                value={wbParcelDistrictSlug ?? ""}
+                onChange={(e) => setWbParcelDistrictSlug(e.target.value || null)}
+                disabled={!showWbParcels || !wbManifest}
+                className="mt-2 w-full rounded-[4px] border border-border bg-card px-2 py-1.5 text-[11.5px] font-medium text-foreground disabled:opacity-50"
+              >
+                <option value="">Select a district…</option>
+                {[...(wbManifest ?? [])]
+                  .sort((a, b) => a.district.localeCompare(b.district))
+                  .map((m) => {
+                    const statusLabel = WB_DISTRICT_STATUS_LABEL[m.status] ?? m.status;
+                    const realNote = m.realCount > 0 ? `, ${m.realCount} real` : "";
+                    return (
+                      <option key={m.slug} value={m.slug}>
+                        {m.district} ({statusLabel}) — {m.count.toLocaleString()} parcels{realNote}
+                      </option>
+                    );
+                  })}
+              </select>
+              {showWbParcels && wbParcelDistrictSlug && wbParcelData && (
+                <p className="mt-2 text-[10.5px] text-muted-foreground">
+                  {wbParcelData.disclaimer}
                 </p>
               )}
             </div>
           )}
 
-          <div className="flex gap-2 border-t border-border pt-3">
-            <button
-              type="button"
-              onClick={() => setFitAllSignal((n) => n + 1)}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-[4px] border border-border bg-card px-2 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-muted"
+          <div className="mt-3 border-t border-border pt-3">
+            <div className="label-xs">Basemap</div>
+            <RadioGroup
+              value={basemap}
+              onValueChange={(v) => setBasemap(v as typeof basemap)}
+              className="mt-2 gap-1.5"
             >
-              Fit all parcels
-            </button>
-            <button
-              type="button"
-              onClick={fitToState}
-              disabled={!districtsData && !stateBoundaryData}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-[4px] border border-border bg-card px-2 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
-            >
-              Zoom to state
-            </button>
+              {BASEMAPS.map((b) => (
+                <div key={b.value} className="flex items-center gap-2">
+                  <RadioGroupItem id={`bm-${b.value}`} value={b.value} className="size-3.5" />
+                  <Label htmlFor={`bm-${b.value}`} className="text-[11.5px] font-normal">
+                    {b.label}
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
           </div>
         </div>
-      </aside>
-
-      {!filtersOpen && (
-        <button
-          type="button"
-          onClick={() => setFiltersOpen(true)}
-          className="panel absolute left-3 top-3 z-[1000] inline-flex items-center gap-1.5 px-2.5 py-2 text-[11.5px] font-medium text-foreground transition-colors hover:bg-muted"
-        >
-          <PanelLeftOpen className="size-4" />
-          Cadastral Filters
-        </button>
       )}
 
-      {/* Top-right map tools */}
-      <div
-        className={cn(
-          "absolute top-3 z-[1000] flex w-[176px] flex-col gap-1.5 transition-all",
-          selected ? "right-[372px]" : "right-3",
-        )}
+      {/* Zoom-out escape hatch — individual parcels are ~100-300m wide, so
+          the default view opens on one real cluster, not all of India. */}
+      <button
+        type="button"
+        onClick={() => setFitAllSignal((n) => n + 1)}
+        className="panel absolute bottom-3 left-3 z-[1000] px-3 py-1.5 text-[11.5px] font-medium text-foreground transition-colors hover:bg-muted"
       >
-        {BASEMAPS.map((b) => (
-          <button
-            key={b.value}
-            type="button"
-            onClick={() => setBasemap(b.value)}
-            aria-pressed={basemap === b.value}
-            className={cn(
-              "flex h-8 items-center gap-1.5 rounded-[5px] border px-2.5 text-[11.5px] font-medium shadow-sm backdrop-blur transition-colors",
-              basemap === b.value
-                ? "border-navy bg-navy/95 text-navy-foreground"
-                : "border-border bg-card/95 text-foreground hover:bg-muted",
-            )}
-          >
-            {b.value === "satellite" ? (
-              <Satellite className="size-3.5 shrink-0" />
-            ) : (
-              <MapIcon className="size-3.5 shrink-0" />
-            )}
-            {b.label}
-          </button>
-        ))}
-        <button
-          type="button"
-          onClick={() => setShowLabels((v) => !v)}
-          aria-pressed={showLabels}
-          className="flex h-8 items-center gap-1.5 rounded-[5px] border border-border bg-card/95 px-2.5 text-[11.5px] font-medium text-foreground shadow-sm backdrop-blur transition-colors hover:bg-muted"
-        >
-          <span
-            className={cn(
-              "grid size-3.5 shrink-0 place-items-center rounded-[3px] border",
-              showLabels ? "border-forest bg-forest text-forest-foreground" : "border-border",
-            )}
-          >
-            {showLabels && <Check className="size-2.5" />}
-          </span>
-          Survey No. Labels
-        </button>
-      </div>
+        Fit all parcels
+      </button>
 
-      {/* Result count */}
-      <div className="pointer-events-none absolute left-1/2 top-3 z-[1000] hidden -translate-x-1/2 rounded-full border border-border bg-card/90 px-3 py-1 text-[11px] font-medium text-foreground shadow-sm backdrop-blur lg:block">
-        <span className="num">{seedParcelCount}</span> ULPIN parcels
+      {/* Legend */}
+      <div className="panel absolute bottom-3 right-3 z-[1000] px-3 py-2">
+        <div className="label-xs">Selection</div>
+        <div className="mt-1.5 flex items-center gap-2">
+          <span
+            className="size-2.5 rounded-[2px]"
+            style={{ backgroundColor: SELECTED_PARCEL_COLOR }}
+          />
+          <span className="text-[11px] text-muted-foreground">Selected parcel</span>
+        </div>
+        <div className="mt-1 flex items-center gap-2">
+          <span
+            className="size-2.5 rounded-[2px]"
+            style={{ backgroundColor: theme.parcelStroke }}
+          />
+          <span className="text-[11px] text-muted-foreground">Parcel outline (demo geometry)</span>
+        </div>
+        <div className="mt-1 flex items-center gap-2">
+          <span
+            className="size-2.5 rounded-[2px]"
+            style={{ backgroundColor: ADMIN_BOUNDARY_COLORS.state }}
+          />
+          <span className="text-[11px] text-muted-foreground">State boundary</span>
+        </div>
+        <div className="mt-1 flex items-center gap-2">
+          <span
+            className="size-2.5 rounded-[2px]"
+            style={{ backgroundColor: ADMIN_BOUNDARY_COLORS.district }}
+          />
+          <span className="text-[11px] text-muted-foreground">District boundary</span>
+        </div>
+        <div className="mt-1 flex items-center gap-2">
+          <span
+            className="size-2.5 rounded-[2px]"
+            style={{ backgroundColor: ADMIN_BOUNDARY_COLORS.block }}
+          />
+          <span className="text-[11px] text-muted-foreground">Block boundary</span>
+        </div>
         {wbParcelsEnabled && (
           <>
-            {" · "}
-            <span className="num">{wbParcelCount}</span> fabric plots
+            <div className="mt-1 flex items-center gap-2">
+              <span
+                className="size-2.5 rounded-[2px]"
+                style={{ backgroundColor: WB_PARCEL_FABRIC_COLORS.real }}
+              />
+              <span className="text-[11px] text-muted-foreground">
+                WB fabric — real Banglarbhumi capture
+              </span>
+            </div>
+            <div className="mt-1 flex items-center gap-2">
+              <span
+                className="size-2.5 rounded-[2px]"
+                style={{ backgroundColor: WB_PARCEL_FABRIC_COLORS.synthetic }}
+              />
+              <span className="text-[11px] text-muted-foreground">
+                WB fabric — synthetic demo parcel
+              </span>
+            </div>
           </>
         )}
       </div>
 
-      <MapLegend filtersOpen={filtersOpen} showWbParcels={wbParcelsEnabled} />
-
+      {/* Selection info panel — parcel, district, or block */}
       {selected && (
-        <CadastralInspector
-          selection={selected}
-          stateCode={stateCode}
-          onClose={() => setSelected(null)}
-          onJumpToDistrict={jumpToDistrict}
-          geojson={geojson}
-          blocksData={blocksData}
-        />
+        <aside className="absolute inset-y-0 right-0 z-[1000] w-[340px] overflow-y-auto border-l border-border bg-card p-4 shadow-lg">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <div className="label-xs">
+                {selected.kind === "parcel"
+                  ? "Land Parcel Information"
+                  : selected.kind === "district"
+                    ? "District"
+                    : selected.kind === "block"
+                      ? "Block"
+                      : "WB Cadastral Fabric (Demo)"}
+              </div>
+              <div className="num mt-1 text-[11px] text-muted-foreground">
+                {selected.centroid[0].toFixed(6)}, {selected.centroid[1].toFixed(6)}
+              </div>
+            </div>
+            <button
+              type="button"
+              aria-label="Close panel"
+              onClick={() => setSelected(null)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+
+          {selected.kind === "parcel" && (
+            <>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <InfoBox label="State" value={selected.properties.state} />
+                <InfoBox label="District" value={selected.properties.district} />
+              </div>
+              <div className="mt-2">
+                <InfoBox
+                  label="Proposal"
+                  value={`${selected.properties.proposalId} — ${selected.properties.projectName}`}
+                />
+              </div>
+
+              <dl className="mt-4 space-y-2.5 text-[12.5px]">
+                <Row label="ULPIN" value={selected.properties.ulpin} mono />
+                {(() => {
+                  const { survey, subDivision } = splitKhasra(selected.properties.khasraNo);
+                  return (
+                    <>
+                      <Row label="Survey Number" value={survey} mono />
+                      <Row label="Sub Division" value={subDivision ?? "—"} mono />
+                    </>
+                  );
+                })()}
+                <Row label="Area" value={`${selected.properties.areaHa.toFixed(2)} Ha`} mono />
+                <Row
+                  label="Zone"
+                  value={selected.properties.classification === "URBAN" ? "Urban" : "Rural"}
+                />
+                <Row
+                  label="Owner"
+                  value={
+                    selected.properties.coOwners > 0
+                      ? `${selected.properties.ownerName} (+${selected.properties.coOwners} co-owners)`
+                      : selected.properties.ownerName
+                  }
+                />
+                <Row label="Status" value={STATUS_LABEL[statusFor(selected.properties.ulpin)]} />
+                <Row
+                  label="Assessed"
+                  value={formatINRFull(selected.properties.compensationAssessed)}
+                  mono
+                />
+                <Row
+                  label="Disbursed"
+                  value={formatINRFull(selected.properties.compensationDisbursed)}
+                  mono
+                />
+              </dl>
+
+              <div className="mt-4 border-t border-border pt-3">
+                <div className="label-xs mb-2">Records</div>
+                <div className="flex flex-wrap gap-2">
+                  <Link
+                    to="/calculator"
+                    search={{ ulpin: selected.properties.ulpin }}
+                    className="inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-card px-2.5 py-1.5 text-[11.5px] font-medium text-foreground transition-colors hover:bg-muted"
+                  >
+                    <Calculator className="size-3.5" />
+                    Compensation
+                  </Link>
+                  <Link
+                    to="/proposals/$id"
+                    params={{ id: selected.properties.proposalId }}
+                    className="inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-card px-2.5 py-1.5 text-[11.5px] font-medium text-foreground transition-colors hover:bg-muted"
+                  >
+                    <FileText className="size-3.5" />
+                    Documents &amp; Audit Trail
+                  </Link>
+                </div>
+              </div>
+            </>
+          )}
+
+          {selected.kind === "district" &&
+            (() => {
+              const distName = selected.properties.distName;
+              const blocksInDistrict =
+                blocksData?.features.filter((f) => f.properties.districtName === distName) ?? [];
+              const parcelsInDistrict =
+                geojson?.features.filter((f) => f.properties.district === distName) ?? [];
+              const proposalCount = new Set(parcelsInDistrict.map((f) => f.properties.proposalId))
+                .size;
+              return (
+                <>
+                  <div className="mt-3">
+                    <InfoBox label="District" value={districtDisplayName(distName, stateCode)} />
+                  </div>
+                  <dl className="mt-4 space-y-2.5 text-[12.5px]">
+                    <Row label="State" value={selected.properties.state} />
+                    <Row label="CD Blocks" value={String(blocksInDistrict.length)} mono />
+                    <Row label="Seeded Proposals" value={String(proposalCount)} mono />
+                    <Row label="Seeded Parcels" value={String(parcelsInDistrict.length)} mono />
+                  </dl>
+                  {blocksInDistrict.length > 0 && (
+                    <p className="mt-3 text-[11px] text-muted-foreground">
+                      Zoom in (or enable Block Boundaries) to see this district's{" "}
+                      {blocksInDistrict.length} CD blocks.
+                    </p>
+                  )}
+                </>
+              );
+            })()}
+
+          {selected.kind === "block" &&
+            (() => {
+              const parcelsHere = (() => {
+                const feature = blocksData?.features.find(
+                  (f) =>
+                    f.properties.blockName === selected.properties.blockName &&
+                    f.properties.districtName === selected.properties.districtName,
+                );
+                return feature ? parcelsInBlock(feature) : [];
+              })();
+              return (
+                <>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <InfoBox label="Block" value={selected.properties.blockName} />
+                    <InfoBox
+                      label="District"
+                      value={districtDisplayName(selected.properties.districtName, stateCode)}
+                    />
+                  </div>
+                  <dl className="mt-4 space-y-2.5 text-[12.5px]">
+                    <Row label="State" value={selected.properties.state} />
+                    <Row label="Seeded Parcels" value={String(parcelsHere.length)} mono />
+                  </dl>
+                  <button
+                    type="button"
+                    onClick={() => jumpToDistrict(selected.properties.districtName)}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-card px-2.5 py-1.5 text-[11.5px] font-medium text-foreground transition-colors hover:bg-muted"
+                  >
+                    <Locate className="size-3.5" />
+                    Back to {districtDisplayName(selected.properties.districtName, stateCode)}
+                  </button>
+                </>
+              );
+            })()}
+
+          {selected.kind === "wbParcel" && (
+            <>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <InfoBox label="District" value={selected.district} />
+                <InfoBox label="Block" value={selected.properties.block} />
+              </div>
+              <div
+                className={cn(
+                  "mt-3 rounded-[4px] px-2.5 py-1.5 text-[11px] font-semibold",
+                  selected.properties.real
+                    ? "bg-status-ok/10 text-status-ok"
+                    : "bg-amber-500/10 text-amber-700",
+                )}
+              >
+                {selected.properties.real
+                  ? "Real Banglarbhumi capture — approximate demo georeferencing"
+                  : "Synthetic demo parcel — not a cadastral boundary"}
+              </div>
+              <dl className="mt-4 space-y-2.5 text-[12.5px]">
+                <Row label="Parcel ID" value={selected.properties.id} mono />
+                <Row label="Mouza" value={selected.properties.mouza} />
+                <Row label="Plot No" value={selected.properties.plot} mono />
+                <Row
+                  label="Area"
+                  value={
+                    selected.properties.areaSqm > 0
+                      ? `${selected.properties.areaSqm.toLocaleString()} m²`
+                      : "Not recorded (synthetic demo)"
+                  }
+                  mono
+                />
+                <Row
+                  label="Khatian"
+                  value={
+                    selected.properties.khatianNo
+                      ? `${selected.properties.khatianType} ${selected.properties.khatianNo}`
+                      : "—"
+                  }
+                  mono
+                />
+              </dl>
+
+              <div className="mt-4 border-t border-border pt-3">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Land Record
+                </div>
+                <dl className="mt-2 space-y-2.5 text-[12.5px]">
+                  <Row
+                    label="Classification"
+                    value={selected.properties.landClassification || "—"}
+                  />
+                  <Row label="Current Use" value={selected.properties.currentLandUse || "—"} />
+                  {selected.properties.cropType && (
+                    <Row
+                      label="Crop"
+                      value={`${selected.properties.cropType} · ${selected.properties.croppingIntensity || "—"}`}
+                    />
+                  )}
+                  <Row
+                    label="Irrigation"
+                    value={
+                      selected.properties.irrigationSource
+                        ? `${selected.properties.irrigationStatus} (${selected.properties.irrigationSource})`
+                        : selected.properties.irrigationStatus || "—"
+                    }
+                  />
+                  <Row
+                    label="Government Land"
+                    value={selected.properties.governmentLand ? "Yes" : "No"}
+                  />
+                </dl>
+              </div>
+
+              <div className="mt-4 border-t border-border pt-3">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Ownership & Status
+                </div>
+                <dl className="mt-2 space-y-2.5 text-[12.5px]">
+                  <Row label="Ownership" value={selected.properties.ownershipType || "—"} />
+                  <Row label="Owners" value={String(selected.properties.ownerCount)} mono />
+                  {selected.properties.tenancyStatus && (
+                    <Row label="Tenancy" value={selected.properties.tenancyStatus} />
+                  )}
+                  <Row label="Mutation" value={selected.properties.mutationStatus || "—"} />
+                  <Row label="RoR Status" value={selected.properties.rorStatus || "—"} />
+                  <Row label="Encumbrance" value={selected.properties.encumbranceStatus || "—"} />
+                  <Row label="Litigation" value={selected.properties.litigationStatus || "—"} />
+                  <Row
+                    label="Field Verification"
+                    value={selected.properties.fieldVerificationStatus || "—"}
+                  />
+                  <Row
+                    label="Last Verified"
+                    value={selected.properties.lastVerifiedDate || "—"}
+                    mono
+                  />
+                </dl>
+              </div>
+
+              <p className="mt-4 border-t border-border pt-3 text-[10.5px] text-muted-foreground">
+                Demo cadastral fabric — NOT an authoritative land record. See the layers panel for
+                the full dataset disclaimer.
+              </p>
+            </>
+          )}
+        </aside>
       )}
-    </div>
-  );
-}
-
-function MapLegend({
-  filtersOpen,
-  showWbParcels,
-}: {
-  filtersOpen: boolean;
-  showWbParcels: boolean;
-}) {
-  return (
-    <div
-      className={cn(
-        "absolute bottom-3 z-[1000] w-[262px] rounded-[6px] border border-border bg-card/95 p-3 shadow-lg backdrop-blur",
-        filtersOpen ? "left-[304px] max-md:left-3" : "left-3",
-      )}
-    >
-      <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-navy">
-        Cadastral Survey &amp; Parcel Legend
-      </div>
-      <div className="mt-2 space-y-1.5">
-        <LegendRow color={CADASTRAL_PARCEL_COLOR} label="Land parcel (ULPIN-linked)" />
-        <LegendRow color={SELECTED_PARCEL_COLOR} label="Selected parcel (inspector active)" />
-        <LegendRow
-          color={WB_PARCEL_FABRIC_COLORS.real}
-          label="Hissa-linked parcel (verified capture)"
-        />
-        <LegendRow color={WB_PARCEL_FABRIC_COLORS.synthetic} label="Synthetic demo parcel" />
-        <LegendRow color={ADMIN_BOUNDARY_COLORS.state} label="State boundary" dashed />
-        <LegendRow color={ADMIN_BOUNDARY_COLORS.district} label="District boundary" />
-        <LegendRow color={ADMIN_BOUNDARY_COLORS.block} label="Block / taluk boundary" />
-      </div>
-      <p className="mt-2 border-t border-border pt-1.5 text-[9.5px] leading-snug text-muted-foreground">
-        Survey numbers pin at zoom {PARCEL_LABEL_ZOOM}+; hover any plot for details
-        {showWbParcels ? "; fabric records are a demo capture, not an authoritative record" : ""}.
-      </p>
-    </div>
-  );
-}
-
-function LegendRow({ color, label, dashed }: { color: string; label: string; dashed?: boolean }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span
-        className="h-0 w-4 shrink-0 border-t-2"
-        style={{ borderColor: color, borderStyle: dashed ? "dashed" : "solid" }}
-      />
-      <span className="text-[10.5px] text-muted-foreground">{label}</span>
-    </div>
-  );
-}
-
-function SelectField({
-  label,
-  value,
-  onChange,
-  options,
-  disabled = false,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: { value: string; label: string }[];
-  disabled?: boolean;
-}) {
-  return (
-    <div className={cn(disabled && "opacity-60")}>
-      <Label className="label-xs">{label}</Label>
-      <Select value={value} onValueChange={onChange} disabled={disabled}>
-        <SelectTrigger className="mt-1 h-8 w-full rounded-[4px] text-[11.5px]">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent className="max-h-[320px]">
-          {options.map((o) => (
-            <SelectItem key={o.value} value={o.value} className="text-[12px]">
-              {o.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
     </div>
   );
 }
@@ -1356,6 +1239,24 @@ function LayerRow({
         {label}
       </Label>
       <Switch id={id} checked={checked} onCheckedChange={onChange} disabled={disabled} />
+    </div>
+  );
+}
+
+function InfoBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[4px] border border-border bg-muted/40 px-2.5 py-1.5">
+      <div className="text-[10px] text-muted-foreground">{label}</div>
+      <div className="truncate text-[12px] font-medium text-foreground">{value}</div>
+    </div>
+  );
+}
+
+function Row({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 border-b border-border pb-1.5">
+      <dt className="shrink-0 text-[11px] text-muted-foreground">{label}</dt>
+      <dd className={cn("text-right", mono && "num font-mono text-[12px]")}>{value}</dd>
     </div>
   );
 }
