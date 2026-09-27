@@ -275,6 +275,19 @@ input:-webkit-autofill:active {
   border-radius: 6px;
 }
 
+/* Leaflet tooltips used as bare map labels (survey/district names) — strip the
+   default white bubble so the canvas stays clean. */
+.leaflet-tooltip.map-plain-label {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.leaflet-tooltip.map-plain-label::before {
+  display: none;
+}
+
 /* Slow drift for the decorative GIS backdrop on the officer sign-in screen. */
 @keyframes bhumitra-map-drift {
   from {

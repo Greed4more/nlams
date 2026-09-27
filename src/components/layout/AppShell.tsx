@@ -25,7 +25,16 @@ function RouteSkeleton() {
   );
 }
 
-export function AppShell({ breadcrumb, children }: { breadcrumb: string[]; children: ReactNode }) {
+export function AppShell({
+  breadcrumb,
+  children,
+  fullBleed = false,
+}: {
+  breadcrumb: string[];
+  children: ReactNode;
+  /** Edge-to-edge content without page padding — used by the GIS canvas. */
+  fullBleed?: boolean;
+}) {
   const location = useLocation();
   const navigate = useNavigate();
   const [navOpen, setNavOpen] = useState(false);
@@ -94,7 +103,14 @@ export function AppShell({ breadcrumb, children }: { breadcrumb: string[]; child
         <div className="print:hidden">
           <TopBar breadcrumb={breadcrumb} />
         </div>
-        <main id="main-content" className="flex-1 px-5 py-5 print:px-0 print:py-0">
+        <main
+          id="main-content"
+          className={
+            fullBleed
+              ? "flex min-h-0 flex-1 flex-col print:p-0"
+              : "flex-1 px-5 py-5 print:px-0 print:py-0"
+          }
+        >
           {loading ? <RouteSkeleton /> : children}
         </main>
         <GovFooter className="print:hidden" />
