@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CalculatorRouteImport } from './routes/calculator'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as GrievancesRouteImport } from './routes/grievances'
 import { Route as JudgeAccessRouteImport } from './routes/judge-access'
 import { Route as MapViewRouteImport } from './routes/map-view'
@@ -29,6 +30,11 @@ const IndexRoute = IndexRouteImport.update({
 const CalculatorRoute = CalculatorRouteImport.update({
   id: '/calculator',
   path: '/calculator',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GrievancesRoute = GrievancesRouteImport.update({
@@ -80,6 +86,7 @@ const PublicIdRoute = PublicIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/calculator': typeof CalculatorRoute
+  '/dashboard': typeof DashboardRoute
   '/grievances': typeof GrievancesRoute
   '/judge-access': typeof JudgeAccessRoute
   '/map-view': typeof MapViewRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/calculator': typeof CalculatorRoute
+  '/dashboard': typeof DashboardRoute
   '/grievances': typeof GrievancesRoute
   '/judge-access': typeof JudgeAccessRoute
   '/map-view': typeof MapViewRoute
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/calculator': typeof CalculatorRoute
+  '/dashboard': typeof DashboardRoute
   '/grievances': typeof GrievancesRoute
   '/judge-access': typeof JudgeAccessRoute
   '/map-view': typeof MapViewRoute
@@ -122,6 +131,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/calculator'
+    | '/dashboard'
     | '/grievances'
     | '/judge-access'
     | '/map-view'
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/calculator'
+    | '/dashboard'
     | '/grievances'
     | '/judge-access'
     | '/map-view'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/calculator'
+    | '/dashboard'
     | '/grievances'
     | '/judge-access'
     | '/map-view'
@@ -162,6 +174,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CalculatorRoute: typeof CalculatorRoute
+  DashboardRoute: typeof DashboardRoute
   GrievancesRoute: typeof GrievancesRoute
   JudgeAccessRoute: typeof JudgeAccessRoute
   MapViewRoute: typeof MapViewRoute
@@ -187,6 +200,13 @@ declare module '@tanstack/react-router' {
       path: '/calculator'
       fullPath: '/calculator'
       preLoaderRoute: typeof CalculatorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/grievances': {
@@ -258,6 +278,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CalculatorRoute: CalculatorRoute,
+  DashboardRoute: DashboardRoute,
   GrievancesRoute: GrievancesRoute,
   JudgeAccessRoute: JudgeAccessRoute,
   MapViewRoute: MapViewRoute,

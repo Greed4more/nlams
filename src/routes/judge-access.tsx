@@ -62,7 +62,7 @@ function JudgeAccessPage() {
       });
       signInWithBypass(res);
       recordLogin();
-      void navigate({ to: "/" });
+      void navigate({ to: "/dashboard" });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Demo sign-in failed");
     } finally {

@@ -63,13 +63,17 @@
   --color-navy-foreground: var(--navy-foreground);
   --color-navy-muted: var(--navy-muted);
   --color-navy-hover: var(--navy-hover);
+  --color-forest: var(--forest);
+  --color-forest-foreground: var(--forest-foreground);
+  --color-forest-hover: var(--forest-hover);
   --color-surface: var(--surface);
   --color-status-ok: var(--status-ok);
   --color-status-warn: var(--status-warn);
   --color-status-critical: var(--status-critical);
   --color-status-info: var(--status-info);
-  --font-sans: "Inter", "Noto Sans", "Noto Sans Devanagari", "Noto Sans Bengali",
-    "Noto Sans Tamil", "Noto Sans Gurmukhi", ui-sans-serif, system-ui, sans-serif;
+  --font-sans:
+    "Inter", "Noto Sans", "Noto Sans Devanagari", "Noto Sans Bengali", "Noto Sans Tamil",
+    "Noto Sans Gurmukhi", ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
@@ -99,6 +103,10 @@
   --navy-foreground: oklch(0.97 0.005 258);
   --navy-muted: oklch(0.66 0.03 250);
   --navy-hover: oklch(0.33 0.055 251);
+  /* Forest green — open/citizen-facing actions on the landing and auth screens. */
+  --forest: oklch(0.375 0.078 158);
+  --forest-foreground: oklch(0.98 0.005 158);
+  --forest-hover: oklch(0.315 0.072 158);
   --surface: oklch(0.977 0.002 264);
   --status-ok: oklch(0.5 0.115 158);
   --status-warn: oklch(0.54 0.14 65);
@@ -119,7 +127,6 @@
   --sidebar-border: oklch(0.36 0.045 251);
   --sidebar-ring: oklch(0.47 0.2 264);
 }
-
 
 .dark {
   --background: oklch(0.129 0.042 264.695);
@@ -190,6 +197,9 @@
   --navy-foreground: #ffffff;
   --navy-muted: #e6e6e6;
   --navy-hover: #222222;
+  --forest: #005a2b;
+  --forest-foreground: #ffffff;
+  --forest-hover: #003d1d;
   --surface: #ffffff;
   --status-ok: #005a2b;
   --status-warn: #7a3d00;
@@ -235,8 +245,13 @@ input:-webkit-autofill:active {
 }
 
 @keyframes bhumitra-alert-pulse {
-  0%, 100% { box-shadow: 0 1px 2px oklch(0.264 0.048 251 / 0.06); }
-  50% { box-shadow: 0 0 0 3px oklch(0.487 0.185 27.5 / 0.12); }
+  0%,
+  100% {
+    box-shadow: 0 1px 2px oklch(0.264 0.048 251 / 0.06);
+  }
+  50% {
+    box-shadow: 0 0 0 3px oklch(0.487 0.185 27.5 / 0.12);
+  }
 }
 
 @utility bhumitra-pulse {
@@ -244,8 +259,13 @@ input:-webkit-autofill:active {
 }
 
 @keyframes bhumitra-spotlight {
-  0%, 100% { box-shadow: 0 0 0 0 oklch(0.264 0.048 251 / 0); }
-  50% { box-shadow: 0 0 0 3px oklch(0.264 0.048 251 / 0.55); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 oklch(0.264 0.048 251 / 0);
+  }
+  50% {
+    box-shadow: 0 0 0 3px oklch(0.264 0.048 251 / 0.55);
+  }
 }
 
 @utility demo-spotlight {
@@ -255,9 +275,27 @@ input:-webkit-autofill:active {
   border-radius: 6px;
 }
 
+/* Slow drift for the decorative GIS backdrop on the officer sign-in screen. */
+@keyframes bhumitra-map-drift {
+  from {
+    transform: scale(1.06) translate3d(-0.8%, -0.5%, 0);
+  }
+  to {
+    transform: scale(1.1) translate3d(0.8%, 0.6%, 0);
+  }
+}
+
+@utility map-drift {
+  animation: bhumitra-map-drift 90s ease-in-out infinite alternate;
+}
+
 @keyframes bhumitra-shimmer {
-  0% { background-position: -420px 0; }
-  100% { background-position: 420px 0; }
+  0% {
+    background-position: -420px 0;
+  }
+  100% {
+    background-position: 420px 0;
+  }
 }
 
 @utility shimmer {

@@ -37,7 +37,7 @@ export function Masthead({ onOpenNav }: { onOpenNav?: () => void }) {
           >
             <Menu className="size-4" strokeWidth={1.75} />
           </button>
-          <Link to="/" className="flex min-w-0 items-center gap-2.5">
+          <Link to="/dashboard" className="flex min-w-0 items-center gap-2.5">
             <span className="grid size-9 shrink-0 place-items-center rounded-full bg-navy text-navy-foreground">
               <Landmark className="size-5" strokeWidth={1.75} />
             </span>

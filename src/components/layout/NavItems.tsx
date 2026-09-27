@@ -1,7 +1,7 @@
 import { LayoutDashboard, FileStack, Calculator, Map, ShieldAlert, Settings2 } from "lucide-react";
 
 export const NAV = [
-  { to: "/", labelKey: "nav.dashboard", icon: LayoutDashboard },
+  { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
   { to: "/proposals", labelKey: "nav.proposals", icon: FileStack },
   { to: "/calculator", labelKey: "nav.calculator", icon: Calculator },
   { to: "/map-view", labelKey: "nav.map", icon: Map },

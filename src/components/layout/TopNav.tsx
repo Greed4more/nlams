@@ -20,7 +20,7 @@ export function TopNav() {
               <Link
                 to={to}
                 title={label}
-                activeOptions={{ exact: to === "/" }}
+                activeOptions={{ exact: to === "/dashboard" }}
                 className="flex items-center gap-2 border-b-2 border-transparent px-3.5 py-2.5 text-[12.5px] font-medium text-navy-foreground/80 transition-colors hover:bg-navy-hover hover:text-navy-foreground lg:px-4"
                 activeProps={{
                   className: "border-status-info bg-navy-hover text-navy-foreground",
@@ -64,7 +64,7 @@ export function MobileNavList({ onNavigate }: { onNavigate?: () => void }) {
                   to={to}
                   title={label}
                   onClick={onNavigate}
-                  activeOptions={{ exact: to === "/" }}
+                  activeOptions={{ exact: to === "/dashboard" }}
                   className={cn(
                     "flex items-center gap-2.5 rounded-[4px] px-2.5 py-2 text-[13px] font-medium text-navy-foreground/80 transition-colors hover:bg-navy-hover hover:text-navy-foreground",
                   )}

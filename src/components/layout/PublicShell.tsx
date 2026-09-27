@@ -26,12 +26,20 @@ export function PublicShell({ children }: { children: ReactNode }) {
               </div>
             </div>
           </Link>
-          <Link
-            to="/sign-in"
-            className="shrink-0 rounded-[4px] border border-white/20 px-3 py-1.5 text-[11.5px] font-medium text-navy-foreground/90 transition-colors hover:bg-navy-hover"
-          >
-            Officer Sign In
-          </Link>
+          <div className="flex shrink-0 items-center gap-2">
+            <Link
+              to="/"
+              className="rounded-[4px] px-2.5 py-1.5 text-[11.5px] font-medium text-navy-foreground/80 transition-colors hover:bg-navy-hover hover:text-navy-foreground"
+            >
+              Home
+            </Link>
+            <Link
+              to="/sign-in"
+              className="rounded-[4px] border border-white/20 px-3 py-1.5 text-[11.5px] font-medium text-navy-foreground/90 transition-colors hover:bg-navy-hover"
+            >
+              Officer Sign In
+            </Link>
+          </div>
         </div>
       </header>
 
