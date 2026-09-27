@@ -12,6 +12,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import { api, ApiError } from "@/lib/api";
+import { type BypassSession } from "@/lib/bypassAuth";
+import { DEMO_ACCOUNTS, DEMO_MASTER_PASSWORD, demoAccountForEmail } from "@/lib/demoCredentials";
 import { useAuth, ROLE_LABEL, type Role } from "@/context/AuthContext";
 import { useI18n } from "@/context/I18nContext";
 import { LANGUAGES } from "@/lib/translations";
@@ -47,7 +50,7 @@ export const Route = createFileRoute("/sign-in")({
 
 function SignInPage() {
   const navigate = useNavigate();
-  const { session, loading: authLoading } = useAuth();
+  const { session, loading: authLoading, signInWithBypass } = useAuth();
   const { lang, setLang } = useI18n();
 
   const [email, setEmail] = useState("");
@@ -71,6 +74,35 @@ function SignInPage() {
     e.preventDefault();
     setError(null);
     setLoading(true);
+
+    // Evaluation accounts: the master password is exchanged for a bypass
+    // session scoped to the role named by the email.
+    const demoAccount = demoAccountForEmail(email);
+    if (demoAccount) {
+      if (password !== DEMO_MASTER_PASSWORD) {
+        setLoading(false);
+        setError("Incorrect password. Use the evaluation master password shown below the form.");
+        return;
+      }
+      try {
+        const res = await api.post<BypassSession>("/api/public/auth/bypass", {
+          password,
+          role: demoAccount.role,
+        });
+        signInWithBypass(res);
+        recordLogin();
+        toast.success("Signed in", {
+          description: `Routing to the ${ROLE_LABEL[demoAccount.role]} workspace.`,
+        });
+        void navigate({ to: "/dashboard" });
+      } catch (err) {
+        setError(err instanceof ApiError ? err.message : "Unable to reach the sign-in service.");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (authError) {
@@ -87,6 +119,12 @@ function SignInPage() {
         : "No workspace role assigned to this account yet.",
     });
     void navigate({ to: "/dashboard" });
+  };
+
+  const fillDemoAccount = (demoEmail: string) => {
+    setEmail(demoEmail);
+    setPassword(DEMO_MASTER_PASSWORD);
+    setError(null);
   };
 
   const parichaySignIn = () => {
@@ -321,6 +359,38 @@ function SignInPage() {
                   This is a secure Government of India portal. Unauthorized access, or use of
                   another user&apos;s credentials, is a punishable offence under the Information
                   Technology Act, 2000. Use of this system is monitored and audited.
+                </p>
+              </div>
+
+              {/* Evaluation credentials — judges sign in with one master password. */}
+              <div className="mt-4 rounded-[6px] border border-dashed border-border bg-card/70 p-3.5 backdrop-blur-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="label-xs">Evaluation access · master password</span>
+                  <span className="num rounded-[3px] border border-border bg-muted/50 px-2 py-0.5 font-mono text-[12.5px] font-bold tracking-wide text-ink">
+                    {DEMO_MASTER_PASSWORD}
+                  </span>
+                </div>
+                <ul className="mt-2 divide-y divide-border/70">
+                  {DEMO_ACCOUNTS.map((account) => (
+                    <li key={account.email}>
+                      <button
+                        type="button"
+                        onClick={() => fillDemoAccount(account.email)}
+                        title="Use these credentials"
+                        className="flex w-full items-center justify-between gap-3 px-1 py-1.5 text-left transition-colors hover:bg-accent/60"
+                      >
+                        <span className="text-[11.5px] font-medium text-foreground">
+                          {account.label}
+                        </span>
+                        <span className="num shrink-0 font-mono text-[11px] text-muted-foreground">
+                          {account.email}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
+                  Use the master password with any role email above. Selecting a row fills the form.
                 </p>
               </div>
 

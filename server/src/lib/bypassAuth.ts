@@ -9,7 +9,7 @@ import type { Role } from "@prisma/client";
  * can still sign in. Not meant to be secure against a determined attacker —
  * change or unset BYPASS_PASSWORD before deploying this anywhere real.
  */
-export const BYPASS_PASSWORD = process.env["BYPASS_PASSWORD"] ?? "nlams-demo-2026";
+export const BYPASS_PASSWORD = process.env["BYPASS_PASSWORD"] ?? "admin123";
 
 export const BYPASS_TOKEN_PREFIX = "bypass_";
 

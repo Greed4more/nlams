@@ -11,7 +11,7 @@ import { supabaseAdmin } from "../src/lib/supabaseAdmin.js";
  * Safe to re-run — existing accounts (matched by email) get their
  * app_metadata updated in place rather than being duplicated.
  */
-const DEMO_PASSWORD = "NlamsDemo!2026";
+const DEMO_PASSWORD = "admin123";
 
 const PERSONAS = [
   {

@@ -23,4 +23,4 @@ services:
       - key: ALLOW_DEMO_AUTH
         value: "true"
       - key: BYPASS_PASSWORD
-        value: "nlams-demo-2026"
+        value: "admin123"
