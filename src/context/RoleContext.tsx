@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { Proposal } from "@/data/mockData";
+import { STATES, type Proposal } from "@/data/mockData";
 import { useAuth, ROLE_LABEL, ROLE_CAN_ACT, type Role } from "@/context/AuthContext";
 import { useProposalsQuery } from "@/hooks/useProposals";
 import { api, ApiError } from "@/lib/api";
@@ -56,6 +56,11 @@ interface RoleContextValue {
   roleLabel: string;
   /** null = national scope (all states) */
   states: string[] | null;
+  /** Officer-selected region view within the authorised scope; null = whole scope. */
+  activeState: string | null;
+  setActiveState: (state: string | null) => void;
+  /** States selectable in the header for the signed-in role. */
+  stateOptions: string[];
   dashboardTitle: string;
   scopeLabel: string;
   canAct: boolean;
@@ -88,6 +93,7 @@ function initialsOf(name: string): string {
 export function RoleProvider({ children }: { children: ReactNode }) {
   const { role, states: rawAuthStates, displayName, signInWithBypass } = useAuth();
   const [switchingPersona, setSwitchingPersona] = useState(false);
+  const [requestedState, setRequestedState] = useState<string | null>(null);
   const qc = useQueryClient();
 
   const { data, isLoading } = useProposalsQuery();
@@ -95,16 +101,26 @@ export function RoleProvider({ children }: { children: ReactNode }) {
 
   const states = rawAuthStates.length > 0 ? rawAuthStates : null;
 
+  // Region view selected in the header. Ignored (reset to whole scope) if the
+  // signed-in role isn't authorised for that state — e.g. after a persona switch.
+  const activeState =
+    requestedState && (!states || states.includes(requestedState)) ? requestedState : null;
+  const stateOptions = useMemo(() => states ?? STATES, [states]);
+
   const value = useMemo<RoleContextValue>(() => {
-    const inScope = (p: Proposal) => !states || states.includes(p.state);
+    const inScope = (p: Proposal) =>
+      (!states || states.includes(p.state)) && (!activeState || p.state === activeState);
     const roleLabel = role ? ROLE_LABEL[role] : "No role assigned";
-    const scopeLabel = states ? states.join(", ") : "All states (National)";
+    const scopeLabel = activeState ?? (states ? states.join(", ") : "All states (National)");
     const dashboardTitle = states ? `${roleLabel} Workspace — ${scopeLabel}` : "National Overview";
 
     return {
       role,
       roleLabel,
       states,
+      activeState,
+      setActiveState: (next: string | null) => setRequestedState(next),
+      stateOptions,
       dashboardTitle,
       scopeLabel,
       canAct: role ? ROLE_CAN_ACT[role] : false,
@@ -142,7 +158,18 @@ export function RoleProvider({ children }: { children: ReactNode }) {
         }
       },
     };
-  }, [role, states, displayName, proposals, isLoading, switchingPersona, qc, signInWithBypass]);
+  }, [
+    role,
+    states,
+    activeState,
+    stateOptions,
+    displayName,
+    proposals,
+    isLoading,
+    switchingPersona,
+    qc,
+    signInWithBypass,
+  ]);
 
   return <RoleContext.Provider value={value}>{children}</RoleContext.Provider>;
 }

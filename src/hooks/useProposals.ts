@@ -3,10 +3,16 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import type { Proposal } from "@/data/mockData";
 
+/** Live register — polled every 15s so officer counters and the table stay in
+ * step with the server (see LiveSyncBadge). */
+export const PROPOSALS_POLL_MS = 15_000;
+
 export const proposalsQueryOptions = () =>
   queryOptions({
     queryKey: ["proposals"],
     queryFn: () => api.get<Proposal[]>("/api/proposals"),
+    refetchInterval: PROPOSALS_POLL_MS,
+    refetchIntervalInBackground: false,
   });
 
 export const proposalQueryOptions = (id: string) =>

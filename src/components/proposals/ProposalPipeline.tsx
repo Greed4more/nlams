@@ -1,13 +1,22 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ChevronRight, ChevronUp, ChevronDown, Search, SearchX } from "lucide-react";
-import { STAGE_ORDER, STATES, REQUIRING_BODY_LIST, type Proposal } from "@/data/mockData";
+import { ChevronRight, ChevronUp, ChevronDown, FileStack, Search, SearchX } from "lucide-react";
+import { STAGE_ORDER, REQUIRING_BODY_LIST, type Proposal } from "@/data/mockData";
 import { getSlaStatus, type SlaStatus } from "@/lib/slaRules";
+import {
+  formatSubmittedAt,
+  parcelCount,
+  reviewBucket,
+  selectedAreaHa,
+  type ReviewBucket,
+} from "@/lib/landMetrics";
 import { Route } from "@/routes/proposals.index";
 import { useRole } from "@/context/RoleContext";
 import { useSpotlight } from "@/context/DemoContext";
 import { fileNumberOf } from "@/lib/fileNumber";
 import { SlaBadge, StageMiniBar, StagePill, SHORT_STAGE } from "./bits";
+import { VerificationSummaryCards } from "./VerificationSummaryCards";
+import { LiveSyncBadge } from "./LiveSyncBadge";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -18,7 +27,18 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-type SortKey = "id" | "projectName" | "state" | "stage" | "area" | "families" | "sla" | "activity";
+type SortKey =
+  | "id"
+  | "projectName"
+  | "state"
+  | "stage"
+  | "area"
+  | "selected"
+  | "parcels"
+  | "families"
+  | "submitted"
+  | "sla"
+  | "activity";
 
 const ALL = "__all__";
 
@@ -32,9 +52,19 @@ const SORT_LABEL: Record<SortKey, string> = {
   projectName: "project name",
   state: "state",
   stage: "statutory stage",
-  area: "area",
+  area: "land required",
+  selected: "selected area",
+  parcels: "parcel count",
   families: "affected families",
+  submitted: "submission timestamp",
   sla: "SLA urgency (nearest lapse first)",
+};
+
+const REVIEW_HEADING: Record<ReviewBucket, string> = {
+  NEW: "New proposals",
+  UNDER_VERIFICATION: "Proposals under verification",
+  RETURNED: "Proposals returned for correction",
+  VERIFIED: "Verified proposals",
 };
 
 const CHIPS = [
@@ -47,7 +77,7 @@ const CHIPS = [
 type ChipKey = (typeof CHIPS)[number]["key"];
 
 export function ProposalPipeline() {
-  const { scopedProposals } = useRole();
+  const { scopedProposals, activeState, setActiveState, stateOptions } = useRole();
   const spotlight = useSpotlight("pipeline-chips");
   const rows = useMemo(
     () => scopedProposals.map((p) => ({ p, sla: getSlaStatus(p) })),
@@ -56,11 +86,16 @@ export function ProposalPipeline() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
-  const [state, setState] = useState(ALL);
   const [body, setBody] = useState(ALL);
   const [stage, setStage] = useState(ALL);
   const [slaFilter, setSlaFilter] = useState(ALL);
+  const [review, setReview] = useState<ReviewBucket | "all">("all");
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "activity", dir: -1 });
+
+  // Region view is owned by the header switcher; the pipeline's State filter
+  // stays in step with it rather than keeping a second, divergent selection.
+  const state = activeState ?? ALL;
+  const setState = (v: string) => setActiveState(v === ALL ? null : v);
 
   const chip: ChipKey =
     search.filter === "breached"
@@ -91,13 +126,14 @@ export function ProposalPipeline() {
       if (body !== ALL && p.requiringBody !== body) return false;
       if (stage !== ALL && p.currentStage !== stage) return false;
       if (slaFilter !== ALL && sla.status !== (slaFilter as SlaStatus)) return false;
+      if (review !== "all" && reviewBucket(p) !== review) return false;
       if (chip === "breached" && sla.status !== "BREACHED") return false;
       if (chip === "at-risk" && sla.status !== "AT_RISK") return false;
       if (chip === "awaiting-award" && !(["SEC_11", "SEC_19"] as string[]).includes(p.currentStage))
         return false;
       return true;
     });
-  }, [rows, q, state, body, stage, slaFilter, chip]);
+  }, [rows, q, state, body, stage, slaFilter, chip, review]);
 
   const sorted = useMemo(() => {
     const val = (r: { p: Proposal; sla: ReturnType<typeof getSlaStatus> }) => {
@@ -112,8 +148,14 @@ export function ProposalPipeline() {
           return STAGE_ORDER.indexOf(r.p.currentStage);
         case "area":
           return r.p.totalAreaHa;
+        case "selected":
+          return selectedAreaHa(r.p);
+        case "parcels":
+          return parcelCount(r.p);
         case "families":
           return r.p.affectedFamilies;
+        case "submitted":
+          return new Date(r.p.initiatedAt).getTime();
         case "sla":
           return r.sla.daysRemaining === Infinity ? 99999 : r.sla.daysRemaining;
         case "activity":
@@ -137,7 +179,8 @@ export function ProposalPipeline() {
     body !== ALL ||
     stage !== ALL ||
     slaFilter !== ALL ||
-    chip !== "all";
+    chip !== "all" ||
+    review !== "all";
 
   const clearFilters = () => {
     setQ("");
@@ -145,8 +188,23 @@ export function ProposalPipeline() {
     setBody(ALL);
     setStage(ALL);
     setSlaFilter(ALL);
+    setReview("all");
     navigate({ to: "/proposals", search: {} });
   };
+
+  const awaitingCount = useMemo(
+    () => sorted.filter(({ p }) => reviewBucket(p) !== "VERIFIED").length,
+    [sorted],
+  );
+  const registerHeading =
+    review !== "all"
+      ? REVIEW_HEADING[review]
+      : chip === "breached"
+        ? "High priority proposals"
+        : hasFilters
+          ? "Acquisition register"
+          : "Projects awaiting verification";
+  const registerCount = hasFilters ? sorted.length : awaitingCount;
 
   const Th = ({
     label,
@@ -180,6 +238,14 @@ export function ProposalPipeline() {
 
   return (
     <div className="space-y-3">
+      <VerificationSummaryCards
+        rows={rows}
+        review={review}
+        onReviewChange={setReview}
+        highPriority={chip === "breached"}
+        onHighPriorityChange={(v) => setChip(v ? "breached" : "all")}
+      />
+
       {/* Filter bar */}
       <div className="panel p-3">
         <div className="flex flex-wrap items-center gap-2">
@@ -193,7 +259,12 @@ export function ProposalPipeline() {
             />
           </div>
 
-          <FilterSelect value={state} onChange={setState} placeholder="State" options={STATES} />
+          <FilterSelect
+            value={state}
+            onChange={setState}
+            placeholder="State"
+            options={stateOptions}
+          />
           <FilterSelect
             value={body}
             onChange={setBody}
@@ -249,40 +320,63 @@ export function ProposalPipeline() {
         </div>
       </div>
 
+      {/* Register heading + live sync status */}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-0.5">
+        <div className="flex items-center gap-2">
+          <FileStack className="size-4 shrink-0 text-navy" />
+          <h2 className="text-[13.5px] font-semibold text-foreground">
+            {registerHeading} <span className="num text-muted-foreground">({registerCount})</span>
+          </h2>
+        </div>
+        <LiveSyncBadge />
+      </div>
+
       {/* Mobile stacked cards */}
       <div className="space-y-2 md:hidden">
-        {sorted.map(({ p, sla }) => (
-          <Link
-            key={p.id}
-            to="/proposals/$id"
-            params={{ id: p.id }}
-            className={cn(
-              "panel block p-3",
-              sla.status === "BREACHED" && "bg-status-critical/[0.045]",
-              search.focus === p.id && "ring-1 ring-inset ring-status-info/40",
-            )}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="num text-[11px] font-semibold text-status-info">{p.id}</span>
-              <SlaBadge sla={sla} />
-            </div>
-            <div className="num text-[10px] text-muted-foreground">{fileNumberOf(p)}</div>
-            <div className="mt-1 truncate text-[13px] font-medium text-foreground">
-              {p.projectName}
-            </div>
-            <div className="truncate text-[11px] text-muted-foreground">{p.requiringBody}</div>
-            <div className="mt-2 flex items-center justify-between gap-2">
-              <div className="min-w-0 text-[11px] text-muted-foreground">
-                {p.state} · {p.district}
+        {sorted.map(({ p, sla }) => {
+          const submitted = formatSubmittedAt(p.initiatedAt);
+          return (
+            <Link
+              key={p.id}
+              to="/proposals/$id"
+              params={{ id: p.id }}
+              className={cn(
+                "panel block p-3",
+                sla.status === "BREACHED" && "bg-status-critical/[0.045]",
+                search.focus === p.id && "ring-1 ring-inset ring-status-info/40",
+              )}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="num text-[11px] font-semibold text-status-info">{p.id}</span>
+                <SlaBadge sla={sla} />
               </div>
-              <StagePill stage={p.currentStage} />
-            </div>
-            <div className="num mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
-              <span>{p.totalAreaHa.toFixed(2)} Ha</span>
-              <span>{p.affectedFamilies} families</span>
-            </div>
-          </Link>
-        ))}
+              <div className="num text-[10px] text-muted-foreground">{fileNumberOf(p)}</div>
+              <div className="mt-1 truncate text-[13px] font-medium text-foreground">
+                {p.projectName}
+              </div>
+              <div className="truncate text-[11px] text-muted-foreground">{p.requiringBody}</div>
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <div className="min-w-0 text-[11px] text-muted-foreground">
+                  {p.state} · {p.district}
+                </div>
+                <StagePill stage={p.currentStage} />
+              </div>
+              <div className="num mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
+                <span>
+                  Req. {p.totalAreaHa.toFixed(2)} Ha &middot; Sel. {selectedAreaHa(p).toFixed(2)} Ha
+                </span>
+                <span>
+                  {parcelCount(p)} parcel{parcelCount(p) === 1 ? "" : "s"} &middot;{" "}
+                  {p.affectedFamilies} families
+                </span>
+              </div>
+              <div className="num mt-1 text-[10.5px] text-muted-foreground">
+                Submitted {submitted.date}
+                {submitted.time ? `, ${submitted.time}` : ""}
+              </div>
+            </Link>
+          );
+        })}
         {sorted.length === 0 && (
           <div className="panel px-4 py-10 text-center">
             <SearchX className="mx-auto size-5 text-muted-foreground/50" />
@@ -312,8 +406,11 @@ export function ProposalPipeline() {
               <Th label="State / District" sortKey="state" />
               <Th label="Stage" sortKey="stage" />
               <Th label="Progress" />
-              <Th label="Area (Ha)" sortKey="area" className="text-right" />
+              <Th label="Land Req. (Ha)" sortKey="area" className="text-right" />
+              <Th label="Selected (Ha)" sortKey="selected" className="text-right" />
+              <Th label="Parcels" sortKey="parcels" className="text-right" />
               <Th label="Families" sortKey="families" className="text-right" />
+              <Th label="Submitted" sortKey="submitted" />
               <Th label="Last Movement" sortKey="activity" />
               <Th label="SLA" sortKey="sla" />
               <th className="w-8 border-b border-border" />
@@ -367,7 +464,14 @@ export function ProposalPipeline() {
                 <td className="num whitespace-nowrap px-3 py-2 text-right">
                   {p.totalAreaHa.toFixed(2)}
                 </td>
+                <td className="num whitespace-nowrap px-3 py-2 text-right">
+                  {selectedAreaHa(p).toFixed(2)}
+                </td>
+                <td className="num px-3 py-2 text-right">{parcelCount(p)}</td>
                 <td className="num px-3 py-2 text-right">{p.affectedFamilies}</td>
+                <td className="whitespace-nowrap px-3 py-2">
+                  <SubmittedCell iso={p.initiatedAt} />
+                </td>
                 <td className="num whitespace-nowrap px-3 py-2 text-[12px] text-muted-foreground">
                   {new Date(p.stageEnteredAt).toLocaleDateString("en-IN", {
                     day: "2-digit",
@@ -387,7 +491,7 @@ export function ProposalPipeline() {
             ))}
             {sorted.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-3 py-12 text-center">
+                <td colSpan={13} className="px-3 py-12 text-center">
                   <SearchX className="mx-auto size-5 text-muted-foreground/50" />
                   <p className="mt-2 text-[13px] text-muted-foreground">
                     No proposals match the current filters.
@@ -407,6 +511,17 @@ export function ProposalPipeline() {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+/** Explicit submission timestamp — date over time, tabular figures. */
+function SubmittedCell({ iso }: { iso: string }) {
+  const { date, time } = formatSubmittedAt(iso);
+  return (
+    <div className="num text-[12px] text-foreground">
+      {date}
+      {time ? <div className="text-[10.5px] text-muted-foreground">{time}</div> : null}
     </div>
   );
 }
