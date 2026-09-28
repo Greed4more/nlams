@@ -2,7 +2,8 @@ import "dotenv/config";
 import { supabaseAdmin } from "../src/lib/supabaseAdmin.js";
 
 /**
- * Creates the four NLAMS demo personas as real Supabase Auth users, with the
+ * Creates the NLAMS demo personas (including the Finance Officer) as real
+ * Supabase Auth users, with the
  * role (and state scope) the app reads from app_metadata. Run once after
  * you've added SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY to server/.env:
  *
@@ -37,6 +38,12 @@ const PERSONAS = [
     name: "M. Vaidya",
     role: "STATE_REVENUE",
     states: ["Maharashtra"],
+  },
+  {
+    email: "finance.officer@nlams.demo",
+    name: "M. Adiga",
+    role: "FINANCE_OFFICER",
+    states: [] as string[],
   },
 ] as const;
 

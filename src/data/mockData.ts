@@ -30,6 +30,8 @@ export interface DocumentRef {
   lastVerifiedAt: string | null;
 }
 
+export type FinancialStatus = "PENDING" | "APPROVED";
+
 export interface Proposal {
   id: string;
   projectName: string;
@@ -44,6 +46,15 @@ export interface Proposal {
   parcels: Parcel[];
   documents: DocumentRef[];
   compensation: { assessed: number; disbursed: number; pending: number };
+  /** Finance Officer clearance state — PENDING until the financial assessment is approved. */
+  financialStatus: FinancialStatus;
+}
+
+/** Stages at/after which a proposal counts as approved by the Land Acquisition Authority. */
+export const LAO_APPROVED_STAGES: RfctlarrStage[] = ["SEC_19", "AWARD", "RR_COMPLETE"];
+
+export function isLaoApproved(stage: RfctlarrStage): boolean {
+  return LAO_APPROVED_STAGES.includes(stage);
 }
 
 /**
@@ -1049,6 +1060,11 @@ export function buildProposals(): Proposal[] {
           disbursed,
           pending: parcelAssessed - disbursed,
         },
+        // Completed projects already carry their financial clearance; some
+        // Award-stage proposals do too, so the Finance Officer register shows
+        // both Pending and Approved rows out of the box.
+        financialStatus:
+          stage === "RR_COMPLETE" || (stage === "AWARD" && i % 2 === 0) ? "APPROVED" : "PENDING",
       } satisfies Proposal);
 
       i += 1;

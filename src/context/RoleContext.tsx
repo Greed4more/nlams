@@ -49,6 +49,14 @@ export const PERSONA_PRESETS: Record<Role, PersonaPreset> = {
     states: ["Maharashtra"],
     description: "Inter-district monitoring, requiring body outlays & land banks",
   },
+  FINANCE_OFFICER: {
+    role: "FINANCE_OFFICER",
+    label: "Finance Officer",
+    name: "M. Adiga",
+    states: [],
+    description:
+      "Financial sanctions, LAO-approved projects, automatic compensation assessment & DBT clearance",
+  },
 };
 
 interface RoleContextValue {

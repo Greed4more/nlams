@@ -18,6 +18,7 @@ import { DolrSecretaryDashboard } from "@/components/dashboard/roles/DolrSecreta
 import { DistrictCollectorDashboard } from "@/components/dashboard/roles/DistrictCollectorDashboard";
 import { LaoDashboard } from "@/components/dashboard/roles/LaoDashboard";
 import { StateRevenueDashboard } from "@/components/dashboard/roles/StateRevenueDashboard";
+import { FinanceOfficerDashboard } from "@/components/dashboard/roles/FinanceOfficerDashboard";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -73,6 +74,7 @@ function Dashboard() {
       {role === "DISTRICT_COLLECTOR" && <DistrictCollectorDashboard />}
       {role === "LAO" && <LaoDashboard />}
       {role === "STATE_REVENUE" && <StateRevenueDashboard />}
+      {role === "FINANCE_OFFICER" && <FinanceOfficerDashboard />}
 
       {!role && (
         <div className="space-y-3">

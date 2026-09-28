@@ -51,6 +51,7 @@ export function serializeProposal(p: ProposalWithRelations) {
     currentStage: p.currentStage,
     stageEnteredAt: p.stageEnteredAt.toISOString(),
     initiatedAt: p.initiatedAt.toISOString(),
+    financialStatus: p.financialStatus,
     totalAreaHa: Number(totalAreaHa.toFixed(2)),
     affectedFamilies: p.affectedFamilies,
     parcels: p.parcels.map(serializeParcel),

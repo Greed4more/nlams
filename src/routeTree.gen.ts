@@ -17,6 +17,8 @@ import { Route as JudgeAccessRouteImport } from './routes/judge-access'
 import { Route as MapViewRouteImport } from './routes/map-view'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as AdminAdaptersRouteImport } from './routes/admin.adapters'
+import { Route as ApprovedProjectsIndexRouteImport } from './routes/approved-projects.index'
+import { Route as ApprovedProjectsIdRouteImport } from './routes/approved-projects.$id'
 import { Route as DossierIdRouteImport } from './routes/dossier.$id'
 import { Route as ProposalsIndexRouteImport } from './routes/proposals.index'
 import { Route as ProposalsIdRouteImport } from './routes/proposals.$id'
@@ -64,6 +66,16 @@ const SignInRoute = SignInRouteImport.update({
 const AdminAdaptersRoute = AdminAdaptersRouteImport.update({
   id: '/admin/adapters',
   path: '/admin/adapters',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApprovedProjectsIndexRoute = ApprovedProjectsIndexRouteImport.update({
+  id: '/approved-projects/',
+  path: '/approved-projects/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApprovedProjectsIdRoute = ApprovedProjectsIdRouteImport.update({
+  id: '/approved-projects/$id',
+  path: '/approved-projects/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DossierIdRoute = DossierIdRouteImport.update({
@@ -116,12 +128,14 @@ export interface FileRoutesByFullPath {
   '/map-view': typeof MapViewRoute
   '/sign-in': typeof SignInRoute
   '/admin/adapters': typeof AdminAdaptersRoute
+  '/approved-projects/$id': typeof ApprovedProjectsIdRoute
   '/dossier/$id': typeof DossierIdRoute
   '/proposals/$id': typeof ProposalsIdRoute
   '/public/$id': typeof PublicIdRoute
   '/public/landowners': typeof PublicLandownersRoute
   '/public/objections': typeof PublicObjectionsRoute
   '/public/rr': typeof PublicRrRoute
+  '/approved-projects/': typeof ApprovedProjectsIndexRoute
   '/proposals/': typeof ProposalsIndexRoute
   '/public/': typeof PublicIndexRoute
 }
@@ -134,12 +148,14 @@ export interface FileRoutesByTo {
   '/map-view': typeof MapViewRoute
   '/sign-in': typeof SignInRoute
   '/admin/adapters': typeof AdminAdaptersRoute
+  '/approved-projects/$id': typeof ApprovedProjectsIdRoute
   '/dossier/$id': typeof DossierIdRoute
   '/proposals/$id': typeof ProposalsIdRoute
   '/public/$id': typeof PublicIdRoute
   '/public/landowners': typeof PublicLandownersRoute
   '/public/objections': typeof PublicObjectionsRoute
   '/public/rr': typeof PublicRrRoute
+  '/approved-projects': typeof ApprovedProjectsIndexRoute
   '/proposals': typeof ProposalsIndexRoute
   '/public': typeof PublicIndexRoute
 }
@@ -153,12 +169,14 @@ export interface FileRoutesById {
   '/map-view': typeof MapViewRoute
   '/sign-in': typeof SignInRoute
   '/admin/adapters': typeof AdminAdaptersRoute
+  '/approved-projects/$id': typeof ApprovedProjectsIdRoute
   '/dossier/$id': typeof DossierIdRoute
   '/proposals/$id': typeof ProposalsIdRoute
   '/public/$id': typeof PublicIdRoute
   '/public/landowners': typeof PublicLandownersRoute
   '/public/objections': typeof PublicObjectionsRoute
   '/public/rr': typeof PublicRrRoute
+  '/approved-projects/': typeof ApprovedProjectsIndexRoute
   '/proposals/': typeof ProposalsIndexRoute
   '/public/': typeof PublicIndexRoute
 }
@@ -173,12 +191,14 @@ export interface FileRouteTypes {
     | '/map-view'
     | '/sign-in'
     | '/admin/adapters'
+    | '/approved-projects/$id'
     | '/dossier/$id'
     | '/proposals/$id'
     | '/public/$id'
     | '/public/landowners'
     | '/public/objections'
     | '/public/rr'
+    | '/approved-projects/'
     | '/proposals/'
     | '/public/'
   fileRoutesByTo: FileRoutesByTo
@@ -191,12 +211,14 @@ export interface FileRouteTypes {
     | '/map-view'
     | '/sign-in'
     | '/admin/adapters'
+    | '/approved-projects/$id'
     | '/dossier/$id'
     | '/proposals/$id'
     | '/public/$id'
     | '/public/landowners'
     | '/public/objections'
     | '/public/rr'
+    | '/approved-projects'
     | '/proposals'
     | '/public'
   id:
@@ -209,12 +231,14 @@ export interface FileRouteTypes {
     | '/map-view'
     | '/sign-in'
     | '/admin/adapters'
+    | '/approved-projects/$id'
     | '/dossier/$id'
     | '/proposals/$id'
     | '/public/$id'
     | '/public/landowners'
     | '/public/objections'
     | '/public/rr'
+    | '/approved-projects/'
     | '/proposals/'
     | '/public/'
   fileRoutesById: FileRoutesById
@@ -228,12 +252,14 @@ export interface RootRouteChildren {
   MapViewRoute: typeof MapViewRoute
   SignInRoute: typeof SignInRoute
   AdminAdaptersRoute: typeof AdminAdaptersRoute
+  ApprovedProjectsIdRoute: typeof ApprovedProjectsIdRoute
   DossierIdRoute: typeof DossierIdRoute
   ProposalsIdRoute: typeof ProposalsIdRoute
   PublicIdRoute: typeof PublicIdRoute
   PublicLandownersRoute: typeof PublicLandownersRoute
   PublicObjectionsRoute: typeof PublicObjectionsRoute
   PublicRrRoute: typeof PublicRrRoute
+  ApprovedProjectsIndexRoute: typeof ApprovedProjectsIndexRoute
   ProposalsIndexRoute: typeof ProposalsIndexRoute
   PublicIndexRoute: typeof PublicIndexRoute
 }
@@ -294,6 +320,20 @@ declare module '@tanstack/react-router' {
       path: '/admin/adapters'
       fullPath: '/admin/adapters'
       preLoaderRoute: typeof AdminAdaptersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/approved-projects/': {
+      id: '/approved-projects/'
+      path: '/approved-projects'
+      fullPath: '/approved-projects/'
+      preLoaderRoute: typeof ApprovedProjectsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/approved-projects/$id': {
+      id: '/approved-projects/$id'
+      path: '/approved-projects/$id'
+      fullPath: '/approved-projects/$id'
+      preLoaderRoute: typeof ApprovedProjectsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dossier/$id': {
@@ -364,12 +404,14 @@ const rootRouteChildren: RootRouteChildren = {
   MapViewRoute: MapViewRoute,
   SignInRoute: SignInRoute,
   AdminAdaptersRoute: AdminAdaptersRoute,
+  ApprovedProjectsIdRoute: ApprovedProjectsIdRoute,
   DossierIdRoute: DossierIdRoute,
   ProposalsIdRoute: ProposalsIdRoute,
   PublicIdRoute: PublicIdRoute,
   PublicLandownersRoute: PublicLandownersRoute,
   PublicObjectionsRoute: PublicObjectionsRoute,
   PublicRrRoute: PublicRrRoute,
+  ApprovedProjectsIndexRoute: ApprovedProjectsIndexRoute,
   ProposalsIndexRoute: ProposalsIndexRoute,
   PublicIndexRoute: PublicIndexRoute,
 }

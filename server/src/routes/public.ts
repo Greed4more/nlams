@@ -20,7 +20,7 @@ export const publicRouter = Router();
 
 const bypassLoginBody = z.object({
   password: z.string(),
-  role: z.enum(["DOLR_SECRETARY", "DISTRICT_COLLECTOR", "LAO", "STATE_REVENUE"]),
+  role: z.enum(["DOLR_SECRETARY", "DISTRICT_COLLECTOR", "LAO", "STATE_REVENUE", "FINANCE_OFFICER"]),
 });
 
 /**
@@ -87,7 +87,8 @@ publicRouter.get("/proposals/search", async (req, res) => {
   if (state) where["state"] = String(state);
   if (district) where["district"] = String(district);
   if (name) where["projectName"] = { contains: String(name), mode: "insensitive" };
-  if (ulpin) where["parcels"] = { some: { ulpin: { contains: String(ulpin), mode: "insensitive" } } };
+  if (ulpin)
+    where["parcels"] = { some: { ulpin: { contains: String(ulpin), mode: "insensitive" } } };
 
   const proposals = await prisma.proposal.findMany({
     where,
@@ -283,7 +284,10 @@ function serializeLandownerRecord(p: ParcelWithProposal) {
     acquiredAreaAcres,
     acquiredAreaHa: round2(acquiredHa),
     compensationStatus: p.compensationDisbursed > 0 ? "APPROVED" : "IN_PROGRESS",
-    disbursed: Math.round(compensationRecords.totalLandCompensation * p.compensationDisbursed / Math.max(p.compensationAssessed, 1)),
+    disbursed: Math.round(
+      (compensationRecords.totalLandCompensation * p.compensationDisbursed) /
+        Math.max(p.compensationAssessed, 1),
+    ),
     compensation: {
       baseLandValue: compensationRecords.baseLandValue,
       solatium: compensationRecords.solatium,
@@ -295,7 +299,8 @@ function serializeLandownerRecord(p: ParcelWithProposal) {
     },
     rr: {
       caseId: rrCaseId(p.ulpin, p.proposal.initiatedAt),
-      overallStatus: currentIndex >= 5 ? "COMPLETE" : currentIndex >= 1 ? "UNDER_REVIEW" : "ELIGIBILITY",
+      overallStatus:
+        currentIndex >= 5 ? "COMPLETE" : currentIndex >= 1 ? "UNDER_REVIEW" : "ELIGIBILITY",
       eligibility: eligible ? "Eligible — RFCTLARR 2nd Schedule" : "Under Review",
       currentStep: currentIndex + 1,
       stages,

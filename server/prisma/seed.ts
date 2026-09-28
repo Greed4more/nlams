@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { createHash } from "node:crypto";
 import { buildProposals } from "../../src/data/mockData.js";
 import { DISTRICT_COORDS } from "./districtCoords.js";
@@ -61,6 +61,11 @@ function synthesizeFile(proposalId: string, docName: string, docType: string): B
 }
 
 import { addAuditEntry, verifyChainIntegrity } from "../src/lib/auditVault.js";
+import {
+  computeFinanceAssessment,
+  financialReferenceNumber,
+  isLaoApprovedStage,
+} from "../src/lib/financeEngine.js";
 import type { AuditAction, GrievanceStatus, RfctlarrStage } from "@prisma/client";
 
 interface PendingAuditEvent {
@@ -92,8 +97,7 @@ interface SeedGrievance {
  * are relative so some clocks are healthy, some near breach, some overdue.
  */
 function buildSeedGrievances(proposals: { id: string; state: string }[]): SeedGrievance[] {
-  const byState = (state: string, n: number) =>
-    proposals.filter((p) => p.state === state)[n]!.id;
+  const byState = (state: string, n: number) => proposals.filter((p) => p.state === state)[n]!.id;
 
   return [
     {
@@ -217,6 +221,19 @@ async function main() {
     },
   });
 
+  // Financial-clearance approver for the seeded, already-approved assessments.
+  const seedFinanceOfficer = await prisma.user.upsert({
+    where: { id: "seed-finance-officer" },
+    update: {},
+    create: {
+      id: "seed-finance-officer",
+      email: "finance.officer@nlams.internal",
+      name: "M. Adiga",
+      role: "FINANCE_OFFICER",
+      states: [],
+    },
+  });
+
   const proposals = buildProposals();
   console.log(`Seeding ${proposals.length} proposals…`);
 
@@ -225,7 +242,7 @@ async function main() {
   for (const p of proposals) {
     const docBuffers: { doc: (typeof p.documents)[0]; buffer: Buffer }[] = [];
 
-    await prisma.proposal.create({
+    const createdProposal = await prisma.proposal.create({
       data: {
         id: p.id,
         projectName: p.projectName,
@@ -236,6 +253,7 @@ async function main() {
         stageEnteredAt: new Date(p.stageEnteredAt),
         initiatedAt: new Date(p.initiatedAt),
         affectedFamilies: p.affectedFamilies,
+        financialStatus: p.financialStatus,
         parcels: {
           create: p.parcels.map((parcel) => ({
             ulpin: parcel.ulpin,
@@ -266,6 +284,7 @@ async function main() {
           }),
         },
       },
+      include: { parcels: true },
     });
 
     // Queue document upload blocks for the audit chain
@@ -312,6 +331,57 @@ async function main() {
           WHERE ulpin = ${parcel.ulpin}
         `;
       }
+    }
+
+    // Persist the financial clearance for proposals the generator already
+    // marked APPROVED, so the Finance Officer register opens with a realistic
+    // mix of Pending and Approved clearances (and their audit blocks exist).
+    if (p.financialStatus === "APPROVED" && isLaoApprovedStage(p.currentStage)) {
+      const approvedAt = new Date(new Date(p.stageEnteredAt).getTime() + 3 * 86400000);
+      const engine = computeFinanceAssessment(
+        {
+          id: createdProposal.id,
+          state: createdProposal.state,
+          district: createdProposal.district,
+          initiatedAt: createdProposal.initiatedAt,
+          parcels: createdProposal.parcels,
+        },
+        approvedAt,
+      );
+      const referenceNumber = financialReferenceNumber(createdProposal);
+      await prisma.financialAssessment.create({
+        data: {
+          proposalId: createdProposal.id,
+          referenceNumber,
+          totalLandValue: engine.totals.landValue,
+          totalAssetValue: engine.totals.assetValue,
+          totalSolatium: engine.totals.solatium,
+          totalInterest: engine.totals.interest,
+          totalCompensation: engine.totals.totalCompensation,
+          beneficiaryCount: engine.beneficiaryCount,
+          beneficiaries: engine.beneficiaries as unknown as Prisma.InputJsonValue,
+          landRulesVersion: engine.landRulesVersion,
+          approvedByUserId: seedFinanceOfficer.id,
+          approvedAt,
+        },
+      });
+      pendingAuditEvents.push({
+        proposalId: p.id,
+        action: "FINANCIAL_ASSESSMENT_APPROVED",
+        fromStage: p.currentStage,
+        toStage: p.currentStage,
+        eventPayload: {
+          referenceNumber,
+          beneficiaryCount: engine.beneficiaryCount,
+          totals: engine.totals,
+          landRulesVersion: engine.landRulesVersion,
+          approvedBy: seedFinanceOfficer.name,
+          approvedAt: approvedAt.toISOString(),
+          forwardedTo: "DISTRICT_COLLECTOR",
+          forwardedFor: "Final award execution & disbursement",
+        },
+        createdAt: approvedAt,
+      });
     }
   }
 

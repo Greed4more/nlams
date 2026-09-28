@@ -32,21 +32,28 @@ function bypassToSession(b: BypassSession): Session {
   } as unknown as Session;
 }
 
-export type Role = "DOLR_SECRETARY" | "DISTRICT_COLLECTOR" | "LAO" | "STATE_REVENUE";
+export type Role =
+  "DOLR_SECRETARY" | "DISTRICT_COLLECTOR" | "LAO" | "STATE_REVENUE" | "FINANCE_OFFICER";
 
 export const ROLE_LABEL: Record<Role, string> = {
   DOLR_SECRETARY: "DoLR Secretary",
   DISTRICT_COLLECTOR: "District Collector",
   LAO: "Land Acquisition Officer",
   STATE_REVENUE: "State Revenue Dept",
+  FINANCE_OFFICER: "Finance Officer",
 };
 
-/** Only the Land Acquisition Officer persona may execute statutory actions. */
+/**
+ * Only the Land Acquisition Officer persona may execute statutory workflow
+ * actions (stage advances, parcel awards). The Finance Officer's own clearance
+ * authority is enforced separately in the finance module.
+ */
 export const ROLE_CAN_ACT: Record<Role, boolean> = {
   DOLR_SECRETARY: false,
   DISTRICT_COLLECTOR: false,
   LAO: true,
   STATE_REVENUE: false,
+  FINANCE_OFFICER: false,
 };
 
 interface AuthContextValue {

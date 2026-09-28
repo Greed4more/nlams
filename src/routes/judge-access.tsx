@@ -33,6 +33,7 @@ const BYPASS_ROLES = [
   { value: "DISTRICT_COLLECTOR", label: "District Collector — South Goa" },
   { value: "LAO", label: "Land Acquisition Officer — South Goa" },
   { value: "STATE_REVENUE", label: "State Revenue Dept — Maharashtra" },
+  { value: "FINANCE_OFFICER", label: "Finance Officer — Compensation & Disbursement" },
 ] as const;
 
 interface BypassLoginResponse {

@@ -32,6 +32,8 @@ const ACTION_LABEL: Record<string, string> = {
   GRIEVANCE_SUBMITTED: "Grievance ticket submitted",
   GRIEVANCE_RESOLVED: "Grievance ticket resolved",
   RISK_SCORED: "Litigation risk re-scored",
+  FINANCIAL_ASSESSMENT_CALCULATED: "Financial assessment computed",
+  FINANCIAL_ASSESSMENT_APPROVED: "Financial assessment approved & forwarded",
 };
 
 const fmt = (iso: string) =>

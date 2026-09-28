@@ -2,13 +2,13 @@ import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/context/I18nContext";
 import { useRole } from "@/context/RoleContext";
-import { NAV, ADMIN_NAV } from "./NavItems";
+import { navForRole } from "./NavItems";
 
 /** Horizontal gov-portal-style main menu bar (desktop, ≥768px). */
 export function TopNav() {
   const { t } = useI18n();
   const { role } = useRole();
-  const items = role === "DOLR_SECRETARY" ? [...NAV, ADMIN_NAV] : NAV;
+  const items = navForRole(role);
 
   return (
     <nav aria-label="Main" className="hidden bg-ink md:block">
@@ -41,7 +41,7 @@ export function TopNav() {
 export function MobileNavList({ onNavigate }: { onNavigate?: () => void }) {
   const { t } = useI18n();
   const { role } = useRole();
-  const items = role === "DOLR_SECRETARY" ? [...NAV, ADMIN_NAV] : NAV;
+  const items = navForRole(role);
 
   return (
     <div className="flex h-full flex-col bg-ink text-ink-foreground">

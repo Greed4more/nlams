@@ -43,7 +43,7 @@ enum DocumentType {
   RR_SCHEME
 }
 
-/// Mirrors the four demo personas; role itself is authoritative in Supabase
+/// Mirrors the demo personas; role itself is authoritative in Supabase
 /// (auth.users.app_metadata.role) and synced here so it can be joined against
 /// audit log rows and queried without calling out to Supabase on every read.
 enum Role {
@@ -51,6 +51,7 @@ enum Role {
   DISTRICT_COLLECTOR
   LAO
   STATE_REVENUE
+  FINANCE_OFFICER
 }
 
 enum AuditAction {
@@ -62,6 +63,17 @@ enum AuditAction {
   GRIEVANCE_SUBMITTED
   GRIEVANCE_RESOLVED
   RISK_SCORED
+  FINANCIAL_ASSESSMENT_CALCULATED
+  FINANCIAL_ASSESSMENT_APPROVED
+}
+
+/// Financial clearance lifecycle for an LAO-approved proposal. PENDING until
+/// the Finance Officer runs the automatic compensation engine and approves the
+/// assessment; APPROVED once the FinancialAssessment row is persisted and the
+/// proposal is forwarded to the District Officer for execution.
+enum FinancialStatus {
+  PENDING
+  APPROVED
 }
 
 enum SlaAlertStatus {
@@ -97,6 +109,7 @@ model User {
   auditLogs AuditLog[]
   compensationRecords CompensationRecord[]
   grievanceTickets    GrievanceTicket[]
+  financialAssessments FinancialAssessment[]
 
   @@map("users")
 }
@@ -118,6 +131,10 @@ model Proposal {
   /// & delay risk model (Module 5, ported from Bhumitra). Null until first set.
   consentPercentage Float?
 
+  /// Finance Officer clearance state — PENDING until the automatic compensation
+  /// assessment is approved (see FinancialAssessment).
+  financialStatus FinancialStatus @default(PENDING)
+
   parcels   Parcel[]
   documents DocumentRef[]
   auditLogs AuditLog[]
@@ -125,6 +142,7 @@ model Proposal {
   compensationRecords CompensationRecord[]
   grievances          GrievanceTicket[]
   riskScores          RiskScore[]
+  financialAssessment FinancialAssessment?
 
   @@map("proposals")
 }
@@ -227,6 +245,36 @@ model CompensationRecord {
   calculatedAt       DateTime @default(now())
 
   @@map("compensation_records")
+}
+
+/// Finance Officer's approved financial clearance for one LAO-approved
+/// proposal — the persisted output of the automatic compensation engine
+/// (server/src/lib/financeEngine.ts). One row per proposal; `beneficiaries`
+/// snapshots the per-parcel payout so the clearance is reproducible even if
+/// parcel rows later change. Approval forwards the proposal to the District
+/// Officer for execution.
+model FinancialAssessment {
+  id                  String   @id @default(cuid())
+  proposalId          String   @unique
+  proposal            Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  /// Human-readable clearance number, e.g. FIN/GA/2026/PROP-0104.
+  referenceNumber     String   @unique
+  totalLandValue      Float
+  totalAssetValue     Float
+  totalSolatium       Float
+  totalInterest       Float
+  totalCompensation   Float
+  beneficiaryCount    Int
+  /// Per-beneficiary payout snapshot: parcel id, survey no, extents, market
+  /// rates, multiplier, solatium, interest, total Compensation.
+  beneficiaries       Json
+  /// Version stamp of the state-wise rate tables used (server/src/lib/landRules.ts).
+  landRulesVersion    String
+  approvedByUserId    String?
+  approvedBy          User?    @relation(fields: [approvedByUserId], references: [id])
+  approvedAt          DateTime @default(now())
+
+  @@map("financial_assessments")
 }
 
 /// Land-title / provenance correction ticket, 15-day statutory SLA. Ported

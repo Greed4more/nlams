@@ -13,7 +13,13 @@ declare global {
   }
 }
 
-const VALID_ROLES: Role[] = ["DOLR_SECRETARY", "DISTRICT_COLLECTOR", "LAO", "STATE_REVENUE"];
+const VALID_ROLES: Role[] = [
+  "DOLR_SECRETARY",
+  "DISTRICT_COLLECTOR",
+  "LAO",
+  "STATE_REVENUE",
+  "FINANCE_OFFICER",
+];
 
 /**
  * Requires a valid Supabase session (Authorization: Bearer <access_token>),

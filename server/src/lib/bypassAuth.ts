@@ -22,7 +22,7 @@ export interface BypassPrincipal {
 }
 
 /**
- * Same four personas as server/scripts/seed-supabase-users.ts, but with
+ * Same personas as server/scripts/seed-supabase-users.ts, but with
  * distinct `+bypass` emails — not just cosmetic: `users.email` is @unique,
  * so reusing the exact same address as the real Supabase demo accounts
  * would collide the moment both auth paths were ever used for the same
@@ -57,6 +57,15 @@ export const BYPASS_PERSONAS: Record<Role, BypassPrincipal> = {
     name: "M. Vaidya",
     role: "STATE_REVENUE",
     states: ["Maharashtra"],
+  },
+  FINANCE_OFFICER: {
+    id: "bypass-finance-officer",
+    email: "finance.officer+bypass@nlams.demo",
+    name: "M. Adiga",
+    role: "FINANCE_OFFICER",
+    // National scope — the compensation & disbursement desk clears awards for
+    // every requiring body, not just one state.
+    states: [],
   },
 };
 

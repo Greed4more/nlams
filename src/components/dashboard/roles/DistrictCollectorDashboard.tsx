@@ -11,11 +11,13 @@ import {
   Scale,
   ExternalLink,
   CheckCircle2,
+  BadgeIndianRupee,
 } from "lucide-react";
 import { formatCrore, formatINRFull } from "@/data/mockData";
 import { useDerived } from "../derive";
 import { useRole, NO_CREDENTIALS_HINT } from "@/context/RoleContext";
 import { useGrievancesQuery } from "@/hooks/useGrievances";
+import { useApprovedProjectsQuery, formatLakhs } from "@/hooks/useFinance";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useI18n } from "@/context/I18nContext";
 import { cn } from "@/lib/utils";
@@ -24,6 +26,8 @@ export function DistrictCollectorDashboard() {
   const { person, canAct, scopedProposals } = useRole();
   const { totals, disbursalPct, enriched, stageBreakdown } = useDerived();
   const { data: grievances = [] } = useGrievancesQuery();
+  const { data: approvedProjects = [] } = useApprovedProjectsQuery();
+  const financialClearances = approvedProjects.filter((p) => p.financialStatus === "APPROVED");
   const { t } = useI18n();
 
   // Filter grievances in scope
@@ -134,6 +138,60 @@ export function DistrictCollectorDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Financial clearances forwarded by the Finance Officer for execution */}
+      <section className="panel overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2.5">
+          <div className="flex items-center gap-1.5">
+            <BadgeIndianRupee className="size-3.5 text-status-ok" />
+            <div className="label-xs">Financial Clearances Forwarded for Execution</div>
+          </div>
+          <Link
+            to="/approved-projects"
+            className="text-[11px] font-medium text-status-info hover:underline"
+          >
+            Open finance register
+          </Link>
+        </div>
+        {financialClearances.length === 0 ? (
+          <div className="px-4 py-6 text-center text-[12.5px] text-muted-foreground">
+            No financially cleared projects are awaiting district execution in your jurisdiction.
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {financialClearances.slice(0, 4).map((p) => (
+              <div
+                key={p.id}
+                className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 transition-colors hover:bg-muted/30"
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="num font-mono text-[11px] font-semibold text-ink">{p.id}</span>
+                    <span className="truncate text-[13px] font-medium text-foreground">
+                      {p.projectName}
+                    </span>
+                  </div>
+                  <div className="num mt-0.5 text-[11px] text-muted-foreground">
+                    {p.financialAssessment?.referenceNumber ?? "Financial clearance"} ·{" "}
+                    {p.financialAssessment
+                      ? formatLakhs(p.financialAssessment.totalCompensation)
+                      : "—"}{" "}
+                    · {p.district}
+                  </div>
+                </div>
+                <Link
+                  to="/approved-projects/$id"
+                  params={{ id: p.id }}
+                  className="inline-flex shrink-0 items-center gap-1 rounded-[4px] border border-border px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  Review clearance
+                  <ArrowRight className="size-3" />
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       {/* Statutory Lapse Countdown Queue & Pipeline Funnel */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-5">

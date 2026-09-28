@@ -1,5 +1,8 @@
 import { STAGE_ORDER, type Proposal } from "@/data/mockData";
 
+/** Hectare → acre conversion used by the land registers and finance workspace. */
+export const ACRES_PER_HECTARE = 2.47105;
+
 /**
  * Officer review queue a proposal currently sits in — the counters on the
  * Acquisition Window map one-to-one onto these buckets.

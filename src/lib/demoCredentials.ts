@@ -31,6 +31,11 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
     label: "State Revenue Dept — Maharashtra",
     email: "state.revenue@nlams.demo",
   },
+  {
+    role: "FINANCE_OFFICER",
+    label: "Finance Officer — Compensation & Disbursement",
+    email: "finance.officer@nlams.demo",
+  },
 ];
 
 export function demoAccountForEmail(email: string): DemoAccount | undefined {
