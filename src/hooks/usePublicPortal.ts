@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Geometry } from "geojson";
 import { api } from "@/lib/api";
 import type { RfctlarrStage } from "@/data/mockData";
@@ -153,5 +153,83 @@ export function usePublicLandownerDetail(ulpin: string | undefined) {
     queryFn: () => api.get<LandownerDetail>(`/api/public/landowners/${ulpin}`),
     enabled: !!ulpin,
     retry: false,
+  });
+}
+
+/* ---------------------------------------------------------------- *
+ * Public objection filing — dispute redressal
+ * ---------------------------------------------------------------- */
+
+export const OBJECTION_TYPES = [
+  { value: "LAND_VALUATION", label: "Land valuation / market rate dispute" },
+  { value: "BOUNDARY_DISPLACEMENT", label: "Boundary displacement (EGPS pegging)" },
+  { value: "RR_ELIGIBILITY", label: "R&R eligibility or entitlement" },
+  { value: "COMPENSATION_DISBURSEMENT", label: "Compensation disbursement" },
+  { value: "OTHER", label: "Other grievance" },
+] as const;
+
+export type ObjectionType = (typeof OBJECTION_TYPES)[number]["value"];
+
+export interface PublicObjection {
+  id: string;
+  proposalId: string;
+  parcelId: string | null;
+  objectionType: string;
+  objectionTypeLabel: string;
+  description: string;
+  status: string;
+  statusLabel: string;
+  createdAt: string;
+  slaDeadline: string;
+  resolvedAt: string | null;
+  hasEvidence: boolean;
+  evidenceName: string | null;
+  evidenceUrl: string | null;
+  projectName: string | null;
+}
+
+export interface PublicObjectionList {
+  count: number;
+  ulpin: string;
+  khasraNo: string;
+  ownerName: string;
+  proposalId: string;
+  objections: PublicObjection[];
+}
+
+/** Unauthenticated — GET /api/public/objections?ulpin=. */
+export function usePublicObjections(ulpin: string | undefined) {
+  return useQuery({
+    queryKey: ["public", "objections", ulpin],
+    queryFn: () => api.get<PublicObjectionList>(`/api/public/objections?ulpin=${ulpin}`),
+    enabled: !!ulpin,
+    retry: false,
+  });
+}
+
+export interface SubmitObjectionInput {
+  ulpin: string;
+  objectionType: ObjectionType;
+  description: string;
+  evidenceUrl?: string | undefined;
+  evidenceFile?: File | null | undefined;
+}
+
+/** Unauthenticated — POST /api/public/objections (multipart, optional evidence file). */
+export function useSubmitPublicObjection() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: SubmitObjectionInput) => {
+      const form = new FormData();
+      form.append("ulpin", input.ulpin);
+      form.append("objectionType", input.objectionType);
+      form.append("description", input.description);
+      if (input.evidenceUrl?.trim()) form.append("evidenceUrl", input.evidenceUrl.trim());
+      if (input.evidenceFile) form.append("evidence", input.evidenceFile);
+      return api.postForm<PublicObjection>("/api/public/objections", form);
+    },
+    onSuccess: (_created, variables) => {
+      void qc.invalidateQueries({ queryKey: ["public", "objections", variables.ulpin] });
+    },
   });
 }

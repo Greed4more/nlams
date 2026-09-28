@@ -243,6 +243,11 @@ model GrievanceTicket {
   issueCategory     String
   description       String
   evidenceUrl       String?
+  /// Citizen-attached evidence file from the public objection form — stored
+  /// inline at hackathon scale, alongside the URL alternative above.
+  evidenceName      String?
+  evidenceType      String?
+  evidenceData      Bytes?
   status            GrievanceStatus @default(SUBMITTED)
   slaDeadline       DateTime
   escalated         Boolean         @default(false)

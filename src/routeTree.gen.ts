@@ -23,6 +23,7 @@ import { Route as ProposalsIdRouteImport } from './routes/proposals.$id'
 import { Route as PublicIndexRouteImport } from './routes/public.index'
 import { Route as PublicIdRouteImport } from './routes/public.$id'
 import { Route as PublicLandownersRouteImport } from './routes/public.landowners'
+import { Route as PublicObjectionsRouteImport } from './routes/public.objections'
 import { Route as PublicRrRouteImport } from './routes/public.rr'
 
 const IndexRoute = IndexRouteImport.update({
@@ -95,6 +96,11 @@ const PublicLandownersRoute = PublicLandownersRouteImport.update({
   path: '/public/landowners',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PublicObjectionsRoute = PublicObjectionsRouteImport.update({
+  id: '/public/objections',
+  path: '/public/objections',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PublicRrRoute = PublicRrRouteImport.update({
   id: '/public/rr',
   path: '/public/rr',
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/proposals/$id': typeof ProposalsIdRoute
   '/public/$id': typeof PublicIdRoute
   '/public/landowners': typeof PublicLandownersRoute
+  '/public/objections': typeof PublicObjectionsRoute
   '/public/rr': typeof PublicRrRoute
   '/proposals/': typeof ProposalsIndexRoute
   '/public/': typeof PublicIndexRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/proposals/$id': typeof ProposalsIdRoute
   '/public/$id': typeof PublicIdRoute
   '/public/landowners': typeof PublicLandownersRoute
+  '/public/objections': typeof PublicObjectionsRoute
   '/public/rr': typeof PublicRrRoute
   '/proposals': typeof ProposalsIndexRoute
   '/public': typeof PublicIndexRoute
@@ -149,6 +157,7 @@ export interface FileRoutesById {
   '/proposals/$id': typeof ProposalsIdRoute
   '/public/$id': typeof PublicIdRoute
   '/public/landowners': typeof PublicLandownersRoute
+  '/public/objections': typeof PublicObjectionsRoute
   '/public/rr': typeof PublicRrRoute
   '/proposals/': typeof ProposalsIndexRoute
   '/public/': typeof PublicIndexRoute
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/proposals/$id'
     | '/public/$id'
     | '/public/landowners'
+    | '/public/objections'
     | '/public/rr'
     | '/proposals/'
     | '/public/'
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
     | '/proposals/$id'
     | '/public/$id'
     | '/public/landowners'
+    | '/public/objections'
     | '/public/rr'
     | '/proposals'
     | '/public'
@@ -202,6 +213,7 @@ export interface FileRouteTypes {
     | '/proposals/$id'
     | '/public/$id'
     | '/public/landowners'
+    | '/public/objections'
     | '/public/rr'
     | '/proposals/'
     | '/public/'
@@ -220,6 +232,7 @@ export interface RootRouteChildren {
   ProposalsIdRoute: typeof ProposalsIdRoute
   PublicIdRoute: typeof PublicIdRoute
   PublicLandownersRoute: typeof PublicLandownersRoute
+  PublicObjectionsRoute: typeof PublicObjectionsRoute
   PublicRrRoute: typeof PublicRrRoute
   ProposalsIndexRoute: typeof ProposalsIndexRoute
   PublicIndexRoute: typeof PublicIndexRoute
@@ -325,6 +338,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicLandownersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/public/objections': {
+      id: '/public/objections'
+      path: '/public/objections'
+      fullPath: '/public/objections'
+      preLoaderRoute: typeof PublicObjectionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/public/rr': {
       id: '/public/rr'
       path: '/public/rr'
@@ -348,6 +368,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProposalsIdRoute: ProposalsIdRoute,
   PublicIdRoute: PublicIdRoute,
   PublicLandownersRoute: PublicLandownersRoute,
+  PublicObjectionsRoute: PublicObjectionsRoute,
   PublicRrRoute: PublicRrRoute,
   ProposalsIndexRoute: ProposalsIndexRoute,
   PublicIndexRoute: PublicIndexRoute,

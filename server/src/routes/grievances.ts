@@ -78,6 +78,9 @@ grievancesRouter.get("/", async (req, res) => {
   const tickets = await prisma.grievanceTicket.findMany({
     where: { proposal: proposalScopeWhere(req.nlamsUser!) },
     include: { proposal: { select: { projectName: true, state: true, district: true } } },
+    // Evidence bytes are streamed separately by the evidence endpoint —
+    // never ship them in list payloads.
+    omit: { evidenceData: true },
     orderBy: { createdAt: "desc" },
     take: 100,
   });
@@ -89,6 +92,7 @@ grievancesRouter.get("/:id", async (req, res) => {
   const ticket = await prisma.grievanceTicket.findFirst({
     where: { id: req.params.id, proposal: proposalScopeWhere(req.nlamsUser!) },
     include: { submittedBy: { select: { name: true, role: true } } },
+    omit: { evidenceData: true },
   });
   if (!ticket) {
     res.status(404).json({ error: "Grievance ticket not found" });

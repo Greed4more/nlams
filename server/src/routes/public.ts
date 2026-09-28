@@ -1,7 +1,9 @@
-import { Router } from "express";
+import { Router, type RequestHandler } from "express";
+import multer from "multer";
 import { z } from "zod";
 import type { Role } from "@prisma/client";
 import { prisma } from "../db.js";
+import { addAuditEntry } from "../lib/auditVault.js";
 import {
   BYPASS_PASSWORD,
   BYPASS_PERSONAS,
@@ -364,6 +366,211 @@ publicRouter.get("/landowners/:ulpin", async (req, res) => {
     ...serializeLandownerRecord(parcel as ParcelWithProposal),
     geometry: geometryText ? JSON.parse(geometryText) : null,
   });
+});
+
+/* ---------------------------------------------------------------- *
+ * Public objection filing — dispute redressal
+ *
+ * A landowner (or any citizen) can raise a formal objection against a
+ * property's valuation, boundary, disbursement or R&R eligibility straight
+ * from the public portal. Tickets land in the same GrievanceTicket register
+ * the LAO monitors, with the standard 15-day statutory SLA.
+ * ---------------------------------------------------------------- */
+
+const objectionUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+});
+
+const OBJECTION_TYPES = [
+  "LAND_VALUATION",
+  "BOUNDARY_DISPLACEMENT",
+  "RR_ELIGIBILITY",
+  "COMPENSATION_DISBURSEMENT",
+  "OTHER",
+] as const;
+
+const OBJECTION_TYPE_LABEL: Record<(typeof OBJECTION_TYPES)[number], string> = {
+  LAND_VALUATION: "Land valuation / market rate dispute",
+  BOUNDARY_DISPLACEMENT: "Boundary displacement (EGPS pegging)",
+  RR_ELIGIBILITY: "R&R eligibility or entitlement",
+  COMPENSATION_DISBURSEMENT: "Compensation disbursement",
+  OTHER: "Other grievance",
+};
+
+const OBJECTION_STATUS_LABEL: Record<string, string> = {
+  SUBMITTED: "Submitted",
+  UNDER_REVIEW: "Under Review",
+  FIELD_VERIFICATION: "Field Verification",
+  RESOLVED: "Resolved",
+  REJECTED: "Rejected",
+};
+
+const GRIEVANCE_SLA_DAYS = 15;
+
+type PublicObjection = {
+  id: string;
+  proposalId: string;
+  parcelId: string | null;
+  issueCategory: string;
+  description: string;
+  status: string;
+  createdAt: Date;
+  slaDeadline: Date;
+  resolvedAt: Date | null;
+  evidenceUrl: string | null;
+  evidenceName: string | null;
+  proposal?: { projectName: string } | null;
+};
+
+function serializePublicObjection(t: PublicObjection) {
+  return {
+    id: t.id,
+    proposalId: t.proposalId,
+    parcelId: t.parcelId,
+    objectionType: t.issueCategory,
+    objectionTypeLabel:
+      OBJECTION_TYPE_LABEL[t.issueCategory as (typeof OBJECTION_TYPES)[number]] ?? t.issueCategory,
+    description: t.description,
+    status: t.status,
+    statusLabel: OBJECTION_STATUS_LABEL[t.status] ?? t.status,
+    createdAt: t.createdAt.toISOString(),
+    slaDeadline: t.slaDeadline.toISOString(),
+    resolvedAt: t.resolvedAt?.toISOString() ?? null,
+    hasEvidence: t.evidenceName != null,
+    evidenceName: t.evidenceName,
+    evidenceUrl: t.evidenceUrl,
+    projectName: t.proposal?.projectName ?? null,
+  };
+}
+
+/** GET /api/public/objections?ulpin= — objections filed against one parcel. */
+publicRouter.get("/objections", async (req, res) => {
+  const ulpin = String(req.query["ulpin"] ?? "")
+    .trim()
+    .toUpperCase();
+  if (!ulpin) {
+    res.status(400).json({ error: "ulpin query parameter is required" });
+    return;
+  }
+  const parcel = await prisma.parcel.findUnique({
+    where: { ulpin },
+    select: { id: true, khasraNo: true, ownerName: true, proposalId: true },
+  });
+  if (!parcel) {
+    res.status(404).json({ error: "Land record not found for this ULPIN" });
+    return;
+  }
+  const tickets = await prisma.grievanceTicket.findMany({
+    where: { parcelId: parcel.id },
+    include: { proposal: { select: { projectName: true } } },
+    omit: { evidenceData: true },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
+  res.json({
+    count: tickets.length,
+    ulpin,
+    khasraNo: parcel.khasraNo,
+    ownerName: parcel.ownerName,
+    proposalId: parcel.proposalId,
+    objections: tickets.map((t) => serializePublicObjection(t)),
+  });
+});
+
+/** POST /api/public/objections — multipart objection filing with optional evidence file. */
+publicRouter.post(
+  "/objections",
+  objectionUpload.single("evidence") as unknown as RequestHandler,
+  async (req, res) => {
+    const parsed = z
+      .object({
+        ulpin: z.string().min(3),
+        objectionType: z.enum(OBJECTION_TYPES),
+        description: z.string().min(10),
+        evidenceUrl: z.string().optional(),
+      })
+      .safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "Invalid objection input", details: parsed.error.flatten() });
+      return;
+    }
+
+    const ulpin = parsed.data.ulpin.trim().toUpperCase();
+    const parcel = await prisma.parcel.findUnique({ where: { ulpin } });
+    if (!parcel) {
+      res.status(404).json({ error: "Land record not found for this ULPIN" });
+      return;
+    }
+
+    // Submissions from the public portal are attributed to a system account so
+    // the officer-facing register can tell portal filings from officer entries.
+    const submitter = await prisma.user.upsert({
+      where: { email: "public.portal@nlams.internal" },
+      update: {},
+      create: {
+        id: "seed-public-portal",
+        email: "public.portal@nlams.internal",
+        name: "Public Landowner Portal",
+        role: "LAO",
+        states: [],
+      },
+    });
+
+    const evidenceUrl = parsed.data.evidenceUrl?.trim() || null;
+    const slaDeadline = new Date(Date.now() + GRIEVANCE_SLA_DAYS * 24 * 60 * 60 * 1000);
+
+    const ticket = await prisma.$transaction(async (tx) => {
+      const created = await tx.grievanceTicket.create({
+        data: {
+          proposalId: parcel.proposalId,
+          parcelId: parcel.id,
+          submittedByUserId: submitter.id,
+          issueCategory: parsed.data.objectionType,
+          description: parsed.data.description.trim(),
+          evidenceUrl,
+          evidenceName: req.file?.originalname ?? null,
+          evidenceType: req.file?.mimetype ?? null,
+          evidenceData: req.file ? Uint8Array.from(req.file.buffer) : null,
+          status: "SUBMITTED",
+          slaDeadline,
+        },
+      });
+      await addAuditEntry(tx, {
+        proposalId: parcel.proposalId,
+        userId: submitter.id,
+        action: "GRIEVANCE_SUBMITTED",
+        fileBuffer: req.file?.buffer ?? null,
+        eventPayload: {
+          grievanceId: created.id,
+          issueCategory: created.issueCategory,
+          source: "PUBLIC_PORTAL",
+          hasEvidence: req.file != null,
+        },
+      });
+      return created;
+    });
+
+    res.status(201).json(serializePublicObjection(ticket));
+  },
+);
+
+/** GET /api/public/objections/:id/evidence — streams the attached evidence file. */
+publicRouter.get("/objections/:id/evidence", async (req, res) => {
+  const ticket = await prisma.grievanceTicket.findUnique({
+    where: { id: req.params.id },
+    select: { evidenceData: true, evidenceName: true, evidenceType: true },
+  });
+  if (!ticket?.evidenceData) {
+    res.status(404).json({ error: "No evidence attached to this objection" });
+    return;
+  }
+  res.setHeader("Content-Type", ticket.evidenceType ?? "application/octet-stream");
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="${(ticket.evidenceName ?? "evidence").replaceAll('"', "")}"`,
+  );
+  res.send(Buffer.from(ticket.evidenceData));
 });
 
 publicRouter.get("/proposals/:id", async (req, res) => {
