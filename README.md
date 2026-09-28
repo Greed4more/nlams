@@ -1,173 +1,128 @@
-# LandTrack India
-
-Build a government-grade web application called NLAMS (National Land Acquisition & Management System) for India's Department of Land Resources. This is a real-time dashboard for tracking land acquisition under the RFCTLARR Act 2013.
-
-STACK: React + React Router + Tailwind + shadcn/ui + Recharts + lucide-react.
-
-DESIGN DIRECTION — read carefully, do NOT use your default styling:
-
-- This must look like serious government infrastructure software, not a SaaS landing page.
-
-- NO purple/violet gradients, no glassmorphism, no hero sections, no rounded-3xl cards.
-
-- Palette: deep navy (#0F2942) sidebar/header, off-white (#F7F8FA) page background, white cards with 1px #E2E5EA borders, radius 6px, subtle shadows only.
-
-- Status colors: green #0F7B4F, amber #B45309, red #B91C1C, blue #1D4ED8.
-
-- Typography: Inter. Dense, data-first. Small labels (11px uppercase, letter-spacing, grey), larger tabular numbers. Use tabular-nums for all figures.
-
-- Compact spacing. Information density over whitespace.
-
-LAYOUT:
-
-- Fixed left sidebar (240px, navy) with the NLAMS wordmark, a small "Ministry of Rural Development" subtitle, and nav items: Dashboard, Proposals, Compensation Calculator, GIS Map View.
-
-- Top bar (white, 56px) with a breadcrumb on the left, and on the right: a role selector dropdown (District Collector – South Goa / Land Acquisition Officer / DoLR Secretary / State Revenue Dept), a bell icon with a red badge showing 4, and an avatar.
-
-- The role selector should be stored in React context — it will later filter data.
-
-MOCK DATA — create src/data/mockData.ts with these TypeScript types and 45 seeded proposals:
-
-type RfctlarrStage = 'INTAKE' | 'SIA' | 'SIA_APPRAISAL' | 'SEC_11' | 'SEC_19' | 'AWARD' | 'RR_COMPLETE';
-
-interface Parcel {
-
-  ulpin: string;            // 14-char alphanumeric, e.g. "GA03B2K9X7M401"
-
-  khasraNo: string;
-
-  vernacularTerm: { local: string; script: string; standard: string };
-
-  areaHa: number;
-
-  classification: 'RURAL' | 'URBAN';
-
-  ownerName: string;
-
-  coOwners: number;
-
-  compensationAssessed: number;
-
-  compensationDisbursed: number;
-
-}
-
-interface DocumentRef {
-
-  id: string;
-
-  name: string;
-
-  type: 'SIA_REPORT' | 'SEC_11_NOTIFICATION' | 'SEC_19_DECLARATION' | 'AWARD_ORDER' | 'RR_SCHEME';
-
-  uploadedAt: string;
-
-  sizeKb: number;
-
-  sha256: string;           // 64-char hex
-
-  blockHeight: number;
-
-  verified: boolean;
-
-}
-
-interface Proposal {
-
-  id: string;               // "PROP-0142"
-
-  projectName: string;
-
-  requiringBody: string;
-
-  state: string;
-
-  district: string;
-
-  currentStage: RfctlarrStage;
-
-  stageEnteredAt: string;   // ISO date
-
-  initiatedAt: string;
-
-  totalAreaHa: number;
-
-  affectedFamilies: number;
-
-  parcels: Parcel[];
-
-  documents: DocumentRef[];
-
-  compensation: { assessed: number; disbursed: number; pending: number };
-
-}
-
-Seed realistically across Maharashtra, Tamil Nadu, Assam, Goa, Punjab. Requiring bodies: NHAI, Ministry of Railways, State PWD, NTPC, Airports Authority of India, State Industrial Development Corp. Project names like "Mumbai–Ahmedabad HSR Corridor – Package 4", "NH-66 Six-Laning Kundapura–Surathkal", "Chennai Metro Phase II Reach 3".
-
-Vernacular terms must be genuine regional revenue vocabulary with correct native script:
-
-- Maharashtra: Khasra (खसरा), Sat-Bara (सातबारा), Gat (गट)
-
-- Assam: Dag (দাগ), Patta (পট্টা)
-
-- Tamil Nadu: Survey Number (சர்வே எண்), Patta (பட்டா)
-
-- Punjab: Khasra (ਖਸਰਾ), Khatauni (ਖਤੌਨੀ)
-
-- Goa: Survey No. / Chalta
-
-Each maps to a `standard` English term. This is the "Glossary of Revenue Terms" normalisation layer.
-
-Spread stageEnteredAt so that roughly 6 proposals are in statutory breach, 8 are approaching breach, and the rest are healthy. Give proposals 3–12 parcels each, areas 0.2–14 hectares, compensation values in the ₹40 lakh to ₹90 crore range.
-
-Also create src/lib/slaRules.ts implementing RFCTLARR statutory deadlines:
-
-- SIA → SIA report: 180 days (Sec 4(2))
-
-- SIA_APPRAISAL → SEC_11: 365 days (Sec 14) — else SIA lapses
-
-- SEC_11 → SEC_19: 365 days (Sec 19(7)) — else notification lapses
-
-- SEC_19 → AWARD: 365 days (Sec 25) — else proceedings lapse
-
-Export getSlaStatus(proposal) returning { daysElapsed, daysRemaining, status: 'OK'|'AT_RISK'|'BREACHED', statuteRef, consequence }. AT_RISK = fewer than 60 days remaining.
-
-For now just build the shell, the data layer, and empty routed pages with placeholder headings. Make sure routing and the sidebar work.
-
-## Development
-
-Requires Node.js. This project uses [Bun](https://bun.sh) as its package manager.
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-bun install
-bun run dev
+# BHUMITRA
+
+Land acquisition management and monitoring for the RFCTLARR Act, 2013.
+
+BHUMITRA follows a proposal from intake through Social Impact Assessment, Section 11/19 notifications and awards, to compensation disbursement and R&R completion. Officers work through role-scoped dashboards and case registers, and every statutory action is signed into a tamper-evident audit ledger.
+
+Built for Smart India Hackathon 2026. The repo ships with a deterministic synthetic dataset, no real land records or personal data.
+
+## Modules
+
+- **Proposal pipeline.** Seven statutory stages (INTAKE, SIA, SIA_APPRAISAL, SEC_11, SEC_19, AWARD, RR_COMPLETE) with SLA clocks, breach alerts and a per-case audit trail.
+- **Role dashboards.** Five officer roles, each with its own dashboard and a National / State-wise view.
+- **Compensation.** Section 26-30 award calculation per parcel, persisted with a mock PFMS/DBT receipt.
+- **Finance Officer clearance.** Register of LAO-approved projects, automatic per-beneficiary compensation calculation from state land-rate rules and parcel data, and a financial assessment that is persisted and forwarded to the District Officer.
+- **Affected landowners and parcels.** ULPIN, survey number, extent, classification, provenance and restriction flags, with cadastral geometry.
+- **GIS.** Leaflet maps for parcel inspection, state/district/block boundaries, and a Bhuvan LULC overlay check.
+- **Documents.** Statutory filings per stage with SHA-256 integrity verification.
+- **Grievances.** 15-day title/record correction tickets, including tickets auto-created when parcel verification fails.
+- **Risk scoring.** Litigation and delay risk from a small ML service, with a rule-based fallback when it is offline.
+- **Audit vault.** Append-only SHA-256 hash chain over the audit log, verifiable end to end.
+- **Public portal.** Read-only, non-PII views for proposal search, landowner records and objections.
+- **State adapters.** Registry for pluggable per-state land-records integrations (Banglarbhumi is the reference implementation).
+- **Languages.** UI translated into English plus the 22 other Eighth Schedule languages.
+
+## Stack
+
+- Web: TanStack Start (React 19, TanStack Router), Vite, Tailwind CSS v4, Radix/shadcn-ui, Recharts, Leaflet, TanStack Query, Zod
+- API (`server/`): Express, Prisma, PostgreSQL with PostGIS, Supabase Auth, Zod
+- Risk service (`ml_service/`): FastAPI, scikit-learn, XGBoost
+- Field app (`field-pwa/`): React, Vite, Dexie (offline-first)
+- Local infra: docker-compose for PostGIS and the risk service
+- Deployment: Vercel for the web app, Render for the API (`render.yaml`)
+
+## Layout
+
+```
+src/          web app: routes, components, hooks, domain libs
+server/       Express API, Prisma schema, migrations and seed
+field-pwa/    offline-first field verification app
+ml_service/   FastAPI risk-scoring service
 ```
 
-npm works as a fallback if Bun isn't available:
+## Getting started
+
+You need Node 20+ and Docker. Bun is used for the web app, npm works as a fallback.
+
+### 1. Database
 
 ```sh
+docker compose up -d db
+```
+
+### 2. API
+
+```sh
+cd server
 npm install
-npm run dev
+cp .env.example .env        # defaults match docker-compose
+npx prisma migrate dev
+npm run seed                # 45 proposals across 5 states, plus documents, grievances and audit chain
+npm run dev                 # http://localhost:4000
 ```
 
-Other scripts: `build` (production build), `preview` (serve the production build), `lint`, `format`.
+### 3. Web app
 
-## Backend (`server/`)
+```sh
+bun install
+cp .env.example .env        # VITE_SUPABASE_* can stay as placeholders for demo sign-in
+bun run dev                 # http://localhost:8080
+```
 
-Express + Prisma + Postgres/PostGIS API on `:4000`, auth via Supabase JWT (see `server/src/middleware/auth.ts`). `docker compose up -d db` for the local dev database, then `cd server && npm install && npx prisma migrate dev && npm run dev`.
+### 4. Sign in
 
-Beyond the core proposal/parcel/document/SLA-alert endpoints, the following statutory modules were ported in from a collaborator's separate Bhumitra backend prototype (`BHUMITRA/backend`) and adapted onto this app's schema, Supabase auth, and existing Cryptographic Audit Vault:
+The API supports two auth paths:
 
-- **Compensation** — `POST/GET /api/parcels/:parcelId/compensation`: Sec. 26-30 statutory award calculation, persisted and audit-hashed, with a mock PFMS/DBT disbursal receipt.
-- **Grievances** — `POST /api/grievances`, `GET /api/grievances[/:id]`, `PATCH /api/grievances/:id/resolve`: 15-day SLA title-correction tickets; auto-created by parcel verification for unverified parcels.
-- **Parcel verification** — `POST /api/parcels/verify`: overlays an ISRO Bhuvan LULC check onto a proposal's parcels and auto-opens grievances for any parcel not yet ULPIN-verified.
-- **Litigation & delay risk** — `GET /api/proposals/:id/risk`, `PATCH /api/proposals/:id/consent`: calls the `ml_service` FastAPI microservice (falls back to a local rule-based estimate if it's not running).
-- **Audit Vault** — `GET /api/audit/verify`: walks the full `audit_logs` hash chain and reports whether it's intact.
-- **Public transparency portal** — `GET /api/public/proposals/search`, `GET /api/public/proposals/:id`: unauthenticated, non-PII aggregate metrics only.
-- **State adapters (admin)** — `GET /api/admin/adapters`, `POST /api/admin/adapters/trigger-sync`: pluggable per-state land-records adapter registry (West Bengal/Banglarbhumi is the reference implementation), DoLR-Secretary-only.
+- **Demo bypass.** With `ALLOW_DEMO_AUTH=true` (the default in `server/.env.example`), the sign-in page accepts a master password and one of the role emails. No Supabase project needed. `BYPASS_PASSWORD` defaults to `admin123`. `/judge-access` is a short path for walkthroughs.
+- **Supabase accounts.** Fill in `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`, then run `npm run seed:supabase-users` from `server/` to create the five accounts with the master password `admin123`.
 
-`ml_service/` (Python FastAPI, `:8000`) is the risk-scoring microservice these call into — run it with `docker compose up -d ml_service` or manually (`cd ml_service && pip install -r requirements.txt && uvicorn main:app --port 8000`).
+| Role | Demo email |
+| --- | --- |
+| DoLR Secretary | dolr.secretary@nlams.demo |
+| District Collector | district.collector@nlams.demo |
+| Land Acquisition Officer | lao@nlams.demo |
+| State Revenue Dept | state.revenue@nlams.demo |
+| Finance Officer | finance.officer@nlams.demo |
 
-The original `BHUMITRA/` folder (a separate Express backend with its own JWT/bcrypt auth and Postgres schema) was the source for this port but is not wired into the running app — it can be removed once the above is verified end-to-end.
+All roles have nationwide scope. The dashboard has a National / State-wise switch, and the selected state scopes the state view and the header region filter.
+
+## Statutory clocks
+
+Defined in `src/lib/slaRules.ts`:
+
+| Transition | Limit | If missed |
+| --- | --- | --- |
+| SIA start to SIA report | 180 days (Sec 4(2)) | SIA study lapses |
+| SIA appraisal to Sec 11 | 365 days (Sec 14) | SIA lapses, fresh assessment required |
+| Sec 11 to Sec 19 | 365 days (Sec 19(7)) | preliminary notification lapses |
+| Sec 19 to award | 365 days (Sec 25) | proceedings lapse |
+
+Anything with under 60 days remaining is flagged `AT_RISK`.
+
+## API
+
+Mounted in `server/src/index.ts`. Highlights:
+
+- `/api/proposals` and `/api/proposals/:id/*`: register, detail, stage advance, consent, risk, audit log, documents
+- `/api/documents/:id/verify` and `/download`: SHA-256 integrity check and file retrieval
+- `/api/parcels`: parcel register, and `POST /api/parcels/verify` for the Bhuvan overlay plus auto-grievances
+- `/api/parcels/:parcelId/compensation`: Section 26-30 award
+- `/api/finance`: approved projects, assessment preview, parcel geometry, financial clearance approval
+- `/api/grievances`, `/api/alerts`, `/api/audit/verify`
+- `/api/admin/adapters`: state adapter registry (DoLR Secretary only)
+- `/api/public/*`: unauthenticated transparency endpoints
+
+## Optional services
+
+```sh
+docker compose up -d ml_service              # risk scoring on :8000
+cd field-pwa && npm install && npm run dev   # field PWA on :5173
+```
+
+The API falls back to a local risk estimate when `ml_service` is not running.
+
+## Notes
+
+- Seed data is deterministic. `src/data/mockData.ts` generates the dataset and `server/prisma/seed.ts` writes it with real document bytes and an intact audit chain.
+- Several modules were ported from a collaborator's Bhumitra backend prototype and adapted to this schema, Supabase auth and audit vault.
+- Demo bypass sessions live in API memory, so a redeploy or restart invalidates them. Sign in again for a fresh token, or use the Supabase accounts for sessions that survive restarts.
