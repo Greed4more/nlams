@@ -30,7 +30,9 @@ export interface BypassPrincipal {
  * keys on a fixed "bypass-*" id — two different ids can't share one email).
  *
  * Personas carry the role's display title as their `name`, not a person's
- * name — the platform identifies officers by role only.
+ * name — the platform identifies officers by role only. Every role is a
+ * nationwide roll (empty `states`); state-level views are chosen inside the
+ * dashboard, not baked into the credential.
  */
 export const BYPASS_PERSONAS: Record<Role, BypassPrincipal> = {
   DOLR_SECRETARY: {
@@ -45,29 +47,27 @@ export const BYPASS_PERSONAS: Record<Role, BypassPrincipal> = {
     email: "district.collector+bypass@nlams.demo",
     name: "District Collector",
     role: "DISTRICT_COLLECTOR",
-    states: ["Goa"],
+    states: [],
   },
   LAO: {
     id: "bypass-lao",
     email: "lao+bypass@nlams.demo",
     name: "Land Acquisition Officer",
     role: "LAO",
-    states: ["Goa"],
+    states: [],
   },
   STATE_REVENUE: {
     id: "bypass-state-revenue",
     email: "state.revenue+bypass@nlams.demo",
     name: "State Revenue Dept",
     role: "STATE_REVENUE",
-    states: ["Maharashtra"],
+    states: [],
   },
   FINANCE_OFFICER: {
     id: "bypass-finance-officer",
     email: "finance.officer+bypass@nlams.demo",
     name: "Finance Officer",
     role: "FINANCE_OFFICER",
-    // National scope — the compensation & disbursement desk clears awards for
-    // every requiring body, not just one state.
     states: [],
   },
 };

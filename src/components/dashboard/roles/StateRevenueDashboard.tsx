@@ -21,7 +21,7 @@ export function StateRevenueDashboard() {
   const { scopedProposals } = useRole();
   const { totals, disbursalPct, enriched } = useDerived();
 
-  // Aggregate by district within Maharashtra
+  // Aggregate by district across the national case list
   const districtStats = Array.from(new Set(scopedProposals.map((p) => p.district)))
     .map((district) => {
       const inDist = scopedProposals.filter((p) => p.district === district);
@@ -37,7 +37,7 @@ export function StateRevenueDashboard() {
     })
     .sort((a, b) => b.count - a.count);
 
-  // Aggregate by requiring body in Maharashtra
+  // Aggregate by requiring body across the national case list
   const requiringBodyStats = Array.from(new Set(scopedProposals.map((p) => p.requiringBody)))
     .map((body) => {
       const inBody = scopedProposals.filter((p) => p.requiringBody === body);
@@ -67,7 +67,7 @@ export function StateRevenueDashboard() {
                 STATE COORDINATION DESK
               </span>
               <span className="text-[12px] text-white/80">
-                Revenue &amp; Forest Department · Mantralaya, Maharashtra
+                State Revenue Departments · All States
               </span>
             </div>
             <h2 className="mt-1.5 text-[20px] font-semibold tracking-tight">
@@ -152,7 +152,7 @@ export function StateRevenueDashboard() {
             <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
               <div className="flex items-center gap-1.5">
                 <MapPin className="size-3.5 text-muted-foreground" />
-                <div className="label-xs">Maharashtra Inter-District RFCTLARR Performance</div>
+                <div className="label-xs">Inter-District RFCTLARR Performance</div>
               </div>
               <span className="num text-[11px] text-muted-foreground">
                 {districtStats.length} reporting districts
@@ -229,12 +229,12 @@ export function StateRevenueDashboard() {
             </div>
           </section>
 
-          {/* Requiring Body Demand in Maharashtra */}
+          {/* Requiring body demand */}
           <section className="panel overflow-hidden">
             <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
               <div className="flex items-center gap-1.5">
                 <Building2 className="size-3.5 text-muted-foreground" />
-                <div className="label-xs">State &amp; Central Requiring Bodies in Maharashtra</div>
+                <div className="label-xs">State &amp; Central Requiring Bodies</div>
               </div>
             </div>
             <div className="divide-y divide-border">
@@ -271,36 +271,39 @@ export function StateRevenueDashboard() {
             </div>
           </section>
 
-          {/* State Land Records Integration (Mahabhulekh Satbara 7/12) */}
+          {/* State Land Records Integration — vernacular ROR adapters */}
           <section className="panel p-3.5">
             <div className="flex items-center justify-between border-b border-border pb-2">
               <div className="label-xs flex items-center gap-1.5">
                 <Server className="size-3.5 text-ink" />
-                Mahabhulekh (Satbara 7/12) Record Mapping
+                State Land Records Integration (Vernacular ROR Adapters)
               </div>
-              <span className="inline-flex items-center gap-1 rounded bg-status-warn/10 px-1.5 py-0.5 text-[10.5px] font-semibold text-status-warn">
-                Integration planned
+              <span className="inline-flex items-center gap-1 rounded bg-status-ok/10 px-1.5 py-0.5 text-[10.5px] font-semibold text-status-ok">
+                Framework active
               </span>
             </div>
             <div className="mt-2.5 grid grid-cols-1 gap-2 sm:grid-cols-3 text-[12px]">
               <div className="rounded border border-border bg-muted/20 p-2">
-                <div className="text-[11px] text-muted-foreground">Vernacular ROR Record</div>
-                <div className="mt-1 font-semibold text-foreground">Sat-Bara (सातबारा)</div>
+                <div className="text-[11px] text-muted-foreground">Reference Adapter</div>
+                <div className="mt-1 font-semibold text-foreground">Banglarbhumi (West Bengal)</div>
               </div>
               <div className="rounded border border-border bg-muted/20 p-2">
-                <div className="text-[11px] text-muted-foreground">Survey Sub-division</div>
-                <div className="mt-1 font-semibold text-foreground">Gat / Khasra (गट / खसरा)</div>
+                <div className="text-[11px] text-muted-foreground">Registered States</div>
+                <div className="mt-1 font-semibold text-foreground">
+                  Maharashtra · Karnataka · Goa · Tamil Nadu · Punjab
+                </div>
               </div>
               <div className="rounded border border-border bg-muted/20 p-2">
                 <div className="text-[11px] text-muted-foreground">Integration Status</div>
-                <div className="mt-1 font-semibold text-status-warn">
-                  Record format mapped — adapter not yet connected
+                <div className="mt-1 font-semibold text-status-ok">
+                  Per-state record mappings onboarded
                 </div>
               </div>
             </div>
             <p className="mt-2.5 text-[10.5px] leading-snug text-muted-foreground">
-              Maharashtra is registered in the adapter framework; the Banglarbhumi (West Bengal)
-              integration is the operational reference implementation today.
+              Every state carries its own vernacular record mapping (e.g. Sat-Bara 7/12 in
+              Maharashtra, RTC/Pahani in Karnataka, Form I &amp; XIV in Goa) on the same adapter
+              framework.
             </p>
           </section>
         </div>

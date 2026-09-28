@@ -61,7 +61,9 @@ export function RoleProvider({ children }: { children: ReactNode }) {
       (!states || states.includes(p.state)) && (!activeState || p.state === activeState);
     const roleLabel = role ? ROLE_LABEL[role] : "No role assigned";
     const scopeLabel = activeState ?? (states ? states.join(", ") : "All states (National)");
-    const dashboardTitle = states ? `${roleLabel} Workspace — ${scopeLabel}` : "National Overview";
+    const dashboardTitle = states
+      ? `${roleLabel} Workspace — ${scopeLabel}`
+      : `${roleLabel} — National Dashboard`;
 
     return {
       role,

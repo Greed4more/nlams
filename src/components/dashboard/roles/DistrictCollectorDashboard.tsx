@@ -32,9 +32,7 @@ export function DistrictCollectorDashboard() {
 
   // Filter grievances in scope
   const districtProposalIds = new Set(scopedProposals.map((p) => p.id));
-  const districtGrievances = grievances.filter(
-    (g) => districtProposalIds.has(g.proposalId) || g.proposal?.district === "South Goa",
-  );
+  const districtGrievances = grievances.filter((g) => districtProposalIds.has(g.proposalId));
 
   // Statutory lapse items (sorted by urgency: breached first, then shortest remaining time)
   const statutoryLapseItems = enriched
@@ -55,7 +53,7 @@ export function DistrictCollectorDashboard() {
               <span className="rounded bg-amber-400/20 px-2 py-0.5 font-mono text-[11px] font-semibold tracking-wider text-amber-300">
                 {t("district.banner.badge")}
               </span>
-              <span className="text-[12px] text-white/80">{t("district.banner.location")}</span>
+              <span className="text-[12px] text-white/80">All Districts · Nationwide</span>
             </div>
             <h2 className="mt-1.5 text-[20px] font-semibold tracking-tight">
               {t("district.banner.title")}

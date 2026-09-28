@@ -29,10 +29,10 @@ export const Route = createFileRoute("/judge-access")({
 });
 
 const BYPASS_ROLES = [
-  { value: "DOLR_SECRETARY", label: "DoLR Secretary (national)" },
-  { value: "DISTRICT_COLLECTOR", label: "District Collector — South Goa" },
-  { value: "LAO", label: "Land Acquisition Officer — South Goa" },
-  { value: "STATE_REVENUE", label: "State Revenue Dept — Maharashtra" },
+  { value: "DOLR_SECRETARY", label: "DoLR Secretary — National" },
+  { value: "DISTRICT_COLLECTOR", label: "District Collector — Nationwide" },
+  { value: "LAO", label: "Land Acquisition Officer — Nationwide" },
+  { value: "STATE_REVENUE", label: "State Revenue Dept — Nationwide" },
   { value: "FINANCE_OFFICER", label: "Finance Officer — Compensation & Disbursement" },
 ] as const;
 

@@ -53,9 +53,7 @@ export function LaoDashboard() {
 
   // Filter grievances in scope
   const districtProposalIds = new Set(scopedProposals.map((p) => p.id));
-  const districtGrievances = grievances.filter(
-    (g) => districtProposalIds.has(g.proposalId) || g.proposal?.district === "South Goa",
-  );
+  const districtGrievances = grievances.filter((g) => districtProposalIds.has(g.proposalId));
 
   return (
     <div className="space-y-4">
@@ -67,7 +65,7 @@ export function LaoDashboard() {
               <span className="rounded bg-emerald-400/20 px-2 py-0.5 font-mono text-[11px] font-semibold tracking-wider text-emerald-300">
                 CASEWORK ACTION WORKBENCH
               </span>
-              <span className="text-[12px] text-white/80">South Goa District · State of Goa</span>
+              <span className="text-[12px] text-white/80">All Districts · Nationwide</span>
             </div>
             <h2 className="mt-1.5 text-[20px] font-semibold tracking-tight">
               Land Acquisition Officer (LAO) Statutory Execution Docket

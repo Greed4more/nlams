@@ -17,18 +17,18 @@ export interface DemoAccount {
 export const DEMO_ACCOUNTS: DemoAccount[] = [
   {
     role: "DOLR_SECRETARY",
-    label: "DoLR Secretary — national scope",
+    label: "DoLR Secretary — National",
     email: "dolr.secretary@nlams.demo",
   },
   {
     role: "DISTRICT_COLLECTOR",
-    label: "District Collector — South Goa",
+    label: "District Collector — Nationwide",
     email: "district.collector@nlams.demo",
   },
-  { role: "LAO", label: "Land Acquisition Officer — South Goa", email: "lao@nlams.demo" },
+  { role: "LAO", label: "Land Acquisition Officer — Nationwide", email: "lao@nlams.demo" },
   {
     role: "STATE_REVENUE",
-    label: "State Revenue Dept — Maharashtra",
+    label: "State Revenue Dept — Nationwide",
     email: "state.revenue@nlams.demo",
   },
   {

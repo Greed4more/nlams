@@ -15,7 +15,8 @@ import { supabaseAdmin } from "../src/lib/supabaseAdmin.js";
 const DEMO_PASSWORD = "admin123";
 
 // `name` is the role's display title, not a person's name — officers are
-// identified by role throughout the platform.
+// identified by role throughout the platform. All roles are nationwide rolls
+// (empty `states`); state-level views are chosen inside the dashboard.
 const PERSONAS = [
   {
     email: "dolr.secretary@nlams.demo",
@@ -27,19 +28,19 @@ const PERSONAS = [
     email: "district.collector@nlams.demo",
     name: "District Collector",
     role: "DISTRICT_COLLECTOR",
-    states: ["Goa"],
+    states: [] as string[],
   },
   {
     email: "lao@nlams.demo",
     name: "Land Acquisition Officer",
     role: "LAO",
-    states: ["Goa"],
+    states: [] as string[],
   },
   {
     email: "state.revenue@nlams.demo",
     name: "State Revenue Dept",
     role: "STATE_REVENUE",
-    states: ["Maharashtra"],
+    states: [] as string[],
   },
   {
     email: "finance.officer@nlams.demo",
