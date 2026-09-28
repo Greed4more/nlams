@@ -11,8 +11,9 @@ const SpatialMapContainer = lazy(() =>
 );
 
 export const Route = createFileRoute("/map-view")({
-  validateSearch: (search: Record<string, unknown>): { ulpin?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { ulpin?: string; proposal?: string } => ({
     ...(typeof search["ulpin"] === "string" ? { ulpin: search["ulpin"] } : {}),
+    ...(typeof search["proposal"] === "string" ? { proposal: search["proposal"] } : {}),
   }),
   head: () => ({
     meta: [
@@ -40,7 +41,7 @@ function MapSkeleton() {
 }
 
 function MapViewPage() {
-  const { ulpin } = Route.useSearch();
+  const { ulpin, proposal } = Route.useSearch();
   const { t } = useI18n();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -49,11 +50,11 @@ function MapViewPage() {
     <AppShell breadcrumb={["BHUMITRA", "GIS Map View"]}>
       <PageHeader
         title={t("page.map.title")}
-        subtitle="Parcel outlines (demo geometry) over OpenStreetMap · district/block boundaries · West Bengal Banglarbhumi cadastral fabric as reference capture"
+        subtitle="Parcel outlines (demo geometry) over satellite imagery · development alignment, acquisition extent and start/end points · district/block boundaries"
       />
       {mounted ? (
         <Suspense fallback={<MapSkeleton />}>
-          <SpatialMapContainer highlightedUlpin={ulpin} />
+          <SpatialMapContainer highlightedUlpin={ulpin} highlightedProposalId={proposal} />
         </Suspense>
       ) : (
         <MapSkeleton />

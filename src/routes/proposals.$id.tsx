@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, ChevronLeft, Loader2 } from "lucide-react";
+import { ArrowRight, ChevronLeft, FileText, Loader2 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { formatINRFull } from "@/data/mockData";
 import { getSlaStatus, SLA_STATUS_LABEL } from "@/lib/slaRules";
@@ -186,6 +186,14 @@ function ProposalDetail() {
                 </Tooltip>
               );
             })()}
+            <Link
+              to="/dossier/$id"
+              params={{ id: proposal.id }}
+              className="inline-flex items-center gap-1.5 rounded-[4px] border border-white/20 px-3 py-1.5 text-[11.5px] font-medium text-ink-foreground/90 transition-colors hover:bg-white/10"
+            >
+              <FileText className="size-3.5" />
+              Read proposal dossier
+            </Link>
           </div>
         </div>
       </header>

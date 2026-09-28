@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import {
   FileText,
   ShieldCheck,
@@ -8,12 +9,23 @@ import {
   ChevronRight,
   Upload,
   SearchCheck,
+  BookOpen,
+  Download,
+  Eye,
+  ScrollText,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { DocumentRef, Proposal } from "@/data/mockData";
 import { useDemo, useSpotlight } from "@/context/DemoContext";
 import { useRole, NO_CREDENTIALS_HINT } from "@/context/RoleContext";
-import { useUploadDocumentMutation, useVerifyDocumentMutation } from "@/hooks/useProposals";
+import {
+  useUploadDocumentMutation,
+  useVerifyAllDocumentsMutation,
+  useVerifyDocumentMutation,
+  downloadDocument,
+  viewDocument,
+} from "@/hooks/useProposals";
+import { downloadProposalDossier, openProposalDossier } from "@/lib/proposalDossier";
 import {
   Select,
   SelectContent,
@@ -42,10 +54,41 @@ export function DocumentRepository({ proposal }: { proposal: Proposal }) {
   const { verifySignal } = useDemo();
   const { canAct } = useRole();
   const uploadMutation = useUploadDocumentMutation(proposal.id);
+  const verifyAllMutation = useVerifyAllDocumentsMutation(proposal.id);
   const fileInput = useRef<HTMLInputElement>(null);
   const [uploadType, setUploadType] = useState<DocumentRef["type"]>("SIA_REPORT");
 
   const handleUploadClick = () => fileInput.current?.click();
+
+  const handleVerifyAll = () => {
+    if (proposal.documents.length === 0) {
+      toast.info("No documents filed yet", {
+        description:
+          "Upload the statutory filings for this stage, then run verification against the audit vault.",
+      });
+      return;
+    }
+    verifyAllMutation.mutate(
+      proposal.documents.map((d) => ({ id: d.id, name: d.name })),
+      {
+        onSuccess: (result) => {
+          if (result.failed.length === 0) {
+            toast.success("All documents verified", {
+              description: `${result.matched}/${result.total} filings match the SHA-256 record in the audit vault.`,
+            });
+          } else {
+            toast.error(`${result.failed.length} document(s) failed integrity`, {
+              description: result.failed.join(", "),
+            });
+          }
+        },
+        onError: (err) =>
+          toast.error("Verification failed", {
+            description: err instanceof Error ? err.message : "Unknown error",
+          }),
+      },
+    );
+  };
 
   const handleFileSelected = async (file: File | undefined) => {
     if (!file) return;
@@ -71,6 +114,33 @@ export function DocumentRepository({ proposal }: { proposal: Proposal }) {
     <section className={cn("panel", spotlight)}>
       <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-2.5">
         <div className="label-xs">Document Repository &amp; Integrity Verification</div>
+        {(() => {
+          const button = (
+            <button
+              type="button"
+              disabled={verifyAllMutation.isPending}
+              onClick={handleVerifyAll}
+              className="inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-card px-2.5 py-1.5 text-[11.5px] font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+              title="Verify every filed document byte-for-byte against the SHA-256 record in the audit vault"
+            >
+              {verifyAllMutation.isPending ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <ShieldCheck className="size-3.5" />
+              )}
+              {verifyAllMutation.isPending ? "Verifying…" : "Verify documents"}
+            </button>
+          );
+          if (canAct) return button;
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>{button}</span>
+              </TooltipTrigger>
+              <TooltipContent side="left">{NO_CREDENTIALS_HINT}</TooltipContent>
+            </Tooltip>
+          );
+        })()}
       </div>
 
       <div className="flex items-center gap-2 border-b border-border bg-muted/30 px-4 py-2.5">
@@ -124,9 +194,12 @@ export function DocumentRepository({ proposal }: { proposal: Proposal }) {
       </div>
 
       <div className="divide-y divide-border">
+        <DossierCard proposal={proposal} />
         {proposal.documents.length === 0 && (
-          <p className="px-4 py-8 text-center text-[12px] text-muted-foreground">
-            No statutory documents filed at this stage.
+          <p className="px-4 py-5 text-center text-[12px] leading-relaxed text-muted-foreground">
+            No statutory documents filed at this stage. The system-generated proposal dossier above
+            is always available to read or download; upload the statutory filings once this proposal
+            enters SIA appraisal.
           </p>
         )}
         {proposal.documents.map((doc, i) => (
@@ -147,6 +220,59 @@ export function DocumentRepository({ proposal }: { proposal: Proposal }) {
   );
 }
 
+/**
+ * The full proposal record rendered as a downloadable/readable document. This
+ * is always present, even before any statutory filing exists, so the proposal
+ * can always be read end-to-end and verified against its own register entry.
+ */
+function DossierCard({ proposal }: { proposal: Proposal }) {
+  return (
+    <div className="flex items-start gap-2.5 bg-status-info/[0.04] px-4 py-3">
+      <ScrollText className="mt-[2px] size-4 shrink-0 text-status-info" />
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[12.5px] font-medium text-foreground">
+          Acquisition Proposal Dossier — {proposal.id}.html
+        </div>
+        <div className="mt-0.5 text-[11px] text-muted-foreground">
+          System-generated statutory record · full particulars, workflow, parcels and compensation
+        </div>
+        <span className="mt-1.5 inline-flex items-center gap-1 rounded-[4px] border border-status-info/30 bg-status-info/10 px-1.5 py-0.5 text-[10.5px] font-semibold text-status-info">
+          <ShieldCheck className="size-3" />
+          Generated from the register
+        </span>
+      </div>
+      <div className="flex shrink-0 flex-col items-end gap-1.5">
+        <Link
+          to="/dossier/$id"
+          params={{ id: proposal.id }}
+          className="inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-card px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-muted"
+        >
+          <BookOpen className="size-3.5" />
+          Read full document
+        </Link>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => openProposalDossier(proposal)}
+            className="inline-flex items-center gap-1 rounded-[4px] border border-border bg-card px-2 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-muted"
+          >
+            <Eye className="size-3.5" />
+            Open
+          </button>
+          <button
+            type="button"
+            onClick={() => downloadProposalDossier(proposal)}
+            className="inline-flex items-center gap-1 rounded-[4px] border border-border bg-card px-2 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-muted"
+          >
+            <Download className="size-3.5" />
+            Download
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DocumentCard({
   doc,
   proposalId,
@@ -157,9 +283,37 @@ function DocumentCard({
   autoVerifySignal?: number | undefined;
 }) {
   const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState<"view" | "download" | null>(null);
   const verifyMutation = useVerifyDocumentMutation(proposalId);
   const lastResult = verifyMutation.data;
   const verifyFileInput = useRef<HTMLInputElement>(null);
+
+  const handleView = async () => {
+    setBusy("view");
+    try {
+      await viewDocument(doc.id);
+    } catch (err) {
+      toast.error("Could not open document", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleDownload = async () => {
+    setBusy("download");
+    try {
+      await downloadDocument(doc.id, doc.name);
+      toast.success("Document downloaded", { description: doc.name });
+    } catch (err) {
+      toast.error("Download failed", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
+    } finally {
+      setBusy(null);
+    }
+  };
 
   const verifyStored = () => {
     verifyMutation.mutate({ documentId: doc.id, form: new FormData() });
@@ -232,25 +386,53 @@ function DocumentCard({
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => verifyFileInput.current?.click()}
-              disabled={verifyMutation.isPending}
+              onClick={handleView}
+              disabled={busy !== null}
               className="inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-card px-2.5 py-1.5 text-[11.5px] font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-70"
             >
-              {verifyMutation.isPending ? (
+              {busy === "view" ? (
                 <Loader2 className="size-3 animate-spin" />
               ) : (
-                <SearchCheck className="size-3.5" />
+                <Eye className="size-3.5" />
               )}
-              {verifyMutation.isPending ? "Checking integrity…" : "Check document integrity"}
+              View document
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDownload}
+              disabled={busy !== null}
+              className="inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-card px-2.5 py-1.5 text-[11.5px] font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-70"
+            >
+              {busy === "download" ? (
+                <Loader2 className="size-3 animate-spin" />
+              ) : (
+                <Download className="size-3.5" />
+              )}
+              Download
             </button>
 
             <button
               type="button"
               onClick={verifyStored}
               disabled={verifyMutation.isPending}
+              className="inline-flex items-center gap-1.5 rounded-[4px] bg-status-info px-2.5 py-1.5 text-[11.5px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-70"
+            >
+              {verifyMutation.isPending ? (
+                <Loader2 className="size-3 animate-spin" />
+              ) : (
+                <SearchCheck className="size-3.5" />
+              )}
+              {verifyMutation.isPending ? "Checking integrity…" : "Verify document"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => verifyFileInput.current?.click()}
+              disabled={verifyMutation.isPending}
               className="inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-card px-2.5 py-1.5 text-[11.5px] font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-70"
             >
-              Verify stored copy
+              Verify against my copy
             </button>
 
             <input

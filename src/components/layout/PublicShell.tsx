@@ -28,6 +28,12 @@ export function PublicShell({ children }: { children: ReactNode }) {
           </Link>
           <div className="flex shrink-0 items-center gap-2">
             <Link
+              to="/public/landowners"
+              className="hidden rounded-[4px] px-2.5 py-1.5 text-[11.5px] font-medium text-ink-foreground/80 transition-colors hover:bg-ink-hover hover:text-ink-foreground sm:block"
+            >
+              Landowner Portal
+            </Link>
+            <Link
               to="/"
               className="rounded-[4px] px-2.5 py-1.5 text-[11.5px] font-medium text-ink-foreground/80 transition-colors hover:bg-ink-hover hover:text-ink-foreground"
             >

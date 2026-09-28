@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import type { Geometry } from "geojson";
 import { api } from "@/lib/api";
 import type { RfctlarrStage } from "@/data/mockData";
 
@@ -64,6 +65,93 @@ export function usePublicProposalDetail(id: string) {
     queryKey: ["public", "proposals", id],
     queryFn: () => api.get<PublicProposalDetail>(`/api/public/proposals/${id}`),
     enabled: !!id,
+    retry: false,
+  });
+}
+
+/* ---------------------------------------------------------------- *
+ * Landowner portal — land information & R&R tracking
+ * ---------------------------------------------------------------- */
+
+export interface RrStage {
+  key: string;
+  label: string;
+  status: "COMPLETE" | "IN_PROGRESS" | "PENDING";
+}
+
+export interface RrEntitlement {
+  category: string;
+  basis: string;
+  applicable: boolean;
+  amount: number;
+}
+
+export interface LandownerRecord {
+  ulpin: string;
+  ownerName: string;
+  coOwners: number;
+  khasraNo: string;
+  classification: "RURAL" | "URBAN";
+  vernacularTerm: { local: string; script: string; standard: string } | null;
+  projectId: string;
+  projectName: string;
+  requiringBody: string;
+  state: string;
+  district: string;
+  totalParcelAreaAcres: number;
+  acquiredAreaAcres: number;
+  acquiredAreaHa: number;
+  compensationStatus: string;
+  disbursed: number;
+  compensation: {
+    baseLandValue: number;
+    solatium: number;
+    interestAmount: number;
+    interestRatePercent: number;
+    rrAllowance: number;
+    totalLandCompensation: number;
+    totalAllocated: number;
+  };
+  rr: {
+    caseId: string;
+    overallStatus: string;
+    eligibility: string;
+    currentStep: number;
+    stages: RrStage[];
+    entitlements: RrEntitlement[];
+  };
+  notice: string;
+}
+
+export interface LandownerSearchResult {
+  count: number;
+  query: string;
+  notice: string;
+  landowners: LandownerRecord[];
+}
+
+/** Unauthenticated — GET /api/public/landowners/search. */
+export function usePublicLandownerSearch(query: string) {
+  const qs = new URLSearchParams();
+  if (query.trim()) qs.set("q", query.trim());
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+
+  return useQuery({
+    queryKey: ["public", "landowners", "search", query.trim()],
+    queryFn: () => api.get<LandownerSearchResult>(`/api/public/landowners/search${suffix}`),
+  });
+}
+
+export interface LandownerDetail extends LandownerRecord {
+  geometry: Geometry | null;
+}
+
+/** Unauthenticated — GET /api/public/landowners/:ulpin. */
+export function usePublicLandownerDetail(ulpin: string | undefined) {
+  return useQuery({
+    queryKey: ["public", "landowners", ulpin],
+    queryFn: () => api.get<LandownerDetail>(`/api/public/landowners/${ulpin}`),
+    enabled: !!ulpin,
     retry: false,
   });
 }

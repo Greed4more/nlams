@@ -103,6 +103,269 @@ publicRouter.get("/proposals/search", async (req, res) => {
   res.json({ count: proposals.length, proposals });
 });
 
+/* ---------------------------------------------------------------- *
+ * Landowner portal — land information & R&R tracking
+ *
+ * Demo deployment over synthetic seeded records: a citizen enters their
+ * survey/ULPIN and receives the land record, the RFCTLARR compensation
+ * breakdown and the R&R lifecycle for that holding. No auth, no writes.
+ * ---------------------------------------------------------------- */
+
+const ACRES_PER_HECTARE = 2.47105;
+
+/** Deterministic [0,1) value derived from a string — keeps the derived
+ * compensation/R&R figures stable across requests without storing them. */
+function hashToUnit(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return (h % 10_000) / 10_000;
+}
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+/** Share of the cadastral parcel actually acquired — the reference portal
+ * distinguishes "land acquired inside parcel" from the total plot extent. */
+function acquiredShare(ulpin: string): number {
+  return 0.62 + hashToUnit(`${ulpin}#acquired`) * 0.33;
+}
+
+interface RrStage {
+  key: string;
+  label: string;
+  status: "COMPLETE" | "IN_PROGRESS" | "PENDING";
+}
+
+const RR_STAGE_LABELS = [
+  "Eligibility",
+  "LAO Review",
+  "Financial Settlement",
+  "District Approval",
+  "Implementation",
+] as const;
+
+/** Proposal workflow stage → index into the 5-step R&R lifecycle. */
+function rrStageIndex(currentStage: string): number {
+  switch (currentStage) {
+    case "INTAKE":
+    case "SIA":
+      return 0;
+    case "SIA_APPRAISAL":
+    case "SEC_11":
+      return 1;
+    case "SEC_19":
+      return 2;
+    case "AWARD":
+      return 3;
+    case "RR_COMPLETE":
+      return 5;
+    default:
+      return 0;
+  }
+}
+
+function buildRrStages(currentStage: string): { stages: RrStage[]; currentIndex: number } {
+  const currentIndex = rrStageIndex(currentStage);
+  const stages: RrStage[] = RR_STAGE_LABELS.map((label, i) => ({
+    key: label.toUpperCase().replace(/[^A-Z]+/g, "_"),
+    label,
+    status: i < currentIndex ? "COMPLETE" : i === currentIndex ? "IN_PROGRESS" : "PENDING",
+  }));
+  return { stages, currentIndex };
+}
+
+interface Entitlement {
+  category: string;
+  basis: string;
+  applicable: boolean;
+  amount: number;
+}
+
+/** Second Schedule, RFCTLARR Act 2013 — indicative entitlement assessment. */
+function buildEntitlements(ulpin: string, eligible: boolean): Entitlement[] {
+  const hasHouse = hashToUnit(`${ulpin}#housing`) > 0.35;
+  const needsTraining = hashToUnit(`${ulpin}#training`) > 0.3;
+  return [
+    {
+      category: "Housing Construction Assistance",
+      basis: "Schedule II (1) — house building assistance",
+      applicable: eligible && hasHouse,
+      amount: eligible && hasHouse ? 120_000 : 0,
+    },
+    {
+      category: "Transportation / Shifting Allowance",
+      basis: "Schedule II (4) — one-time shifting allowance",
+      applicable: eligible,
+      amount: eligible ? 25_000 : 0,
+    },
+    {
+      category: "Subsistence Allowance",
+      basis: "Schedule II (5) — ₹3,000/month for 12 months",
+      applicable: eligible,
+      amount: eligible ? 36_000 : 0,
+    },
+    {
+      category: "Livelihood Training",
+      basis: "Schedule II (6) — skill development grant",
+      applicable: eligible && needsTraining,
+      amount: eligible && needsTraining ? 40_000 : 0,
+    },
+  ];
+}
+
+/** Sec. 26-30 land compensation split used when no award record exists yet. */
+function buildLandBreakdown(assessed: number, ulpin: string) {
+  const baseLandValue = Math.round(assessed / 2);
+  const solatium = baseLandValue; // Sec. 30(1) — 100% of market value
+  const interestRate = hashToUnit(`${ulpin}#interest`) > 0.5 ? 0.09 : 0.06; // Sec. 30(3)
+  const interestAmount = Math.round(baseLandValue * interestRate);
+  return {
+    baseLandValue,
+    solatium,
+    interestAmount,
+    interestRatePercent: Math.round(interestRate * 100),
+    totalLandCompensation: baseLandValue + solatium + interestAmount,
+  };
+}
+
+function rrCaseId(ulpin: string, initiatedAt: Date): string {
+  const code = ulpin.slice(0, 2);
+  const tail = ulpin.slice(-4);
+  return `RR-${initiatedAt.getFullYear()}-${code}-${tail}`;
+}
+
+type ParcelWithProposal = {
+  ulpin: string;
+  khasraNo: string;
+  ownerName: string;
+  coOwners: number;
+  areaHa: number;
+  classification: string;
+  compensationAssessed: number;
+  compensationDisbursed: number;
+  vernacularTerm: unknown;
+  proposal: {
+    id: string;
+    projectName: string;
+    requiringBody: string;
+    state: string;
+    district: string;
+    currentStage: string;
+    initiatedAt: Date;
+  };
+};
+
+function serializeLandownerRecord(p: ParcelWithProposal) {
+  const acquiredHa = p.areaHa * acquiredShare(p.ulpin);
+  const totalParcelAreaAcres = round2(p.areaHa * ACRES_PER_HECTARE);
+  const acquiredAreaAcres = round2(acquiredHa * ACRES_PER_HECTARE);
+  const eligible = rrStageIndex(p.proposal.currentStage) >= 1;
+
+  const compensationRecords = buildLandBreakdown(p.compensationAssessed, p.ulpin);
+  const entitlements = buildEntitlements(p.ulpin, eligible);
+  const rrAllowance = entitlements.reduce((sum, e) => sum + (e.applicable ? e.amount : 0), 0);
+  const { stages, currentIndex } = buildRrStages(p.proposal.currentStage);
+
+  return {
+    ulpin: p.ulpin,
+    ownerName: p.ownerName,
+    coOwners: p.coOwners,
+    khasraNo: p.khasraNo,
+    classification: p.classification,
+    vernacularTerm: p.vernacularTerm,
+    projectId: p.proposal.id,
+    projectName: p.proposal.projectName,
+    requiringBody: p.proposal.requiringBody,
+    state: p.proposal.state,
+    district: p.proposal.district,
+    totalParcelAreaAcres,
+    acquiredAreaAcres,
+    acquiredAreaHa: round2(acquiredHa),
+    compensationStatus: p.compensationDisbursed > 0 ? "APPROVED" : "IN_PROGRESS",
+    disbursed: Math.round(compensationRecords.totalLandCompensation * p.compensationDisbursed / Math.max(p.compensationAssessed, 1)),
+    compensation: {
+      baseLandValue: compensationRecords.baseLandValue,
+      solatium: compensationRecords.solatium,
+      interestAmount: compensationRecords.interestAmount,
+      interestRatePercent: compensationRecords.interestRatePercent,
+      rrAllowance,
+      totalLandCompensation: compensationRecords.totalLandCompensation,
+      totalAllocated: compensationRecords.totalLandCompensation + rrAllowance,
+    },
+    rr: {
+      caseId: rrCaseId(p.ulpin, p.proposal.initiatedAt),
+      overallStatus: currentIndex >= 5 ? "COMPLETE" : currentIndex >= 1 ? "UNDER_REVIEW" : "ELIGIBILITY",
+      eligibility: eligible ? "Eligible — RFCTLARR 2nd Schedule" : "Under Review",
+      currentStep: currentIndex + 1,
+      stages,
+      entitlements,
+    },
+    notice:
+      "Demo deployment over synthetic records. Personal data is processed only for the seeded demo dataset under the Digital Personal Data Protection Act, 2023.",
+  };
+}
+
+const landownerInclude = {
+  proposal: {
+    select: {
+      id: true,
+      projectName: true,
+      requiringBody: true,
+      state: true,
+      district: true,
+      currentStage: true,
+      initiatedAt: true,
+    },
+  },
+} as const;
+
+/** GET /api/public/landowners/search?q=<ulpin|survey no|name> — directory. */
+publicRouter.get("/landowners/search", async (req, res) => {
+  const q = String(req.query["q"] ?? "").trim();
+  const where =
+    q.length >= 2
+      ? {
+          OR: [
+            { ulpin: { contains: q, mode: "insensitive" as const } },
+            { khasraNo: { contains: q, mode: "insensitive" as const } },
+            { ownerName: { contains: q, mode: "insensitive" as const } },
+          ],
+        }
+      : {};
+  const parcels = await prisma.parcel.findMany({
+    where,
+    include: landownerInclude,
+    orderBy: { ulpin: "asc" },
+    take: 24,
+  });
+  res.json({
+    count: parcels.length,
+    query: q,
+    notice:
+      "Demo deployment over synthetic records. Search by ULPIN, survey number or landowner name.",
+    landowners: parcels.map(serializeLandownerRecord),
+  });
+});
+
+/** GET /api/public/landowners/:ulpin — one landowner/parcel record + R&R. */
+publicRouter.get("/landowners/:ulpin", async (req, res) => {
+  const ulpin = req.params.ulpin.toUpperCase();
+  const parcel = await prisma.parcel.findUnique({ where: { ulpin }, include: landownerInclude });
+  if (!parcel) {
+    res.status(404).json({ error: "Land record not found for this ULPIN" });
+    return;
+  }
+
+  const geometryRows = await prisma.$queryRaw<{ geometry: string | null }[]>`
+    SELECT ST_AsGeoJSON(geom) AS geometry FROM parcels WHERE ulpin = ${ulpin}
+  `;
+  const geometryText = geometryRows[0]?.geometry ?? null;
+
+  res.json({
+    ...serializeLandownerRecord(parcel as ParcelWithProposal),
+    geometry: geometryText ? JSON.parse(geometryText) : null,
+  });
+});
+
 publicRouter.get("/proposals/:id", async (req, res) => {
   const proposal = await prisma.proposal.findUnique({
     where: { id: req.params.id },

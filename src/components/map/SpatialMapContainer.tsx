@@ -5,6 +5,9 @@ import {
   TileLayer,
   WMSTileLayer,
   GeoJSON,
+  Polyline,
+  CircleMarker,
+  Tooltip as LeafletTooltip,
   useMap,
   useMapEvents,
 } from "react-leaflet";
@@ -21,6 +24,7 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Locate,
+  Route as RouteIcon,
 } from "lucide-react";
 import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
 import { point as turfPoint } from "@turf/helpers";
@@ -97,6 +101,81 @@ const BASEMAPS = [
 export interface SpatialMapContainerProps {
   onParcelClick?: (parcel: ParcelFeatureProperties) => void;
   highlightedUlpin?: string | undefined;
+  /** Proposal whose acquisition corridor (alignment + start/end points) should be drawn. */
+  highlightedProposalId?: string | undefined;
+}
+
+const HECTARES_TO_ACRES = 2.47105;
+const CORRIDOR_COLOR = "#ea580c";
+const CORRIDOR_START_COLOR = "#16a34a";
+const CORRIDOR_END_COLOR = "#dc2626";
+
+const acresOf = (ha: number) => ha * HECTARES_TO_ACRES;
+
+/** Great-circle distance in km — used for the corridor (chainage) length. */
+function haversineKm(a: [number, number], b: [number, number]): number {
+  const R = 6371;
+  const dLat = ((b[0] - a[0]) * Math.PI) / 180;
+  const dLng = ((b[1] - a[1]) * Math.PI) / 180;
+  const lat1 = (a[0] * Math.PI) / 180;
+  const lat2 = (b[0] * Math.PI) / 180;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+interface Corridor {
+  points: [number, number][];
+  lengthKm: number;
+  features: ParcelFeature[];
+  totalAreaHa: number;
+  totalAcres: number;
+}
+
+/**
+ * Indicative development alignment for a proposal: connects its notified
+ * parcels in a nearest-neighbour path (deterministic start at the westernmost
+ * parcel) so the map shows both where the works begin/end and how much land is
+ * being taken. This is derived from parcel sequence, not a surveyed alignment.
+ */
+function buildCorridor(features: ParcelFeature[]): Corridor | null {
+  if (features.length === 0) return null;
+  const remaining = features.map((f) => ({
+    f,
+    c: polygonCentroid(f.geometry.coordinates[0]!),
+  }));
+  remaining.sort((a, b) => a.c[0] + a.c[1] - (b.c[0] + b.c[1]));
+
+  const ordered: ParcelFeature[] = [];
+  const points: [number, number][] = [];
+  let current = remaining.splice(0, 1)[0]!;
+  ordered.push(current.f);
+  points.push(current.c);
+  while (remaining.length > 0) {
+    let bestIndex = 0;
+    let bestDistance = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < remaining.length; i++) {
+      const d = haversineKm(current.c, remaining[i]!.c);
+      if (d < bestDistance) {
+        bestDistance = d;
+        bestIndex = i;
+      }
+    }
+    current = remaining.splice(bestIndex, 1)[0]!;
+    ordered.push(current.f);
+    points.push(current.c);
+  }
+
+  let lengthKm = 0;
+  for (let i = 1; i < points.length; i++) lengthKm += haversineKm(points[i - 1]!, points[i]!);
+
+  const totalAreaHa = features.reduce((s, f) => s + f.properties.areaHa, 0);
+  return {
+    points,
+    lengthKm,
+    features: ordered,
+    totalAreaHa,
+    totalAcres: acresOf(totalAreaHa),
+  };
 }
 
 type Selection =
@@ -208,10 +287,12 @@ function defaultCluster(features: ParcelFeature[]): ParcelFeature[] {
 function FitToData({
   data,
   highlightedUlpin,
+  highlightedProposalId,
   fitAllSignal,
 }: {
   data: FeatureCollection<Polygon, ParcelFeatureProperties> | undefined;
   highlightedUlpin?: string | undefined;
+  highlightedProposalId?: string | undefined;
   fitAllSignal: number;
 }) {
   const map = useMap();
@@ -221,6 +302,17 @@ function FitToData({
     if (fitAllSignal > 0) {
       map.fitBounds(boundsOf(data.features), { padding: [24, 24] });
       return;
+    }
+    if (highlightedProposalId) {
+      // Whole-proposal view: frame the acquisition corridor (all notified
+      // parcels) so the alignment and both endpoints are visible together.
+      const cluster = data.features.filter(
+        (f) => f.properties.proposalId === highlightedProposalId,
+      );
+      if (cluster.length > 0) {
+        map.fitBounds(boundsOf(cluster), { padding: [56, 56] });
+        return;
+      }
     }
     if (highlightedUlpin) {
       // A specific ULPIN was requested (e.g. a "View on map" link) — if it
@@ -245,7 +337,7 @@ function FitToData({
     const [lng, lat] = cluster[0]!.geometry.coordinates[0]![0]!;
     map.setView([lat!, lng!], 16);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, highlightedUlpin, fitAllSignal]);
+  }, [data, highlightedUlpin, highlightedProposalId, fitAllSignal]);
   return null;
 }
 
@@ -289,7 +381,11 @@ function FocusOnRequest({ request }: { request: FocusRequest | null }) {
   return null;
 }
 
-export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: SpatialMapContainerProps) {
+export function SpatialMapContainer({
+  onParcelClick,
+  highlightedUlpin,
+  highlightedProposalId,
+}: SpatialMapContainerProps) {
   const { data, isLoading } = useParcelsGeoJson();
   const [stateCode, setStateCode] = useState("WB");
   const stateName = STATE_LIST.find((s) => s.code === stateCode)?.name ?? stateCode;
@@ -312,12 +408,33 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
   const [zoom, setZoom] = useState(8);
   const [showWbParcels, setShowWbParcels] = useState(false);
   const [wbParcelDistrictSlug, setWbParcelDistrictSlug] = useState<string | null>(null);
+  const [showCorridor, setShowCorridor] = useState(true);
 
   const theme = MAP_THEME;
   const geojson = data as FeatureCollection<Polygon, ParcelFeatureProperties> | undefined;
   const lulcLayer = selected?.kind === "parcel" ? lulcLayerFor(selected.properties.state) : null;
   const blocksVisible = showBlocks && zoom >= BLOCK_VISIBLE_ZOOM;
   const adminLabelsVisible = zoom >= ADMIN_LABEL_ZOOM;
+
+  /** Proposal whose corridor is shown: explicitly requested via URL, or the
+   * proposal of whichever parcel the user clicked on the map. */
+  const activeProposalId =
+    highlightedProposalId ?? (selected?.kind === "parcel" ? selected.properties.proposalId : null);
+  const corridor = useMemo(() => {
+    if (!geojson || !activeProposalId) return null;
+    return buildCorridor(
+      geojson.features.filter((f) => f.properties.proposalId === activeProposalId),
+    );
+  }, [geojson, activeProposalId]);
+  const corridorVisible = showCorridor && corridor != null && corridor.points.length > 1;
+
+  /** [lng, lat] pairs for Leaflet, ordered start → end. */
+  const corridorPositions = useMemo(
+    () => (corridor ? corridor.points.map(([lat, lng]) => [lat, lng] as [number, number]) : []),
+    [corridor],
+  );
+  const corridorStart = corridor?.features[0]?.properties;
+  const corridorEnd = corridor?.features[corridor.features.length - 1]?.properties;
 
   /** BHUMITRA West Bengal 28-district target-state parcel demo — see
    * public/geo/wb_parcels. Opt-in and WB-only: 28 districts x up to ~9.5k
@@ -345,7 +462,6 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
       bounds: boundsOfGeometries(source.map((f) => f.geometry)),
       nonce: Date.now(),
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateCode, districtsData, stateBoundaryData]);
 
   useEffect(() => {
@@ -371,7 +487,6 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
       bounds: boundsOfGeometries(wbParcelData.features.map((f) => f.geometry)),
       nonce: Date.now(),
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wbParcelDistrictSlug, wbParcelData]);
 
   const selectParcel = (feature: Feature<Geometry, ParcelFeatureProperties>) => {
@@ -688,6 +803,64 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
           <GeoJSON key={geojsonKey} data={geojson} style={styleFor} onEachFeature={onEachFeature} />
         )}
 
+        {/* Development alignment — indicative corridor connecting the proposal's
+            notified parcels, with explicit start/end points and chainage. */}
+        {corridorVisible && corridor && (
+          <>
+            <Polyline
+              positions={corridorPositions}
+              pathOptions={{
+                color: CORRIDOR_COLOR,
+                weight: 4,
+                opacity: 0.95,
+                dashArray: "10 7",
+              }}
+            />
+            {corridor.points.map((point, i) => {
+              const isStart = i === 0;
+              const isEnd = i === corridor.points.length - 1;
+              const feature = corridor.features[i]?.properties;
+              const chainage = corridor.points
+                .slice(0, i + 1)
+                .reduce(
+                  (sum, p, idx, arr) => (idx === 0 ? 0 : sum + haversineKm(arr[idx - 1]!, p)),
+                  0,
+                );
+              return (
+                <CircleMarker
+                  key={`corridor-${i}`}
+                  center={point}
+                  radius={isStart || isEnd ? 9 : 3}
+                  pathOptions={{
+                    color: isStart
+                      ? CORRIDOR_START_COLOR
+                      : isEnd
+                        ? CORRIDOR_END_COLOR
+                        : CORRIDOR_COLOR,
+                    fillColor: isStart
+                      ? CORRIDOR_START_COLOR
+                      : isEnd
+                        ? CORRIDOR_END_COLOR
+                        : "#ffffff",
+                    fillOpacity: 1,
+                    weight: 2,
+                  }}
+                >
+                  {(isStart || isEnd) && (
+                    <LeafletTooltip permanent direction={isStart ? "top" : "bottom"}>
+                      <span style={{ fontWeight: 700 }}>
+                        {isStart ? "START POINT" : "END POINT"}
+                      </span>
+                      <br />
+                      Chainage {chainage.toFixed(2)} km · Khasra {feature?.khasraNo ?? "—"}
+                    </LeafletTooltip>
+                  )}
+                </CircleMarker>
+              );
+            })}
+          </>
+        )}
+
         {wbParcelsEnabled && wbParcelData && (
           <>
             <WbParcelsPaneSetup />
@@ -705,7 +878,12 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
           </>
         )}
 
-        <FitToData data={geojson} highlightedUlpin={highlightedUlpin} fitAllSignal={fitAllSignal} />
+        <FitToData
+          data={geojson}
+          highlightedUlpin={highlightedUlpin}
+          highlightedProposalId={highlightedProposalId}
+          fitAllSignal={fitAllSignal}
+        />
         <FocusOnRequest request={focusRequest} />
         <ZoomWatcher onZoom={setZoom} />
       </MapContainer>
@@ -718,6 +896,59 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
               ? "Loading West Bengal cadastral fabric (Banglarbhumi demo capture)…"
               : "Fetching parcel records from the National Land Records Repository…"}
           </div>
+        </div>
+      )}
+
+      {/* Acquisition extent + development alignment banner — answers "how much
+          land is being taken and from where to where" without opening a panel. */}
+      {corridorVisible && corridor && (
+        <div
+          className={cn(
+            "panel absolute top-14 z-[1000] flex flex-wrap items-center gap-x-5 gap-y-1 px-3 py-2",
+            panelOpen ? "left-[270px]" : "left-3",
+            "right-3",
+          )}
+        >
+          <div className="flex items-center gap-2">
+            <RouteIcon className="size-4 shrink-0 text-[#ea580c]" />
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">
+                Development Alignment · Indicative
+              </div>
+              <div className="num text-[12.5px] font-semibold text-foreground">
+                Land to acquire: {corridor.totalAcres.toFixed(2)} Acres (
+                {corridor.totalAreaHa.toFixed(2)} Ha) across {corridor.features.length} parcels
+              </div>
+            </div>
+          </div>
+          <div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">
+              Corridor Length
+            </div>
+            <div className="num text-[12.5px] font-semibold">{corridor.lengthKm.toFixed(2)} km</div>
+          </div>
+          <div className="min-w-0">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">
+              Works From → To
+            </div>
+            <div className="num truncate text-[12.5px] font-medium">
+              <span className="text-[#16a34a]">
+                Start: Khasra {corridorStart?.khasraNo ?? "—"} ({corridorStart?.district ?? ""})
+              </span>
+              <span className="mx-1.5 text-muted-foreground">→</span>
+              <span className="text-[#dc2626]">End: Khasra {corridorEnd?.khasraNo ?? "—"}</span>
+            </div>
+          </div>
+          {activeProposalId && (
+            <Link
+              to="/proposals/$id"
+              params={{ id: activeProposalId }}
+              className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-[4px] border border-border bg-card px-2.5 py-1.5 text-[11.5px] font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              <FileText className="size-3.5" />
+              Open proposal
+            </Link>
+          )}
         </div>
       )}
 
@@ -742,6 +973,23 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
                 checked={showLabels}
                 onChange={setShowLabels}
               />
+              <LayerRow
+                label={
+                  corridor
+                    ? "Development Alignment & End Points"
+                    : "Development Alignment — select a proposal"
+                }
+                checked={showCorridor}
+                onChange={setShowCorridor}
+                disabled={!corridor}
+              />
+              {corridor && (
+                <p className="text-[10px] leading-snug text-muted-foreground">
+                  Corridor: {corridor.totalAcres.toFixed(2)} Acres to acquire over{" "}
+                  {corridor.lengthKm.toFixed(2)} km, connecting {corridor.features.length} notified
+                  parcels. Start/end markers show the work limits.
+                </p>
+              )}
               <LayerRow
                 label="Admin Boundaries (Bhuvan)"
                 checked={showBhuvanAdmin}
@@ -898,6 +1146,31 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
           />
           <span className="text-[11px] text-muted-foreground">Parcel outline (demo geometry)</span>
         </div>
+        {corridorVisible && corridor && (
+          <>
+            <div className="mt-1 flex items-center gap-2">
+              <span
+                className="h-0 w-3 border-t-[3px] border-dashed"
+                style={{ borderColor: CORRIDOR_COLOR }}
+              />
+              <span className="text-[11px] text-muted-foreground">Development alignment</span>
+            </div>
+            <div className="mt-1 flex items-center gap-2">
+              <span
+                className="size-2.5 rounded-full"
+                style={{ backgroundColor: CORRIDOR_START_COLOR }}
+              />
+              <span className="text-[11px] text-muted-foreground">Start point (work limit)</span>
+            </div>
+            <div className="mt-1 flex items-center gap-2">
+              <span
+                className="size-2.5 rounded-full"
+                style={{ backgroundColor: CORRIDOR_END_COLOR }}
+              />
+              <span className="text-[11px] text-muted-foreground">End point (work limit)</span>
+            </div>
+          </>
+        )}
         <div className="mt-1 flex items-center gap-2">
           <span
             className="size-2.5 rounded-[2px]"
@@ -997,6 +1270,11 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
                 })()}
                 <Row label="Area" value={`${selected.properties.areaHa.toFixed(2)} Ha`} mono />
                 <Row
+                  label="Area To Acquire"
+                  value={`${acresOf(selected.properties.areaHa).toFixed(2)} Acres (${selected.properties.areaHa.toFixed(2)} Ha)`}
+                  mono
+                />
+                <Row
                   label="Zone"
                   value={selected.properties.classification === "URBAN" ? "Urban" : "Rural"}
                 />
@@ -1020,6 +1298,37 @@ export function SpatialMapContainer({ onParcelClick, highlightedUlpin }: Spatial
                   mono
                 />
               </dl>
+
+              {corridor && corridor.features.length > 0 && (
+                <div className="mt-4 border-t border-border pt-3">
+                  <div className="label-xs mb-2">Proposal Acquisition &amp; Alignment</div>
+                  <dl className="space-y-2.5 text-[12.5px]">
+                    <Row
+                      label="Total Land To Acquire"
+                      value={`${corridor.totalAcres.toFixed(2)} Acres (${corridor.totalAreaHa.toFixed(2)} Ha)`}
+                      mono
+                    />
+                    <Row label="Notified Parcels" value={String(corridor.features.length)} mono />
+                    <Row
+                      label="Corridor Length"
+                      value={`${corridor.lengthKm.toFixed(2)} km`}
+                      mono
+                    />
+                    <Row
+                      label="Works From"
+                      value={`Khasra ${corridorStart?.khasraNo ?? "—"} · ${corridorStart?.district ?? "—"}`}
+                    />
+                    <Row
+                      label="Works To"
+                      value={`Khasra ${corridorEnd?.khasraNo ?? "—"} · ${corridorEnd?.district ?? "—"}`}
+                    />
+                  </dl>
+                  <p className="mt-2 text-[10.5px] leading-snug text-muted-foreground">
+                    Indicative alignment derived from the notified parcel sequence — not a surveyed
+                    centre-line. Start/end markers show the acquisition work limits.
+                  </p>
+                </div>
+              )}
 
               <div className="mt-4 border-t border-border pt-3">
                 <div className="label-xs mb-2">Records</div>

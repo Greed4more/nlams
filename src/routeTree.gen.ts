@@ -17,10 +17,13 @@ import { Route as JudgeAccessRouteImport } from './routes/judge-access'
 import { Route as MapViewRouteImport } from './routes/map-view'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as AdminAdaptersRouteImport } from './routes/admin.adapters'
+import { Route as DossierIdRouteImport } from './routes/dossier.$id'
 import { Route as ProposalsIndexRouteImport } from './routes/proposals.index'
 import { Route as ProposalsIdRouteImport } from './routes/proposals.$id'
 import { Route as PublicIndexRouteImport } from './routes/public.index'
 import { Route as PublicIdRouteImport } from './routes/public.$id'
+import { Route as PublicLandownersRouteImport } from './routes/public.landowners'
+import { Route as PublicRrRouteImport } from './routes/public.rr'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -62,6 +65,11 @@ const AdminAdaptersRoute = AdminAdaptersRouteImport.update({
   path: '/admin/adapters',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DossierIdRoute = DossierIdRouteImport.update({
+  id: '/dossier/$id',
+  path: '/dossier/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProposalsIndexRoute = ProposalsIndexRouteImport.update({
   id: '/proposals/',
   path: '/proposals/',
@@ -82,6 +90,16 @@ const PublicIdRoute = PublicIdRouteImport.update({
   path: '/public/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PublicLandownersRoute = PublicLandownersRouteImport.update({
+  id: '/public/landowners',
+  path: '/public/landowners',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublicRrRoute = PublicRrRouteImport.update({
+  id: '/public/rr',
+  path: '/public/rr',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -92,8 +110,11 @@ export interface FileRoutesByFullPath {
   '/map-view': typeof MapViewRoute
   '/sign-in': typeof SignInRoute
   '/admin/adapters': typeof AdminAdaptersRoute
+  '/dossier/$id': typeof DossierIdRoute
   '/proposals/$id': typeof ProposalsIdRoute
   '/public/$id': typeof PublicIdRoute
+  '/public/landowners': typeof PublicLandownersRoute
+  '/public/rr': typeof PublicRrRoute
   '/proposals/': typeof ProposalsIndexRoute
   '/public/': typeof PublicIndexRoute
 }
@@ -106,8 +127,11 @@ export interface FileRoutesByTo {
   '/map-view': typeof MapViewRoute
   '/sign-in': typeof SignInRoute
   '/admin/adapters': typeof AdminAdaptersRoute
+  '/dossier/$id': typeof DossierIdRoute
   '/proposals/$id': typeof ProposalsIdRoute
   '/public/$id': typeof PublicIdRoute
+  '/public/landowners': typeof PublicLandownersRoute
+  '/public/rr': typeof PublicRrRoute
   '/proposals': typeof ProposalsIndexRoute
   '/public': typeof PublicIndexRoute
 }
@@ -121,8 +145,11 @@ export interface FileRoutesById {
   '/map-view': typeof MapViewRoute
   '/sign-in': typeof SignInRoute
   '/admin/adapters': typeof AdminAdaptersRoute
+  '/dossier/$id': typeof DossierIdRoute
   '/proposals/$id': typeof ProposalsIdRoute
   '/public/$id': typeof PublicIdRoute
+  '/public/landowners': typeof PublicLandownersRoute
+  '/public/rr': typeof PublicRrRoute
   '/proposals/': typeof ProposalsIndexRoute
   '/public/': typeof PublicIndexRoute
 }
@@ -137,8 +164,11 @@ export interface FileRouteTypes {
     | '/map-view'
     | '/sign-in'
     | '/admin/adapters'
+    | '/dossier/$id'
     | '/proposals/$id'
     | '/public/$id'
+    | '/public/landowners'
+    | '/public/rr'
     | '/proposals/'
     | '/public/'
   fileRoutesByTo: FileRoutesByTo
@@ -151,8 +181,11 @@ export interface FileRouteTypes {
     | '/map-view'
     | '/sign-in'
     | '/admin/adapters'
+    | '/dossier/$id'
     | '/proposals/$id'
     | '/public/$id'
+    | '/public/landowners'
+    | '/public/rr'
     | '/proposals'
     | '/public'
   id:
@@ -165,8 +198,11 @@ export interface FileRouteTypes {
     | '/map-view'
     | '/sign-in'
     | '/admin/adapters'
+    | '/dossier/$id'
     | '/proposals/$id'
     | '/public/$id'
+    | '/public/landowners'
+    | '/public/rr'
     | '/proposals/'
     | '/public/'
   fileRoutesById: FileRoutesById
@@ -180,8 +216,11 @@ export interface RootRouteChildren {
   MapViewRoute: typeof MapViewRoute
   SignInRoute: typeof SignInRoute
   AdminAdaptersRoute: typeof AdminAdaptersRoute
+  DossierIdRoute: typeof DossierIdRoute
   ProposalsIdRoute: typeof ProposalsIdRoute
   PublicIdRoute: typeof PublicIdRoute
+  PublicLandownersRoute: typeof PublicLandownersRoute
+  PublicRrRoute: typeof PublicRrRoute
   ProposalsIndexRoute: typeof ProposalsIndexRoute
   PublicIndexRoute: typeof PublicIndexRoute
 }
@@ -244,6 +283,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdaptersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dossier/$id': {
+      id: '/dossier/$id'
+      path: '/dossier/$id'
+      fullPath: '/dossier/$id'
+      preLoaderRoute: typeof DossierIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/proposals/': {
       id: '/proposals/'
       path: '/proposals'
@@ -272,6 +318,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/public/landowners': {
+      id: '/public/landowners'
+      path: '/public/landowners'
+      fullPath: '/public/landowners'
+      preLoaderRoute: typeof PublicLandownersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/public/rr': {
+      id: '/public/rr'
+      path: '/public/rr'
+      fullPath: '/public/rr'
+      preLoaderRoute: typeof PublicRrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -284,8 +344,11 @@ const rootRouteChildren: RootRouteChildren = {
   MapViewRoute: MapViewRoute,
   SignInRoute: SignInRoute,
   AdminAdaptersRoute: AdminAdaptersRoute,
+  DossierIdRoute: DossierIdRoute,
   ProposalsIdRoute: ProposalsIdRoute,
   PublicIdRoute: PublicIdRoute,
+  PublicLandownersRoute: PublicLandownersRoute,
+  PublicRrRoute: PublicRrRoute,
   ProposalsIndexRoute: ProposalsIndexRoute,
   PublicIndexRoute: PublicIndexRoute,
 }

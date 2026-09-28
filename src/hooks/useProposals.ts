@@ -143,3 +143,58 @@ export function useVerifyDocumentMutation(proposalId: string) {
     },
   });
 }
+
+export interface VerifyAllResult {
+  total: number;
+  matched: number;
+  failed: string[];
+}
+
+/**
+ * Verifies every filed document in one pass using the server-side stored-bytes
+ * self-check (no user file picker required) — the "Verify documents" action on
+ * the proposal's Document Repository.
+ */
+export function useVerifyAllDocumentsMutation(proposalId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (documents: { id: string; name: string }[]): Promise<VerifyAllResult> => {
+      const failed: string[] = [];
+      let matched = 0;
+      for (const doc of documents) {
+        const result = await api.postForm<VerifyDocumentResult>(
+          `/api/documents/${doc.id}/verify`,
+          new FormData(),
+        );
+        if (result.integrityMatch) matched += 1;
+        else failed.push(doc.name);
+      }
+      return { total: documents.length, matched, failed };
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["proposals", proposalId] });
+      void qc.invalidateQueries({ queryKey: ["proposals"] });
+    },
+  });
+}
+
+/** Downloads a filed document's stored bytes. Follows the server's content type. */
+export async function downloadDocument(documentId: string, filename: string): Promise<void> {
+  const blob = await api.getBlob(`/api/documents/${documentId}/download`);
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4_000);
+}
+
+/** Opens a filed document in a new browser tab (read it in full). */
+export async function viewDocument(documentId: string): Promise<void> {
+  const blob = await api.getBlob(`/api/documents/${documentId}/download`);
+  const url = URL.createObjectURL(blob);
+  window.open(url, "_blank", "noopener");
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}

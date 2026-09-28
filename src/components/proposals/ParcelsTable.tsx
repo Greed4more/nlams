@@ -210,9 +210,9 @@ export function ParcelsTable({ proposal }: { proposal: Proposal }) {
                     <div className="flex items-center justify-end gap-2 text-muted-foreground">
                       <Link
                         to="/map-view"
-                        search={{ ulpin: p.ulpin }}
-                        aria-label={`Locate ${p.ulpin} on map`}
-                        title="Locate on map"
+                        search={{ ulpin: p.ulpin, proposal: proposal.id }}
+                        aria-label={`Locate ${p.ulpin} on map with acquisition alignment`}
+                        title="Locate on map with acquisition alignment"
                         className="transition-colors hover:text-foreground"
                       >
                         <MapPin className="size-3.5" />
