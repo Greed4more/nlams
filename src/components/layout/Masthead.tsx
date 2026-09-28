@@ -1,4 +1,4 @@
-import { Bell, LogOut, Menu, PlayCircle, Shield, Languages } from "lucide-react";
+import { Bell, LogOut, Menu, PlayCircle, Languages } from "lucide-react";
 import { AshokaChakra } from "./GovIdentity";
 import { Link } from "@tanstack/react-router";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -9,17 +9,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useRole, PERSONA_PRESETS } from "@/context/RoleContext";
-import { useAuth, type Role } from "@/context/AuthContext";
+import { useRole } from "@/context/RoleContext";
+import { useAuth } from "@/context/AuthContext";
 import { useDemo } from "@/context/DemoContext";
 import { useI18n } from "@/context/I18nContext";
 import { LANGUAGES } from "@/lib/translations";
 import { useDerived } from "@/components/dashboard/derive";
 import { DemoPanel } from "./DemoPanel";
 
-/** Gov-portal-style masthead: brand/ministry identity left, officer controls right. */
+/**
+ * Gov-portal-style masthead: brand/ministry identity left, officer controls
+ * right. Officers are identified by role only — there is no persona switcher;
+ * a different role dashboard is reached by signing in with that role.
+ */
 export function Masthead({ onOpenNav }: { onOpenNav?: () => void }) {
-  const { initials, person, roleLabel, role, switchPersona, switchingPersona } = useRole();
+  const { roleInitials, roleLabel } = useRole();
   const { signOut } = useAuth();
   const { lang, setLang, t } = useI18n();
   const { breachedQueue } = useDerived();
@@ -60,34 +64,6 @@ export function Masthead({ onOpenNav }: { onOpenNav?: () => void }) {
         </div>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <div className="hidden lg:flex items-center">
-            <Select
-              value={role ?? "DOLR_SECRETARY"}
-              onValueChange={(val) => void switchPersona(val as Role)}
-              disabled={switchingPersona}
-            >
-              <SelectTrigger className="h-8 w-[230px] rounded-[4px] border-border bg-muted/30 text-[11.5px] font-medium text-foreground">
-                <div className="flex min-w-0 items-center gap-1.5">
-                  <Shield className="size-3.5 text-ink shrink-0" />
-                  <SelectValue placeholder="Select persona">{roleLabel}</SelectValue>
-                </div>
-              </SelectTrigger>
-              <SelectContent align="end" className="w-[300px]">
-                {(Object.keys(PERSONA_PRESETS) as Role[]).map((r) => {
-                  const p = PERSONA_PRESETS[r];
-                  return (
-                    <SelectItem key={r} value={r} className="py-2 text-[12px]">
-                      <div className="font-semibold text-foreground">{p.label}</div>
-                      <div className="text-[10.5px] text-muted-foreground leading-tight mt-0.5">
-                        {p.name} · {p.description}
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          </div>
-
           <Select
             value={lang}
             onValueChange={(v) => setLang(v as (typeof LANGUAGES)[number]["value"])}
@@ -187,11 +163,11 @@ export function Masthead({ onOpenNav }: { onOpenNav?: () => void }) {
                 className="hidden items-center gap-2 border-l border-border pl-3 sm:flex"
               >
                 <div className="grid size-8 place-items-center rounded-full bg-ink text-[11px] font-semibold text-ink-foreground">
-                  {initials}
+                  {roleInitials}
                 </div>
                 <div className="hidden text-left leading-tight lg:block">
-                  <div className="text-[12px] font-semibold text-foreground">{person}</div>
-                  <div className="text-[10px] text-muted-foreground">{roleLabel}</div>
+                  <div className="text-[12px] font-semibold text-foreground">{roleLabel}</div>
+                  <div className="text-[10px] text-muted-foreground">Officer Workspace</div>
                 </div>
               </button>
             </PopoverTrigger>

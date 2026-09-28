@@ -42,7 +42,7 @@ export const Route = createFileRoute("/")({
 });
 
 function LandingPage() {
-  const { session, role, displayName, loading } = useAuth();
+  const { session, role, loading } = useAuth();
   const signedIn = !loading && session !== null;
   const officerTo = signedIn ? ("/dashboard" as const) : ("/sign-in" as const);
 
@@ -173,7 +173,7 @@ function LandingPage() {
             description="Role-based workspace for district, state and national officers handling statutory acquisition workflows."
             ctaTo={officerTo}
             ctaLabel={
-              signedIn ? `Continue as ${role ? ROLE_LABEL[role] : displayName}` : "Officer Login"
+              signedIn ? `Continue as ${role ? ROLE_LABEL[role] : "Officer"}` : "Officer Login"
             }
             capabilities={[
               {

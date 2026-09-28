@@ -4,9 +4,9 @@
  * a shape AuthContext can fold into a normal-looking Supabase Session, so
  * every other consumer of useAuth()/api.ts keeps working unmodified.
  *
- * The bypass password itself never reaches the browser: persona switching is
- * performed server-side by POST /api/public/auth/switch-persona, authorised
- * by the existing bypass token.
+ * The bypass password itself never reaches the browser: the sign-in screen
+ * exchanges it for a role-scoped token via POST /api/public/auth/bypass.
+ * Switching roles requires signing in again.
  */
 const STORAGE_KEY = "nlams-bypass-session";
 

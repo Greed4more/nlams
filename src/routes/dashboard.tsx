@@ -4,13 +4,6 @@ import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { LastLoginNotice } from "@/components/layout/LastLoginNotice";
 import { useRole } from "@/context/RoleContext";
-import { KpiCards } from "@/components/dashboard/KpiCards";
-import { StageChart } from "@/components/dashboard/StageChart";
-import { DelayQueue } from "@/components/dashboard/DelayQueue";
-import { StateDistribution } from "@/components/dashboard/StateDistribution";
-import { CompensationFlow } from "@/components/dashboard/CompensationFlow";
-import { RRProgress } from "@/components/dashboard/RRProgress";
-import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { MisExport } from "@/components/dashboard/MisExport";
 import { useI18n } from "@/context/I18nContext";
 
@@ -36,7 +29,7 @@ export const Route = createFileRoute("/dashboard")({
           "Track RFCTLARR Act 2013 acquisition proposals, statutory SLA breaches and compensation across states.",
       },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
+      { property: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Dashboard,
@@ -52,8 +45,13 @@ function useLiveClock() {
   return now;
 }
 
+/**
+ * Role-scoped landing surface: every role signs in to its own custom
+ * dashboard — there is no shared/generic overview and no in-app persona
+ * switcher.
+ */
 function Dashboard() {
-  const { person, roleLabel, role, dashboardTitle } = useRole();
+  const { roleLabel, role, dashboardTitle } = useRole();
   const { t } = useI18n();
   const now = useLiveClock();
   const stamp = now
@@ -64,7 +62,7 @@ function Dashboard() {
     <AppShell breadcrumb={["Home", "Dashboard"]}>
       <PageHeader
         title={dashboardTitle || t("page.dashboard.title")}
-        subtitle={`Signed in as ${person} (${roleLabel}) · Statutory positions computed at page load (${stamp} IST) — seeded demo dataset`}
+        subtitle={`Role: ${roleLabel} · Statutory positions computed at page load (${stamp} IST) — seeded demo dataset`}
         actions={<MisExport />}
       />
 
@@ -75,28 +73,6 @@ function Dashboard() {
       {role === "LAO" && <LaoDashboard />}
       {role === "STATE_REVENUE" && <StateRevenueDashboard />}
       {role === "FINANCE_OFFICER" && <FinanceOfficerDashboard />}
-
-      {!role && (
-        <div className="space-y-3">
-          <KpiCards />
-
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-5 lg:items-start">
-            <div className="lg:col-span-3">
-              <StageChart />
-            </div>
-            <div className="flex flex-col gap-3 lg:col-span-2">
-              <DelayQueue />
-              <StateDistribution />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-            <CompensationFlow />
-            <RRProgress />
-            <ActivityFeed />
-          </div>
-        </div>
-      )}
     </AppShell>
   );
 }

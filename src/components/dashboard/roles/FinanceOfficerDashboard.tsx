@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 /** Finance Officer landing view — the disbursement desk summary with a direct
  * route into the Approved Projects & Disbursement register. */
 export function FinanceOfficerDashboard() {
-  const { person } = useRole();
+  const { roleLabel } = useRole();
   const { data, isLoading } = useApprovedProjectsQuery();
   const projects = data ?? [];
 
@@ -71,7 +71,7 @@ export function FinanceOfficerDashboard() {
               Financial sanctions &amp; compensation clearance
             </h2>
             <p className="mt-0.5 text-[12.5px] text-white/80">
-              Signed in as {person} — approve LAO-cleared assessments and forward them to District
+              {roleLabel} desk — approve LAO-cleared assessments and forward them to District
               Officers for execution.
             </p>
           </div>

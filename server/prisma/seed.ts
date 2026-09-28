@@ -228,7 +228,7 @@ async function main() {
     create: {
       id: "seed-finance-officer",
       email: "finance.officer@nlams.internal",
-      name: "M. Adiga",
+      name: "Finance Officer",
       role: "FINANCE_OFFICER",
       states: [],
     },

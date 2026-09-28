@@ -4,12 +4,7 @@ import { z } from "zod";
 import type { Role } from "@prisma/client";
 import { prisma } from "../db.js";
 import { addAuditEntry } from "../lib/auditVault.js";
-import {
-  BYPASS_PASSWORD,
-  BYPASS_PERSONAS,
-  issueBypassToken,
-  resolveBypassToken,
-} from "../lib/bypassAuth.js";
+import { BYPASS_PASSWORD, BYPASS_PERSONAS, issueBypassToken } from "../lib/bypassAuth.js";
 
 /**
  * Public case-transparency portal — no auth, no PII. Ported from Bhumitra's
@@ -45,38 +40,6 @@ publicRouter.post("/auth/bypass", (req, res) => {
     name: principal.name,
     email: principal.email,
     states: principal.states,
-  });
-});
-
-/**
- * POST /api/public/auth/switch-persona — re-issues a demo session as another
- * persona, but only for a caller that already holds a valid bypass token. Keeps
- * the bypass password out of the browser bundle entirely (the old persona
- * switcher reused it client-side).
- */
-publicRouter.post("/auth/switch-persona", (req, res) => {
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-  const principal = token ? resolveBypassToken(token) : null;
-  if (!principal) {
-    res.status(401).json({ error: "A valid demo session is required to switch personas" });
-    return;
-  }
-
-  const parsed = bypassLoginBody.pick({ role: true }).safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: "Invalid request", details: parsed.error.flatten() });
-    return;
-  }
-
-  const next = BYPASS_PERSONAS[parsed.data.role as Role];
-  const nextToken = issueBypassToken(next);
-  res.json({
-    token: nextToken,
-    role: next.role,
-    name: next.name,
-    email: next.email,
-    states: next.states,
   });
 });
 

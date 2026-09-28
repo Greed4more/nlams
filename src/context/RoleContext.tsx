@@ -1,67 +1,28 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { STATES, type Proposal } from "@/data/mockData";
 import { useAuth, ROLE_LABEL, ROLE_CAN_ACT, type Role } from "@/context/AuthContext";
 import { useProposalsQuery } from "@/hooks/useProposals";
-import { api, ApiError } from "@/lib/api";
-import { getBypassSession, type BypassSession } from "@/lib/bypassAuth";
 
+/** Tooltip shown when a role lacks the credential for a statutory action. */
 export const NO_CREDENTIALS_HINT = "Requires LAO credentials";
 
-export interface PersonaPreset {
-  role: Role;
-  label: string;
-  name: string;
-  states: string[];
-  district?: string;
-  description: string;
-}
-
-export const PERSONA_PRESETS: Record<Role, PersonaPreset> = {
-  DOLR_SECRETARY: {
-    role: "DOLR_SECRETARY",
-    label: "DoLR Secretary",
-    name: "Dr. Alok Kumar",
-    states: [],
-    description: "National apex overview, state comparisons & policy enforcement",
-  },
-  DISTRICT_COLLECTOR: {
-    role: "DISTRICT_COLLECTOR",
-    label: "District Collector",
-    name: "Asvin Chandru, IAS",
-    states: ["Goa"],
-    district: "South Goa",
-    description: "District governance, legal lapse tracking & R&R rehabilitation",
-  },
-  LAO: {
-    role: "LAO",
-    label: "Land Acquisition Officer",
-    name: "Rohan Dessai, GCS",
-    states: ["Goa"],
-    district: "South Goa",
-    description: "Casework execution, Section 26 awards & field title verification",
-  },
-  STATE_REVENUE: {
-    role: "STATE_REVENUE",
-    label: "State Revenue Dept",
-    name: "Vikas Deshmukh",
-    states: ["Maharashtra"],
-    description: "Inter-district monitoring, requiring body outlays & land banks",
-  },
-  FINANCE_OFFICER: {
-    role: "FINANCE_OFFICER",
-    label: "Finance Officer",
-    name: "M. Adiga",
-    states: [],
-    description:
-      "Financial sanctions, LAO-approved projects, automatic compensation assessment & DBT clearance",
-  },
+/**
+ * Two-letter monogram per role for the masthead avatar. Deliberately derived
+ * from the role, not a person — the platform identifies officers by role only.
+ */
+export const ROLE_INITIALS: Record<Role, string> = {
+  DOLR_SECRETARY: "DS",
+  DISTRICT_COLLECTOR: "DC",
+  LAO: "LA",
+  STATE_REVENUE: "SR",
+  FINANCE_OFFICER: "FO",
 };
 
 interface RoleContextValue {
   role: Role | null;
   roleLabel: string;
+  /** Role monogram for avatars — never a personal name. */
+  roleInitials: string;
   /** null = national scope (all states) */
   states: string[] | null;
   /** Officer-selected region view within the authorised scope; null = whole scope. */
@@ -72,37 +33,17 @@ interface RoleContextValue {
   dashboardTitle: string;
   scopeLabel: string;
   canAct: boolean;
-  initials: string;
-  person: string;
   proposals: Proposal[];
   proposalsLoading: boolean;
   scopedProposals: Proposal[];
   inScope: (p: Proposal) => boolean;
-  /**
-   * Actually re-authenticates as the chosen demo persona (via the bypass
-   * token's server-side persona switch), replacing the whole session — not
-   * just a client-side display override. Only works from an existing demo
-   * session; on a real Supabase login it's a no-op with a toast, since a
-   * client can't silently escalate its own privileges.
-   */
-  switchPersona: (role: Role) => Promise<void>;
-  switchingPersona: boolean;
 }
 
 const RoleContext = createContext<RoleContextValue | null>(null);
 
-function initialsOf(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
-  return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase();
-}
-
 export function RoleProvider({ children }: { children: ReactNode }) {
-  const { role, states: rawAuthStates, displayName, signInWithBypass } = useAuth();
-  const [switchingPersona, setSwitchingPersona] = useState(false);
+  const { role, states: rawAuthStates } = useAuth();
   const [requestedState, setRequestedState] = useState<string | null>(null);
-  const qc = useQueryClient();
 
   const { data, isLoading } = useProposalsQuery();
   const proposals = useMemo(() => data ?? [], [data]);
@@ -110,7 +51,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   const states = rawAuthStates.length > 0 ? rawAuthStates : null;
 
   // Region view selected in the header. Ignored (reset to whole scope) if the
-  // signed-in role isn't authorised for that state — e.g. after a persona switch.
+  // signed-in role isn't authorised for that state.
   const activeState =
     requestedState && (!states || states.includes(requestedState)) ? requestedState : null;
   const stateOptions = useMemo(() => states ?? STATES, [states]);
@@ -125,6 +66,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
     return {
       role,
       roleLabel,
+      roleInitials: role ? ROLE_INITIALS[role] : "—",
       states,
       activeState,
       setActiveState: (next: string | null) => setRequestedState(next),
@@ -132,52 +74,12 @@ export function RoleProvider({ children }: { children: ReactNode }) {
       dashboardTitle,
       scopeLabel,
       canAct: role ? ROLE_CAN_ACT[role] : false,
-      initials: initialsOf(displayName),
-      person: displayName,
       proposals,
       proposalsLoading: isLoading,
       scopedProposals: proposals.filter(inScope),
       inScope,
-      switchingPersona,
-      switchPersona: async (nextRole: Role) => {
-        if (!getBypassSession()) {
-          toast.error("Persona switching is only available in demo sessions.", {
-            description: "Sign out and start a demo session from the judge-access screen first.",
-          });
-          return;
-        }
-        setSwitchingPersona(true);
-        try {
-          // Server-side switch, authorised by the current bypass token — the
-          // bypass password never lives in the client bundle.
-          const res = await api.post<BypassSession>("/api/public/auth/switch-persona", {
-            role: nextRole,
-          });
-          signInWithBypass(res);
-          // Every proposal/grievance/dashboard query is scoped server-side to
-          // the caller's token — the new persona invalidates all of it.
-          await qc.invalidateQueries();
-        } catch (err) {
-          toast.error("Could not switch persona", {
-            description: err instanceof ApiError ? err.message : "Unknown error",
-          });
-        } finally {
-          setSwitchingPersona(false);
-        }
-      },
     };
-  }, [
-    role,
-    states,
-    activeState,
-    stateOptions,
-    displayName,
-    proposals,
-    isLoading,
-    switchingPersona,
-    qc,
-    signInWithBypass,
-  ]);
+  }, [role, states, activeState, stateOptions, proposals, isLoading]);
 
   return <RoleContext.Provider value={value}>{children}</RoleContext.Provider>;
 }

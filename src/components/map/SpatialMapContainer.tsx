@@ -392,7 +392,7 @@ export function SpatialMapContainer({
   const { data: stateBoundaryData } = useStateBoundary(stateCode);
   const { data: districtsData } = useDistricts(stateCode);
   const { data: blocksData } = useBlocks(stateCode);
-  const { person } = useRole();
+  const { roleLabel } = useRole();
   const [panelOpen, setPanelOpen] = useState(true);
   const [showCadastral, setShowCadastral] = useState(true);
   const [showLabels, setShowLabels] = useState(true);
@@ -716,7 +716,7 @@ export function SpatialMapContainer({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-3">
-          <span className="hidden text-[11.5px] opacity-90 sm:inline">{person}</span>
+          <span className="hidden text-[11.5px] opacity-90 sm:inline">{roleLabel}</span>
           <button
             type="button"
             aria-label="Toggle layers panel"

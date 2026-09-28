@@ -23,7 +23,7 @@ import { useI18n } from "@/context/I18nContext";
 import { cn } from "@/lib/utils";
 
 export function DistrictCollectorDashboard() {
-  const { person, canAct, scopedProposals } = useRole();
+  const { roleLabel, scopedProposals } = useRole();
   const { totals, disbursalPct, enriched, stageBreakdown } = useDerived();
   const { data: grievances = [] } = useGrievancesQuery();
   const { data: approvedProjects = [] } = useApprovedProjectsQuery();
@@ -61,7 +61,7 @@ export function DistrictCollectorDashboard() {
               {t("district.banner.title")}
             </h2>
             <p className="mt-0.5 text-[12.5px] text-white/80">
-              {t("district.banner.presidedByPrefix")} {person}{" "}
+              {t("district.banner.presidedByPrefix")} {roleLabel}{" "}
               {t("district.banner.presidedBySuffix")}
             </p>
           </div>

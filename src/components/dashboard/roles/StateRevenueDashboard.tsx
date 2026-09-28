@@ -15,12 +15,10 @@ import {
 import { formatCrore, formatINRFull } from "@/data/mockData";
 import { useDerived } from "../derive";
 import { useRole } from "@/context/RoleContext";
-import { StageChart } from "../StageChart";
-import { DelayQueue } from "../DelayQueue";
 import { cn } from "@/lib/utils";
 
 export function StateRevenueDashboard() {
-  const { person, scopedProposals } = useRole();
+  const { scopedProposals } = useRole();
   const { totals, disbursalPct, enriched } = useDerived();
 
   // Aggregate by district within Maharashtra
@@ -76,8 +74,8 @@ export function StateRevenueDashboard() {
               Statewide Inter-District Land Acquisition &amp; Budget Allocation Monitor
             </h2>
             <p className="mt-0.5 text-[12.5px] text-white/80">
-              Coordinated by {person}. Oversight of inter-district performance, requiring body
-              capital demands, Section 10 agricultural ceiling compliance, and state land bank.
+              Departmental oversight of inter-district performance, requiring body capital demands,
+              Section 10 agricultural ceiling compliance, and the state land bank.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -307,13 +305,73 @@ export function StateRevenueDashboard() {
           </section>
         </div>
 
-        {/* Right Column: Stage Pipeline & Section 10 Land Protection */}
+        {/* Right Column: PFMS Disbursal Reconciliation & Section 10 Land Protection */}
         <div className="space-y-3 lg:col-span-2">
-          {/* State Stage Pipeline */}
-          <StageChart />
-
-          {/* State Delay Queue */}
-          <DelayQueue />
+          {/* State Disbursal Reconciliation — unique to the State Revenue desk */}
+          <section className="panel overflow-hidden">
+            <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+              <div className="flex items-center gap-1.5">
+                <TrendingUp className="size-3.5 text-ink" />
+                <div className="label-xs">PFMS Disbursal Reconciliation</div>
+              </div>
+              <span className="num text-[11px] text-muted-foreground">
+                {districtStats.length} districts
+              </span>
+            </div>
+            <div className="space-y-3 p-3.5">
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="rounded border border-border bg-muted/20 p-2">
+                  <div className="text-[10.5px] text-muted-foreground">Assessed</div>
+                  <div className="num mt-1 text-[14px] font-semibold text-foreground">
+                    {formatCrore(totals.assessed)}
+                  </div>
+                </div>
+                <div className="rounded border border-border bg-muted/20 p-2">
+                  <div className="text-[10.5px] text-muted-foreground">Disbursed</div>
+                  <div className="num mt-1 text-[14px] font-semibold text-status-ok">
+                    {formatCrore(totals.disbursed)}
+                  </div>
+                </div>
+                <div className="rounded border border-border bg-muted/20 p-2">
+                  <div className="text-[10.5px] text-muted-foreground">Pending</div>
+                  <div className="num mt-1 text-[14px] font-semibold text-status-warn">
+                    {formatCrore(totals.assessed - totals.disbursed)}
+                  </div>
+                </div>
+              </div>
+              <div className="divide-y divide-border">
+                {districtStats.map((row) => {
+                  const pct =
+                    row.assessed > 0
+                      ? Math.min(100, Math.round((row.disbursed / row.assessed) * 100))
+                      : 0;
+                  return (
+                    <div key={row.district} className="py-2">
+                      <div className="flex items-center justify-between gap-2 text-[12px]">
+                        <span className="truncate font-medium text-foreground">{row.district}</span>
+                        <span className="num shrink-0 text-[11px] text-muted-foreground">
+                          {formatCrore(row.disbursed, 1)} / {formatCrore(row.assessed, 1)} · {pct}%
+                        </span>
+                      </div>
+                      <div className="mt-1 h-1.5 w-full overflow-hidden rounded bg-muted">
+                        <div
+                          className={cn(
+                            "h-full rounded",
+                            pct >= 75
+                              ? "bg-status-ok"
+                              : pct >= 40
+                                ? "bg-status-warn"
+                                : "bg-status-critical",
+                          )}
+                          style={{ width: `${Math.max(2, pct)}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
 
           {/* Section 10 Agricultural Land Protection & Land Bank */}
           <section className="panel p-3.5">

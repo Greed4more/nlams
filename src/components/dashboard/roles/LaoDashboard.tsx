@@ -25,7 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
 export function LaoDashboard() {
-  const { person, canAct, scopedProposals } = useRole();
+  const { scopedProposals } = useRole();
   const { totals, disbursalPct } = useDerived();
   const { data: grievances = [] } = useGrievancesQuery();
   const { data: chainData } = useAuditChainQuery(10);
@@ -73,8 +73,8 @@ export function LaoDashboard() {
               Land Acquisition Officer (LAO) Statutory Execution Docket
             </h2>
             <p className="mt-0.5 text-[12.5px] text-white/80">
-              Assigned to {person} (LAO). Authorized statutory casework officer for Section 26
-              market value awards, ULPIN parcel survey verification, and 15-day objection disposal.
+              Authorized statutory casework docket for Section 26 market value awards, ULPIN parcel
+              survey verification, and 15-day objection disposal.
             </p>
           </div>
           <div className="flex items-center gap-2">

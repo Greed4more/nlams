@@ -14,34 +14,36 @@ import { supabaseAdmin } from "../src/lib/supabaseAdmin.js";
  */
 const DEMO_PASSWORD = "admin123";
 
+// `name` is the role's display title, not a person's name — officers are
+// identified by role throughout the platform.
 const PERSONAS = [
   {
     email: "dolr.secretary@nlams.demo",
-    name: "R. Kulkarni",
+    name: "DoLR Secretary",
     role: "DOLR_SECRETARY",
     states: [] as string[],
   },
   {
     email: "district.collector@nlams.demo",
-    name: "A. Naik",
+    name: "District Collector",
     role: "DISTRICT_COLLECTOR",
     states: ["Goa"],
   },
   {
     email: "lao@nlams.demo",
-    name: "S. Desai",
+    name: "Land Acquisition Officer",
     role: "LAO",
     states: ["Goa"],
   },
   {
     email: "state.revenue@nlams.demo",
-    name: "M. Vaidya",
+    name: "State Revenue Dept",
     role: "STATE_REVENUE",
     states: ["Maharashtra"],
   },
   {
     email: "finance.officer@nlams.demo",
-    name: "M. Adiga",
+    name: "Finance Officer",
     role: "FINANCE_OFFICER",
     states: [] as string[],
   },

@@ -28,40 +28,43 @@ export interface BypassPrincipal {
  * would collide the moment both auth paths were ever used for the same
  * identity (the real-Supabase upsert keys on Supabase's UUID, this one
  * keys on a fixed "bypass-*" id — two different ids can't share one email).
+ *
+ * Personas carry the role's display title as their `name`, not a person's
+ * name — the platform identifies officers by role only.
  */
 export const BYPASS_PERSONAS: Record<Role, BypassPrincipal> = {
   DOLR_SECRETARY: {
     id: "bypass-dolr-secretary",
     email: "dolr.secretary+bypass@nlams.demo",
-    name: "R. Kulkarni",
+    name: "DoLR Secretary",
     role: "DOLR_SECRETARY",
     states: [],
   },
   DISTRICT_COLLECTOR: {
     id: "bypass-district-collector",
     email: "district.collector+bypass@nlams.demo",
-    name: "A. Naik",
+    name: "District Collector",
     role: "DISTRICT_COLLECTOR",
     states: ["Goa"],
   },
   LAO: {
     id: "bypass-lao",
     email: "lao+bypass@nlams.demo",
-    name: "S. Desai",
+    name: "Land Acquisition Officer",
     role: "LAO",
     states: ["Goa"],
   },
   STATE_REVENUE: {
     id: "bypass-state-revenue",
     email: "state.revenue+bypass@nlams.demo",
-    name: "M. Vaidya",
+    name: "State Revenue Dept",
     role: "STATE_REVENUE",
     states: ["Maharashtra"],
   },
   FINANCE_OFFICER: {
     id: "bypass-finance-officer",
     email: "finance.officer+bypass@nlams.demo",
-    name: "M. Adiga",
+    name: "Finance Officer",
     role: "FINANCE_OFFICER",
     // National scope — the compensation & disbursement desk clears awards for
     // every requiring body, not just one state.

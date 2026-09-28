@@ -261,6 +261,43 @@ export function DolrSecretaryDashboard() {
           {/* National Delay Queue */}
           <DelayQueue />
 
+          {/* National Policy Watch — unique to the DoLR desk */}
+          <section className="panel p-3.5">
+            <div className="flex items-center justify-between border-b border-border pb-2">
+              <div className="label-xs flex items-center gap-1.5">
+                <AlertOctagon className="size-3.5 text-status-critical" />
+                National Policy Watch — Statutory Lapses
+              </div>
+              <Link
+                to="/proposals"
+                className="text-[11px] font-medium text-status-info hover:underline"
+              >
+                Investigate
+              </Link>
+            </div>
+            <div className="mt-2.5 space-y-2">
+              {stateStats.filter((s) => s.breached > 0).length === 0 && (
+                <div className="py-2 text-center text-[12px] text-muted-foreground">
+                  No statutory breaches recorded nationally.
+                </div>
+              )}
+              {stateStats
+                .filter((s) => s.breached > 0)
+                .slice(0, 4)
+                .map((row) => (
+                  <div
+                    key={row.state}
+                    className="flex items-center justify-between gap-2 text-[12px]"
+                  >
+                    <span className="truncate font-medium text-foreground">{row.state}</span>
+                    <span className="num shrink-0 rounded bg-status-critical/10 px-1.5 py-0.5 text-[10.5px] font-bold text-status-critical">
+                      {row.breached} {t("common.breached")} · {row.atRisk} at risk
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </section>
+
           {/* Pluggable State Adapters & Audit Vault Health */}
           <div className="grid grid-cols-1 gap-3">
             <section className="panel p-3.5">

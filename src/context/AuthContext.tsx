@@ -64,7 +64,6 @@ interface AuthContextValue {
   role: Role | null;
   /** Empty = national scope. */
   states: string[];
-  displayName: string;
   signOut: () => Promise<void>;
   /** Demo bypass login (no Supabase account needed) — see lib/bypassAuth.ts. */
   signInWithBypass: (session: BypassSession) => void;
@@ -100,8 +99,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const states: string[] = Array.isArray(user?.app_metadata["states"])
       ? (user.app_metadata["states"] as string[])
       : [];
-    const displayName =
-      (user?.user_metadata["name"] as string | undefined) ?? user?.email ?? "Unknown";
 
     return {
       loading,
@@ -109,7 +106,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       role,
       states,
-      displayName,
       signOut: async () => {
         if (getBypassSession()) {
           clearBypassSession();
